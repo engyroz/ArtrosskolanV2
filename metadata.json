@@ -1,0 +1,5 @@
+{
+  "name": "Artrosskolan",
+  "description": "A SaaS application for Osteoarthritis treatment management, featuring patient assessment, subscription payments, and progress tracking.",
+  "requestFramePermissions": []
+}
