@@ -2,41 +2,24 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { CheckCircle, Lock, BookOpen, ChevronRight, Trophy, Map } from 'lucide-react';
 import { EDUCATION_MODULES, LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
+import { getMaxXP } from '../utils/progressionEngine'; // Updated import
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const MyJourney = () => {
   const { user, userProfile, refreshProfile } = useAuth();
-  const [sessionsCompleted, setSessionsCompleted] = useState(0);
   
-  // Target sessions to unlock next level (SOP Rule: approx 12 sessions)
-  const SESSIONS_TARGET = 12;
-
-  useEffect(() => {
-    if (!userProfile) return;
-    
-    // Calculate sessions done in current level
-    // Note: In a real app we might store 'levelStartedAt' timestamp to filter logs accurately.
-    // For now, we assume all logs with the current level property count.
-    const history = userProfile.activityHistory || [];
-    const currentLevelCount = history.filter(
-        h => h.type === 'rehab' // Only rehab counts for progression, typically
-    ).length;
-    
-    // Simplification for demo: Using total rehab logs. 
-    // Ideally this would reset when level increments.
-    setSessionsCompleted(currentLevelCount % SESSIONS_TARGET); // Modulo to simulate progress within current level cycle
-  }, [userProfile]);
-
   const currentLevel = userProfile?.currentLevel || 1;
   const userGoal = userProfile?.assessmentData?.mainGoal || "Bli smärtfri";
   
-  // Cap at 100%
-  const progressPercentage = Math.min(100, Math.round((sessionsCompleted / SESSIONS_TARGET) * 100));
+  // Use XP instead of session count for consistent progression bar
+  const currentXP = userProfile?.progression?.experiencePoints || 0;
+  const maxXP = getMaxXP(currentLevel);
+  
+  const progressPercentage = Math.min(100, Math.round((currentXP / maxXP) * 100));
 
   const handleReadArticle = async (articleId: string) => {
       if (!user) return;
-      // Optimistic UI update could happen here, but we rely on refreshProfile
       try {
           const userRef = doc(db, 'users', user.uid);
           await updateDoc(userRef, {
@@ -60,7 +43,6 @@ const MyJourney = () => {
         
         {/* Timeline Visual */}
         <div className="relative flex justify-between items-center px-2">
-            {/* Background Line */}
             <div className="absolute left-0 right-0 top-1/2 h-1 bg-slate-100 -z-10 transform -translate-y-1/2 mx-4"></div>
             
             {[1, 2, 3, 4].map((level) => {
@@ -120,7 +102,7 @@ const MyJourney = () => {
                     ></div>
                 </div>
                 <p className="text-xs text-slate-400 text-right">
-                    {sessionsCompleted} av {SESSIONS_TARGET} pass avklarade
+                    {currentXP} / {maxXP} XP
                 </p>
             </div>
 

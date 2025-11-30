@@ -8,9 +8,8 @@ import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { Flame, Lightbulb, ExternalLink } from 'lucide-react';
 import { toLocalISOString } from '../utils/dateHelpers';
 import { generateLevelPlan, getWorkoutSession } from '../utils/workoutEngine';
-import { MAX_XP_PER_LEVEL } from '../utils/progressionEngine';
+import { getMaxXP } from '../utils/progressionEngine'; // Updated import
 
-// Components
 import ActionCard from '../components/ActionCard';
 import LevelProgressBar from '../components/LevelProgressBar';
 import PreWorkoutModal from '../components/PreWorkoutModal';
@@ -23,19 +22,17 @@ const Dashboard = () => {
   
   const [loading, setLoading] = useState(true);
   const [showPreFlight, setShowPreFlight] = useState(false);
-  const [showBossFight, setShowBossFight] = useState(false); // New state
+  const [showBossFight, setShowBossFight] = useState(false);
   
   const history = userProfile?.activityHistory || [];
   const currentLevel = userProfile?.currentLevel || 1;
   const selectedDateStr = toLocalISOString(today);
   const logEntry = history.find(h => h.date === selectedDateStr);
   
-  // Mock Schedule Logic
   const dayIndex = today.getDay();
   const rehabDays = [1, 3, 5]; 
   const isRehabDay = currentLevel === 1 || rehabDays.includes(dayIndex);
   
-  // View State Logic
   let dailyState = 'rest';
   
   if (logEntry) {
@@ -50,12 +47,10 @@ const Dashboard = () => {
       dailyState = 'rest';
   }
 
-  // --- Plan Generation Check ---
   useEffect(() => {
     const initPlan = async () => {
       if (!userProfile) return;
       
-      // Generate plan if missing (e.g., new user OR after level up)
       if (!userProfile.activePlanIds || userProfile.activePlanIds.length === 0) {
         console.log("Generating plan for user...");
         try {
@@ -80,8 +75,6 @@ const Dashboard = () => {
     };
     initPlan();
   }, [userProfile, currentLevel]);
-
-  // --- Actions ---
 
   const handleStartClick = () => {
     if (dailyState === 'boss_fight_ready') {
@@ -111,26 +104,23 @@ const Dashboard = () => {
         const nextLevel = userProfile.currentLevel + 1;
         const userRef = doc(db, 'users', userProfile.uid);
 
-        // Update Level, Reset XP, Clear Plan (to trigger regen)
         await updateDoc(userRef, {
             currentLevel: nextLevel,
             "progression.experiencePoints": 0,
             "progression.levelMaxedOut": false,
             "progression.currentPhase": 1,
             "progression.consecutivePerfectSessions": 0,
-            activePlanIds: [], // Clear so useEffect generates new plan
-            exerciseProgress: {} // Reset exercise history for new level
+            activePlanIds: [], 
+            exerciseProgress: {} 
         });
 
         await refreshProfile();
         setShowBossFight(false);
-        // Optional: Show celebration modal or toast here
     } catch (e) {
         console.error("Level up failed:", e);
     }
   };
 
-  // Determine Card Props
   let cardTitle = "Vila & Återhämtning";
   let cardSubtitle = "Ingen träning idag";
   
@@ -142,10 +132,12 @@ const Dashboard = () => {
       cardSubtitle = "Du är redo för nästa nivå!";
   }
 
+  // Calculate dynamic Max XP
+  const maxXP = getMaxXP(currentLevel);
+
   return (
     <div className="min-h-screen bg-slate-50 pb-32">
       
-      {/* Modals */}
       <PreWorkoutModal 
         isOpen={showPreFlight} 
         onClose={() => setShowPreFlight(false)} 
@@ -190,7 +182,7 @@ const Dashboard = () => {
                 <LevelProgressBar 
                     level={currentLevel} 
                     currentXP={userProfile?.progression?.experiencePoints || 0} 
-                    maxXP={MAX_XP_PER_LEVEL} 
+                    maxXP={maxXP} 
                 />
             )}
         </div>

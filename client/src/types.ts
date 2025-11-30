@@ -7,7 +7,7 @@ export interface UserProfile {
   displayName?: string;
   program?: ProgramConfig; 
   
-  // Add this field back
+  // Re-added this field to fix TS errors
   assessmentData?: Record<string, any>;
 
   progression?: ProgressionState;
