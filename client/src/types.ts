@@ -14,6 +14,17 @@ export interface UserProfile {
   
   trainingSchedule?: number[]; 
   activityHistory?: ActivityLogEntry[];
+  
+  completedEducationIds?: string[]; // Track read articles
+}
+
+export interface EducationModule {
+  id: string;
+  title: string;
+  category: string; 
+  readTime: string; 
+  contentUrl: string; 
+  requiredLevel: number; 
 }
 
 export interface ExerciseProgressEntry {
@@ -117,13 +128,11 @@ export interface ProgramConfig {
   focusAreas: string[]; 
 }
 
-// --- CALENDAR & DIARY TYPES ---
-
 export type SessionStatus = 'planned' | 'completed' | 'missed';
 
 export interface WorkoutLog {
-  id?: string; // Optional if derived from ActivityLogEntry
-  date: string; // YYYY-MM-DD
+  id?: string; 
+  date: string; 
   status: SessionStatus;
   workoutType: 'rehab' | 'daily_activity' | 'circulation'; 
   level?: number;

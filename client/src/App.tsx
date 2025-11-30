@@ -12,7 +12,8 @@ import Results from './pages/Results';
 import Payment from './pages/Payment';
 import Dashboard from './pages/Dashboard';
 import WorkoutPlayer from './pages/WorkoutPlayer';
-import CalendarDiary from './pages/CalendarDiary'; // Import
+import CalendarDiary from './pages/CalendarDiary';
+import MyJourney from './pages/MyJourney'; // Import
 import ProtectedRoute from './components/ProtectedRoute';
 import TimeTravelDebug from './components/TimeTravelDebug';
 
@@ -20,7 +21,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { user } = useAuth();
   
-  const isAppRoute = ['/dashboard', '/calendar', '/plan', '/progress', '/profile', '/workout'].includes(location.pathname);
+  const isAppRoute = ['/dashboard', '/calendar', '/plan', '/journey', '/progress', '/profile', '/workout'].includes(location.pathname);
   const showBottomNav = user && isAppRoute;
   const showTopNav = !showBottomNav; 
 
@@ -61,10 +62,15 @@ const App: React.FC = () => {
                 element={<ProtectedRoute requireSubscription={true}><Dashboard /></ProtectedRoute>} 
               />
 
-              {/* Calendar Route */}
               <Route 
                 path="/calendar" 
                 element={<ProtectedRoute requireSubscription={true}><CalendarDiary /></ProtectedRoute>} 
+              />
+
+              {/* Journey Route */}
+              <Route 
+                path="/journey" 
+                element={<ProtectedRoute requireSubscription={true}><MyJourney /></ProtectedRoute>} 
               />
 
               <Route 
@@ -72,9 +78,8 @@ const App: React.FC = () => {
                 element={<ProtectedRoute requireSubscription={true}><WorkoutPlayer /></ProtectedRoute>} 
               />
               
-              {/* Redirect old /plan to /calendar if needed, or keep placeholder */}
-              <Route path="/plan" element={<CalendarDiary />} /> 
-              <Route path="/progress" element={<div className="p-8 text-center">Statistik kommer snart...</div>} />
+              <Route path="/plan" element={<CalendarDiary />} />
+              <Route path="/progress" element={<MyJourney />} /> {/* Redirect old progress link */}
               <Route path="/profile" element={<div className="p-8 text-center">Profil kommer snart...</div>} />
 
             </Routes>

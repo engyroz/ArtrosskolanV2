@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Calendar, TrendingUp, User } from 'lucide-react';
+import { Home, Calendar, Map, User } from 'lucide-react';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -10,8 +10,8 @@ const BottomNavigation = () => {
 
   const tabs = [
     { id: 'dashboard', label: 'Idag', icon: Home, path: '/dashboard' },
-    { id: 'plan', label: 'Min Plan', icon: Calendar, path: '/calendar' }, // Updated path
-    { id: 'progress', label: 'Framsteg', icon: TrendingUp, path: '/progress' },
+    { id: 'plan', label: 'Min Plan', icon: Calendar, path: '/calendar' },
+    { id: 'journey', label: 'Resan', icon: Map, path: '/journey' },
     { id: 'profile', label: 'Profil', icon: User, path: '/profile' },
   ];
 
