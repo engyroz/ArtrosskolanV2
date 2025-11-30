@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ClipboardList, ArrowRight, Activity, AlertCircle, CheckCircle, Loader2, AlertTriangle, Play } from 'lucide-react';
+import { ArrowRight, Activity, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { 
   getAssessmentState,
   AVAILABLE_JOINTS,
@@ -16,7 +16,7 @@ import { db } from '../firebase';
 const Assessment = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, refreshProfile } = useAuth(); // Added Auth context
+  const { user, refreshProfile } = useAuth();
   
   const [selectedJoint, setSelectedJoint] = useState<JointType | null>(null);
   const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -38,8 +38,12 @@ const Assessment = () => {
     if (selectedJoint) {
       const state = getAssessmentState(selectedJoint, answers);
       setAssessmentState(state);
-      setLocalValue(null); 
+      // Nollställ bara localValue om vi faktiskt byter fråga (dvs inte är klara)
+      if (state.status !== 'COMPLETE') {
+          setLocalValue(null);
+      }
 
+      // Trigga avslut om status är COMPLETE
       if (state.status === 'COMPLETE' && state.result && !loading) {
         finishAssessment(state.result);
       }
@@ -49,16 +53,21 @@ const Assessment = () => {
   const finishAssessment = async (result: any) => {
     setLoading(true);
 
-    if (user) {
-        // Authenticated User: Update Firestore directly
-        try {
-            // 1. Generate Plan IDs immediately
+    try {
+        if (user) {
+            // Inloggad användare: Spara till Firestore
+            console.log("Saving assessment for user:", user.uid);
+            
+            // 1. Hämta alla övningar för att kunna generera planen
             const querySnapshot = await getDocs(collection(db, "exercises"));
             const allExercises: Exercise[] = [];
             querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
             
-            // Map joint name if needed
+            // Mappa lednamn
             const mappedJoint = selectedJoint === 'Knä' ? 'knee' : (selectedJoint === 'Höft' ? 'hip' : 'shoulder');
+            
+            // Generera plan-IDn
+            // OBS: Om generateLevelPlan kastar fel kommer vi till catch-blocket
             const planIds = generateLevelPlan(allExercises, result.level, mappedJoint);
 
             const userRef = doc(db, 'users', user.uid);
@@ -68,38 +77,42 @@ const Assessment = () => {
                 currentLevel: result.level,
                 program: result,
                 activePlanIds: planIds,
-                exerciseProgress: {} // Reset progress on re-assessment
+                exerciseProgress: {} 
             });
             await refreshProfile();
             navigate('/dashboard');
-        } catch (error) {
-            console.error("Error saving authenticated assessment:", error);
-            setLoading(false);
-        }
-    } else {
-        // Anonymous User: Save to LocalStorage
-        saveAssessmentToStorage({
-            joint: selectedJoint!,
-            level: result.level,
-            functionalAnswers: answers, 
-            activityLevel: answers['activityProfile'],
-            goal: answers['mainGoal'],
-            programConfig: result
-        });
+        } else {
+            // Anonym användare: Spara till LocalStorage
+            console.log("Saving assessment to local storage");
+            saveAssessmentToStorage({
+                joint: selectedJoint!,
+                level: result.level,
+                functionalAnswers: answers, 
+                activityLevel: answers['activityProfile'],
+                goal: answers['mainGoal'],
+                programConfig: result
+            });
 
-        setTimeout(() => {
-            navigate('/results');
-        }, 2000);
+            setTimeout(() => {
+                navigate('/results');
+            }, 2000);
+        }
+    } catch (error) {
+        console.error("Error generating/saving assessment:", error);
+        // Här kan du visa ett felmeddelande till användaren om du vill
+        setLoading(false); // Sluta ladda så användaren inte fastnar
     }
   };
 
   const handleNext = () => {
     if (assessmentState.nextQuestion && localValue !== null) {
+        console.log("Answering:", assessmentState.nextQuestion.id, "Value:", localValue);
         setAnswers(prev => ({ ...prev, [assessmentState.nextQuestion!.id]: localValue }));
     }
   };
 
-  // --- Renderers (Same as before) ---
+  // --- Renderers ---
+
   const renderSafetyCheck = () => (
     <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 animate-fade-in">
         <div className="flex items-center gap-4 mb-6">
@@ -280,7 +293,7 @@ const Assessment = () => {
         {/* Main Card */}
         <div className="bg-white shadow-xl rounded-2xl p-8 sm:p-10 border border-slate-100 min-h-[400px] flex flex-col justify-center">
             
-            {loading ? renderLoading() : (
+            {loading || assessmentState.status === 'COMPLETE' ? renderLoading() : (
                 <>
                     {!selectedJoint && renderJointSelection()}
                     {selectedJoint && assessmentState.status === 'SAFETY_CHECK' && renderSafetyCheck()}
