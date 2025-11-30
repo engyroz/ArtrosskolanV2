@@ -1,11 +1,11 @@
 import React from 'react';
 import { WorkoutLog } from '../types';
-import { Play, CheckCircle, Calendar, Clock, AlertCircle } from 'lucide-react';
+import { Play, CheckCircle, Calendar, Clock, AlertCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface DayDetailCardProps {
   date: Date;
-  log?: WorkoutLog; // If undefined, nothing scheduled or planned
+  log?: WorkoutLog; 
   isToday: boolean;
 }
 
@@ -18,9 +18,7 @@ const DayDetailCard = ({ date, log, isToday }: DayDetailCardProps) => {
     month: 'long' 
   }).format(date);
 
-  // --- RENDER LOGIC ---
-
-  // 1. Completed Session
+  // 1. Completed
   if (log && log.status === 'completed') {
     const painColor = (log.painScore || 0) <= 3 ? 'text-green-600 bg-green-50' : 
                       (log.painScore || 0) <= 5 ? 'text-yellow-600 bg-yellow-50' : 
@@ -45,16 +43,28 @@ const DayDetailCard = ({ date, log, isToday }: DayDetailCardProps) => {
           <div className="font-bold text-slate-800 capitalize">{log.workoutType === 'rehab' ? 'Rehabstyrka' : 'Cirkulation'}</div>
         </div>
 
-        {log.userNote && (
-          <div className="text-sm text-slate-500 italic">
-            "{log.userNote}"
-          </div>
-        )}
+        {log.userNote && <div className="text-sm text-slate-500 italic">"{log.userNote}"</div>}
       </div>
     );
   }
 
-  // 2. Planned Session (Future or Today)
+  // 2. Missed (Past)
+  if (log && log.status === 'missed') {
+    return (
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 animate-slide-up opacity-80">
+        <h3 className="text-xl font-bold text-slate-900 capitalize mb-4">{formattedDate}</h3>
+        <div className="bg-red-50 border border-red-100 rounded-2xl p-5 flex items-center gap-4">
+            <XCircle className="w-8 h-8 text-red-400" />
+            <div>
+                <h4 className="text-lg font-bold text-red-900 mb-1">Missat pass</h4>
+                <p className="text-red-700 text-sm">Livet kommer emellan ibland. Nya tag!</p>
+            </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Planned (Future or Today)
   if (log && log.status === 'planned') {
     return (
       <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 animate-slide-up">
@@ -73,24 +83,21 @@ const DayDetailCard = ({ date, log, isToday }: DayDetailCardProps) => {
 
         {isToday ? (
           <button 
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/dashboard')} // Go to dashboard to start
             className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg shadow-blue-200"
           >
-            <Play className="w-4 h-4 mr-2 fill-current" /> Gå till Dashboard
+            <Play className="w-4 h-4 mr-2 fill-current" /> Starta på Dashboard
           </button>
         ) : (
-          <div className="flex gap-3">
-             <button className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50">
-               Flytta pass
-             </button>
-             {/* If future, maybe "Sneak Peek"? */}
-          </div>
+          <button className="w-full py-3 border border-slate-200 text-slate-400 rounded-xl font-bold text-sm cursor-not-allowed">
+             Kan ej startas än
+          </button>
         )}
       </div>
     );
   }
 
-  // 3. Rest Day / Empty
+  // 4. Rest / Empty
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 animate-slide-up text-center">
       <h3 className="text-xl font-bold text-slate-900 capitalize mb-2">{formattedDate}</h3>
@@ -98,7 +105,8 @@ const DayDetailCard = ({ date, log, isToday }: DayDetailCardProps) => {
         <div className="h-14 w-14 bg-slate-100 rounded-full flex items-center justify-center mb-3 text-slate-400">
           <Calendar className="w-6 h-6" />
         </div>
-        <p className="text-slate-500 font-medium">Inget planerat denna dag.</p>
+        <p className="text-slate-500 font-medium">Vilodag</p>
+        <p className="text-xs text-slate-400 mt-1">Inget rehabpass inbokat.</p>
         <button className="mt-4 text-blue-600 font-bold text-sm hover:underline">
           + Lägg till aktivitet
         </button>

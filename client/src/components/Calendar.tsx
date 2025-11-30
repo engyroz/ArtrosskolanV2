@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Maximize2, Minimize2 } from 'lucide-react';
 import { 
   toLocalISOString, 
@@ -13,35 +13,31 @@ import {
 export interface CalendarMarker {
   date: string; // YYYY-MM-DD
   color: string;
-  type: 'filled' | 'hollow';
+  type: 'filled' | 'hollow' | 'cross'; // Added 'cross' for missed
 }
 
 interface CalendarProps {
   selectedDate: Date;
   onSelectDate: (date: Date) => void;
+  currentMonth: Date;
+  onMonthChange: (date: Date) => void;
   markers: CalendarMarker[];
-  currentDate: Date; // Simulated Today
+  currentDate: Date;
 }
 
-const Calendar = ({ selectedDate, onSelectDate, markers, currentDate }: CalendarProps) => {
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('month'); // Default to Month per spec
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-
-  useEffect(() => {
-    setCurrentMonth(selectedDate);
-  }, [selectedDate]);
+const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, markers, currentDate }: CalendarProps) => {
+  // We can keep viewMode local as it doesn't affect data fetching requirements usually
+  const [viewMode, setViewMode] = React.useState<'week' | 'month'>('month'); 
 
   const renderDayCell = (date: Date, isCurrentMonth = true) => {
     const dateStr = toLocalISOString(date);
     const isSelected = isSameDay(date, selectedDate);
     const isToday = isSameDay(date, currentDate);
     
-    // Find Marker
     const marker = markers.find(m => m.date === dateStr);
 
     let cellClasses = "relative w-10 h-10 flex flex-col items-center justify-center rounded-full text-sm font-medium transition-all cursor-pointer select-none";
     
-    // Base State
     if (isSelected) {
       cellClasses += " bg-slate-900 text-white shadow-lg transform scale-105 z-10";
     } else if (isToday) {
@@ -62,13 +58,13 @@ const Calendar = ({ selectedDate, onSelectDate, markers, currentDate }: Calendar
         >
           <span>{date.getDate()}</span>
           
-          {/* Marker Dot */}
           {marker && (
-            <div className={`absolute bottom-1.5 w-1.5 h-1.5 rounded-full ${isSelected ? 'ring-2 ring-slate-900' : ''}`}
-                 style={{ 
+            <div 
+                className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${isSelected ? 'ring-2 ring-slate-900' : ''}`}
+                style={{ 
                    backgroundColor: marker.type === 'filled' ? marker.color : 'transparent',
-                   border: marker.type === 'hollow' ? `1.5px solid ${marker.color}` : 'none'
-                 }} 
+                   border: marker.type === 'hollow' || marker.type === 'cross' ? `1.5px solid ${marker.color}` : 'none'
+                }} 
             />
           )}
         </div>
@@ -120,6 +116,7 @@ const Calendar = ({ selectedDate, onSelectDate, markers, currentDate }: Calendar
 
         <div className="grid grid-cols-7 gap-y-3">
           {displayedDays.map(date => {
+            // Check if day belongs to the month being viewed
             const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
             const showOpaque = viewMode === 'week' || isCurrentMonth;
             return renderDayCell(date, showOpaque);
@@ -127,18 +124,18 @@ const Calendar = ({ selectedDate, onSelectDate, markers, currentDate }: Calendar
         </div>
       </div>
 
-      {/* Month Navigation */}
+      {/* Navigation */}
       {viewMode === 'month' && (
         <div className="flex justify-between mt-6 pt-4 border-t border-slate-100">
            <button 
-             onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
+             onClick={() => onMonthChange(addMonths(currentMonth, -1))}
              className="flex items-center text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors"
            >
              <ChevronLeft className="w-4 h-4 mr-1" />
              Föregående
            </button>
            <button 
-             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+             onClick={() => onMonthChange(addMonths(currentMonth, 1))}
              className="flex items-center text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors"
            >
              Nästa

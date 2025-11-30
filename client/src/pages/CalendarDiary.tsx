@@ -3,92 +3,107 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import Calendar, { CalendarMarker } from '../components/Calendar';
 import DayDetailCard from '../components/DayDetailCard';
-import { WorkoutLog } from '../types';
-import { toLocalISOString, isSameDay } from '../utils/dateHelpers';
+import { WorkoutLog, SessionStatus } from '../types';
+import { toLocalISOString, isSameDay, getDaysInMonthGrid } from '../utils/dateHelpers';
 
 const CalendarDiary = () => {
   const { userProfile } = useAuth();
   const { currentDate: today } = useTime();
+  
   const [selectedDate, setSelectedDate] = useState<Date>(today);
+  const [currentMonth, setCurrentMonth] = useState<Date>(today);
+  
   const [logs, setLogs] = useState<WorkoutLog[]>([]);
   const [markers, setMarkers] = useState<CalendarMarker[]>([]);
 
   // Sync selected date to simulated today on mount
   useEffect(() => {
     setSelectedDate(today);
+    setCurrentMonth(today);
   }, [today]);
 
-  // Fetch / Generate Data Logic
-  // Ideally this fetches from Firestore collection 'workoutLogs'.
-  // For now, we simulate by merging 'activityHistory' (completed) with 'trainingSchedule' (planned).
   useEffect(() => {
     if (!userProfile) return;
 
+    const history = userProfile.activityHistory || [];
+    const level = userProfile.currentLevel || 1;
+    
+    // Define Schedule based on Level (SOP)
+    // Level 1: Daily (0-6)
+    // Level 2+: Mon(1), Wed(3), Fri(5)
+    const schedule = level === 1 ? [0, 1, 2, 3, 4, 5, 6] : [1, 3, 5];
+
+    // Generate data for the ENTIRE visible grid (including prev/next month buffer days)
+    const daysInView = getDaysInMonthGrid(currentMonth);
+    
     const generatedLogs: WorkoutLog[] = [];
     const generatedMarkers: CalendarMarker[] = [];
 
-    // 1. Map Completed History
-    const history = userProfile.activityHistory || [];
-    history.forEach(entry => {
-      generatedLogs.push({
-        id: entry.completedAt, // temporary unique id
-        date: entry.date,
-        status: 'completed',
-        workoutType: entry.type === 'circulation' ? 'circulation' : 'rehab',
-        level: userProfile.currentLevel,
-        painScore: entry.painScore,
-        userNote: entry.feedbackMessage
-      });
-
-      // Traffic Light Color
-      let color = '#4CAF50'; // Green default
-      if ((entry.painScore || 0) > 5) color = '#EF4444'; // Red
-      else if ((entry.painScore || 0) > 3) color = '#F59E0B'; // Yellow
-
-      generatedMarkers.push({
-        date: entry.date,
-        color: color,
-        type: 'filled'
-      });
-    });
-
-    // 2. Generate Future Plan (Simple projection based on schedule)
-    // Project 2 weeks ahead for demo
-    const schedule = [1, 3, 5]; // Mon, Wed, Fri (Mock)
-    const startDate = new Date(today); // Start projecting from today
-    
-    for (let i = 0; i < 14; i++) {
-        const d = new Date(startDate);
-        d.setDate(d.getDate() + i);
-        const dateStr = toLocalISOString(d);
+    daysInView.forEach(date => {
+        const dateStr = toLocalISOString(date);
+        const dayIndex = date.getDay();
         
-        // Don't overwrite history
-        if (history.some(h => h.date === dateStr)) continue;
-
-        const dayIndex = d.getDay();
-        if (schedule.includes(dayIndex)) {
+        // 1. Check History
+        const entry = history.find(h => h.date === dateStr);
+        
+        if (entry) {
+            // COMPLETED
             generatedLogs.push({
+                id: entry.completedAt,
                 date: dateStr,
-                status: 'planned',
-                workoutType: 'rehab',
-                level: userProfile.currentLevel,
-                focusText: "Styrka & Balans"
+                status: 'completed',
+                workoutType: entry.type === 'circulation' ? 'circulation' : 'rehab',
+                level: level,
+                painScore: entry.painScore,
+                userNote: entry.feedbackMessage
             });
 
-            generatedMarkers.push({
-                date: dateStr,
-                color: '#CBD5E1', // Slate-300
-                type: 'hollow'
-            });
+            // Color Logic (Traffic Light)
+            let color = '#4CAF50'; // Green
+            if ((entry.painScore || 0) > 5) color = '#EF4444'; // Red
+            else if ((entry.painScore || 0) > 3) color = '#F59E0B'; // Yellow
+            // If just circulation/activity, maybe Blue?
+            if (entry.type === 'circulation') color = '#3B82F6'; 
+
+            generatedMarkers.push({ date: dateStr, color, type: 'filled' });
+        } 
+        else if (schedule.includes(dayIndex)) {
+            // SCHEDULED but NO LOG
+            
+            // If in Past (and not today) -> Missed
+            if (date < today && !isSameDay(date, today)) {
+                generatedLogs.push({
+                    date: dateStr,
+                    status: 'missed',
+                    workoutType: 'rehab',
+                    level: level,
+                    focusText: "Missat pass"
+                });
+                generatedMarkers.push({ date: dateStr, color: '#EF4444', type: 'hollow' }); // Red hollow/cross
+            } 
+            // If Today or Future -> Planned
+            else {
+                generatedLogs.push({
+                    date: dateStr,
+                    status: 'planned',
+                    workoutType: 'rehab',
+                    level: level,
+                    focusText: level === 1 ? "Kontakt & Ro" : "Styrka & Balans"
+                });
+                generatedMarkers.push({ date: dateStr, color: '#CBD5E1', type: 'hollow' }); // Gray hollow
+            }
         }
-    }
+        else {
+            // REST DAY
+            // No log, no marker
+        }
+    });
 
     setLogs(generatedLogs);
     setMarkers(generatedMarkers);
 
-  }, [userProfile, today]);
+  }, [userProfile, currentMonth, today]);
 
-  // Get log for selected date
   const selectedLog = logs.find(l => l.date === toLocalISOString(selectedDate));
 
   return (
@@ -103,6 +118,8 @@ const CalendarDiary = () => {
         <Calendar 
           selectedDate={selectedDate} 
           onSelectDate={setSelectedDate}
+          currentMonth={currentMonth}
+          onMonthChange={setCurrentMonth}
           markers={markers}
           currentDate={today}
         />
