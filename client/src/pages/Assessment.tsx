@@ -45,6 +45,8 @@ const Assessment = () => {
       if (state.status === 'QUESTION' && state.nextQuestion?.id !== assessmentState.nextQuestion?.id) {
           setLocalValue(null);
       }
+      
+      // NOTE: Removed auto-finish logic from here to prevent race conditions with manual button click.
     }
   }, [selectedJoint, answers]);
 
@@ -56,6 +58,7 @@ const Assessment = () => {
     try {
         if (user) {
             console.log("User is authenticated. Saving to Firestore...");
+            // 1. Fetch exercises to generate plan
             const querySnapshot = await getDocs(collection(db, "exercises"));
             const allExercises: Exercise[] = [];
             querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
@@ -74,7 +77,9 @@ const Assessment = () => {
                 exerciseProgress: {} 
             };
 
+            // Safe write with merge
             await setDoc(userRef, payload, { merge: true });
+            
             await refreshProfile();
             navigate('/dashboard');
         } else {
@@ -104,7 +109,7 @@ const Assessment = () => {
         const newAnswers = { ...answers, [assessmentState.nextQuestion.id]: localValue };
         setAnswers(newAnswers);
 
-        // Check immediately if this was the last question
+        // Check immediately using the NEW answers if this completes the flow
         const nextState = getAssessmentState(selectedJoint!, newAnswers);
         
         if (nextState.status === 'COMPLETE' && nextState.result) {
@@ -142,7 +147,7 @@ const Assessment = () => {
                 onClick={() => {
                     const newAnswers = { ...answers, safetyCheck: 'pass' };
                     setAnswers(newAnswers);
-                    // Check if complete immediately (Level 1 fast track)
+                    // Check completion immediately for fast-track L1
                     const nextState = getAssessmentState(selectedJoint!, newAnswers);
                     if (nextState.status === 'COMPLETE' && nextState.result) {
                         finishAssessment(newAnswers, nextState.result);
@@ -199,15 +204,11 @@ const Assessment = () => {
                 </div>
                 <button
                     onClick={() => {
-                        // Special handling for scale: confirm local value then next
                         const val = localValue !== null ? localValue : 5;
-                        setLocalValue(val); // Ensure local value is set
-                        // Need to manually trigger logic similar to handleNext since handleNext relies on state being ready
-                        // But handleNext uses localValue, so we can just call it
-                        // We set localValue first to be safe, though state update is async.
-                        // Better to pass val directly to logic.
+                        setLocalValue(val);
                         const newAnswers = { ...answers, [q.id]: val };
                         setAnswers(newAnswers);
+                        // Manual trigger logic for scale input
                         const nextState = getAssessmentState(selectedJoint!, newAnswers);
                         if (nextState.status === 'COMPLETE' && nextState.result) {
                             finishAssessment(newAnswers, nextState.result);
