@@ -7,7 +7,6 @@ export interface UserProfile {
   displayName?: string;
   program?: ProgramConfig; 
   
-  // Re-added this field to fix TS errors
   assessmentData?: Record<string, any>;
 
   progression?: ProgressionState;
@@ -18,7 +17,7 @@ export interface UserProfile {
   trainingSchedule?: number[]; 
   activityHistory?: ActivityLogEntry[];
   
-  completedEducationIds?: string[]; // Track read articles
+  completedEducationIds?: string[]; 
 }
 
 export interface EducationModule {
@@ -77,7 +76,8 @@ export type ExertionLevel = 'light' | 'perfect' | 'heavy';
 
 export interface ActivityLogEntry {
   date: string; 
-  type: 'rehab' | 'light' | 'circulation';
+  // Updated type definition to include 'daily_activity'
+  type: 'rehab' | 'light' | 'circulation' | 'daily_activity';
   painScore?: number;
   completedAt: string; 
   exertion?: ExertionLevel;

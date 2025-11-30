@@ -4,12 +4,19 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import { Exercise } from '../types';
 import { db } from '../firebase';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { Flame, Lightbulb, ExternalLink } from 'lucide-react';
-import { toLocalISOString } from '../utils/dateHelpers';
+import { collection, getDocs, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { Play, Check, Circle, Activity } from 'lucide-react';
+import { toLocalISOString, isSameDay } from '../utils/dateHelpers';
 import { generateLevelPlan, getWorkoutSession } from '../utils/workoutEngine';
-import { getMaxXP } from '../utils/progressionEngine'; // Updated import
+import { getMaxXP } from '../utils/progressionEngine';
+import { 
+    ACTION_CARD_CONFIG, 
+    PHYSICAL_ACTIVITY_TASKS, 
+    PHASE_NAMES,
+    PRE_FLIGHT_MESSAGES 
+} from '../utils/textConstants';
 
+// Components
 import ActionCard from '../components/ActionCard';
 import LevelProgressBar from '../components/LevelProgressBar';
 import PreWorkoutModal from '../components/PreWorkoutModal';
@@ -23,36 +30,72 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showPreFlight, setShowPreFlight] = useState(false);
   const [showBossFight, setShowBossFight] = useState(false);
+  const [preFlightType, setPreFlightType] = useState<'rehab' | 'circulation'>('rehab');
   
+  // State for optimistic UI updates
+  const [activityCompletedToday, setActivityCompletedToday] = useState(false);
+
+  // --- DERIVED STATE ---
   const history = userProfile?.activityHistory || [];
   const currentLevel = userProfile?.currentLevel || 1;
   const selectedDateStr = toLocalISOString(today);
-  const logEntry = history.find(h => h.date === selectedDateStr);
   
+  // Find logs for today
+  const rehabLog = history.find(h => h.date === selectedDateStr && h.type === 'rehab');
+  const activityLog = history.find(h => h.date === selectedDateStr && h.type === 'daily_activity');
+  
+  // Calculate Week/Day since start
+  const startDate = userProfile?.assessmentData?.timestamp 
+    ? new Date(userProfile.assessmentData.timestamp) 
+    : new Date(); // Fallback to today if missing
+  const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const currentWeek = Math.ceil(daysSinceStart / 7);
+  const currentDayInWeek = ((daysSinceStart - 1) % 7) + 1;
+
+  // Schedule Logic (Active vs Recovery)
   const dayIndex = today.getDay();
-  const rehabDays = [1, 3, 5]; 
-  const isRehabDay = currentLevel === 1 || rehabDays.includes(dayIndex);
+  // Level 1: Rehab every day. Level 2+: Mon/Wed/Fri
+  const isRehabDay = currentLevel === 1 || [1, 3, 5].includes(dayIndex);
   
-  let dailyState = 'rest';
+  // --- HERO CARD STATE ---
+  let heroMode: 'active' | 'recovery' | 'completed' | 'boss_fight' = 'active';
   
-  if (logEntry) {
-      dailyState = 'completed';
+  if (rehabLog) {
+      heroMode = 'completed';
   } else if (isRehabDay) {
       if (userProfile?.progression?.levelMaxedOut) {
-          dailyState = 'boss_fight_ready';
+          heroMode = 'boss_fight';
       } else {
-          dailyState = 'todo';
+          heroMode = 'active';
       }
   } else {
-      dailyState = 'rest';
+      heroMode = 'recovery';
   }
 
+  // --- SECONDARY CARD LOGIC (Daglig Medicin) ---
+  // Level 2 & 3 show it. Level 1 & 4 hide it.
+  const showDailyMedicine = (currentLevel === 2 || currentLevel === 3) && !rehabLog; 
+  // Note: Only show if rehab not done? Or always? PDF says "Synlig (Varje dag)" for Lvl 2. 
+  // Let's show it always for Lvl 2/3 unless user finished it (we don't track circulation separate status strictly in this simplified logic, but let's assume if rehab is done, maybe hide? 
+  // Actually, specs say "Vid behov" for Lvl 3. Let's keep it visible always for 2/3 for simplicity of access).
+
+  // --- TERTIARY CARD CONFIG ---
+  const activityConfig = PHYSICAL_ACTIVITY_TASKS[currentLevel as keyof typeof PHYSICAL_ACTIVITY_TASKS] || PHYSICAL_ACTIVITY_TASKS[1];
+  const isActivityDone = !!activityLog || activityCompletedToday;
+
+  // --- EFFECTS ---
+
+  useEffect(() => {
+    // Sync local state with DB history
+    if (activityLog) setActivityCompletedToday(true);
+    else setActivityCompletedToday(false);
+  }, [activityLog, selectedDateStr]);
+
+  // Plan Generation
   useEffect(() => {
     const initPlan = async () => {
       if (!userProfile) return;
-      
       if (!userProfile.activePlanIds || userProfile.activePlanIds.length === 0) {
-        console.log("Generating plan for user...");
         try {
             const querySnapshot = await getDocs(collection(db, "exercises"));
             const allExercises: Exercise[] = [];
@@ -60,28 +103,40 @@ const Dashboard = () => {
             
             const joint = userProfile.program?.joint || 'Knä'; 
             const mappedJoint = joint === 'Knä' ? 'knee' : (joint === 'Höft' ? 'hip' : 'shoulder');
-
             const newPlanIds = generateLevelPlan(allExercises, currentLevel, mappedJoint);
             
-            await updateDoc(doc(db, 'users', userProfile.uid), {
-                activePlanIds: newPlanIds
-            });
+            await updateDoc(doc(db, 'users', userProfile.uid), { activePlanIds: newPlanIds });
             await refreshProfile();
-        } catch (e) {
-            console.error("Plan generation failed", e);
-        }
+        } catch (e) { console.error(e); }
       }
       setLoading(false);
     };
     initPlan();
   }, [userProfile, currentLevel]);
 
-  const handleStartClick = () => {
-    if (dailyState === 'boss_fight_ready') {
-        setShowBossFight(true);
-    } else {
-        setShowPreFlight(true);
+  // --- HANDLERS ---
+
+  const handleHeroClick = () => {
+    if (heroMode === 'completed') {
+        // Maybe go to stats?
+        return; 
     }
+    if (heroMode === 'recovery') {
+        navigate('/journey'); // Go to education
+        return;
+    }
+    if (heroMode === 'boss_fight') {
+        setShowBossFight(true);
+        return;
+    }
+    // Active
+    setPreFlightType('rehab');
+    setShowPreFlight(true);
+  };
+
+  const handleMedicineClick = () => {
+      setPreFlightType('circulation');
+      setShowPreFlight(true);
   };
 
   const handleLaunchSession = async () => {
@@ -92,18 +147,44 @@ const Dashboard = () => {
     const allExercises: Exercise[] = [];
     querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
 
-    const session = getWorkoutSession(userProfile, allExercises, 'rehab');
+    const session = getWorkoutSession(userProfile, allExercises, preFlightType);
     
     navigate('/workout', { state: { session } });
   };
 
+  const handleToggleActivity = async () => {
+      if (isActivityDone) return; // Already done
+      
+      setActivityCompletedToday(true); // Optimistic
+      
+      if (!userProfile) return;
+      try {
+          const newLog = {
+            date: selectedDateStr,
+            type: 'daily_activity',
+            completedAt: new Date().toISOString(),
+            painScore: 0, // Not relevant for this lightweight log
+            exertion: 'light',
+            feedbackMessage: 'Aktivitet registrerad',
+            xpEarned: 10
+          };
+          
+          await updateDoc(doc(db, 'users', userProfile.uid), {
+              activityHistory: arrayUnion(newLog),
+              "progression.experiencePoints": (userProfile.progression?.experiencePoints || 0) + 10
+          });
+          await refreshProfile();
+      } catch (e) {
+          console.error(e);
+          setActivityCompletedToday(false); // Revert
+      }
+  };
+
   const handleBossFightSuccess = async () => {
     if (!userProfile) return;
-    
     try {
         const nextLevel = userProfile.currentLevel + 1;
         const userRef = doc(db, 'users', userProfile.uid);
-
         await updateDoc(userRef, {
             currentLevel: nextLevel,
             "progression.experiencePoints": 0,
@@ -113,27 +194,25 @@ const Dashboard = () => {
             activePlanIds: [], 
             exerciseProgress: {} 
         });
-
         await refreshProfile();
         setShowBossFight(false);
-    } catch (e) {
-        console.error("Level up failed:", e);
-    }
+    } catch (e) { console.error(e); }
   };
 
-  let cardTitle = "Vila & Återhämtning";
-  let cardSubtitle = "Ingen träning idag";
+  // --- RENDER HELPERS ---
+  const levelConfig = ACTION_CARD_CONFIG[currentLevel as keyof typeof ACTION_CARD_CONFIG] || ACTION_CARD_CONFIG[1];
   
-  if (dailyState === 'todo') {
-      cardTitle = "Starta Dagens Pass";
-      cardSubtitle = "Fokus: Styrka & Kontroll";
-  } else if (dailyState === 'boss_fight_ready') {
-      cardTitle = "GÖR NIVÅ-TESTET";
-      cardSubtitle = "Du är redo för nästa nivå!";
-  }
+  const heroTitle = heroMode === 'active' ? "Dagens Rehabpass" :
+                    heroMode === 'recovery' ? "Återhämtning" :
+                    heroMode === 'boss_fight' ? "NIVÅTEST" : "Bra jobbat!";
+  
+  const heroSubtitle = heroMode === 'active' ? levelConfig.activeSubtitle :
+                       heroMode === 'recovery' ? levelConfig.recoverySubtitle :
+                       heroMode === 'boss_fight' ? "Du är redo för nästa nivå" :
+                       "Dagens rehab är avklarad.";
 
-  // Calculate dynamic Max XP
-  const maxXP = getMaxXP(currentLevel);
+  const heroMeta = heroMode === 'active' ? { time: levelConfig.time, xp: levelConfig.xp } : 
+                   heroMode === 'recovery' ? { xp: 10 } : undefined;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-32">
@@ -143,7 +222,7 @@ const Dashboard = () => {
         onClose={() => setShowPreFlight(false)} 
         onStart={handleLaunchSession}
         level={currentLevel}
-        type="rehab"
+        type={preFlightType}
       />
 
       <BossFightModal
@@ -153,53 +232,85 @@ const Dashboard = () => {
         level={currentLevel}
       />
 
-      {/* Header */}
-      <div className="pt-12 pb-6 px-6 bg-white sticky top-0 z-30 border-b border-slate-100 flex justify-between items-center">
+      {/* 1. HEADER */}
+      <div className="pt-12 pb-4 px-6 bg-white sticky top-0 z-30 border-b border-slate-100 flex justify-between items-start">
         <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                Hej {userProfile?.displayName || 'Kämpe'} <span className="inline-block animate-wave">👋</span>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                Hej {userProfile?.displayName || 'Kämpe'}!
             </h1>
             <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-1">
-                {new Intl.DateTimeFormat('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' }).format(today)}
+                Vecka {currentWeek}, Dag {currentDayInWeek}
             </p>
         </div>
-        <div className="flex items-center bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100">
-            <Flame className="w-4 h-4 text-orange-500 mr-1.5 fill-orange-500" />
-            <span className="text-sm font-bold text-orange-700">3 dagar</span>
+        <div className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 text-xs font-bold">
+            {PHASE_NAMES[currentLevel as keyof typeof PHASE_NAMES]}
         </div>
       </div>
 
-      <div className="px-6 max-w-md mx-auto mt-6 space-y-10 animate-fade-in">
-        <div className="relative">
+      <div className="px-6 max-w-md mx-auto mt-6 space-y-8 animate-fade-in">
+        
+        {/* 2. HERO SECTION */}
+        <section>
             <ActionCard 
-                state={dailyState as any}
-                title={cardTitle}
-                subtitle={cardSubtitle}
-                duration="Ca 15 min"
-                onClick={handleStartClick}
+                mode={heroMode}
+                title={heroTitle}
+                subtitle={heroSubtitle}
+                meta={heroMeta}
+                onClick={handleHeroClick}
             />
-            {dailyState !== 'rest' && (
+            {/* Gamification Progress */}
+            {heroMode !== 'recovery' && heroMode !== 'completed' && (
                 <LevelProgressBar 
                     level={currentLevel} 
                     currentXP={userProfile?.progression?.experiencePoints || 0} 
-                    maxXP={maxXP} 
+                    maxXP={getMaxXP(currentLevel)} 
                 />
             )}
-        </div>
+        </section>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div className="flex items-center gap-2 mb-3 text-slate-800 font-bold">
-                <Lightbulb className="w-5 h-5 text-yellow-500 fill-current" />
-                Dagens Tips
+        {/* 3. SECONDARY CARD: DAGLIG MEDICIN */}
+        {showDailyMedicine && (
+            <section className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex justify-between items-center">
+                <div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-1">Daglig Medicin</h3>
+                    <p className="text-slate-500 text-sm mb-2">Smörj leden (Cirkulation)</p>
+                    <div className="inline-flex items-center text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
+                        +30 XP
+                    </div>
+                </div>
+                <button 
+                    onClick={handleMedicineClick}
+                    className="h-12 w-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors"
+                >
+                    <Play className="w-5 h-5 ml-1 fill-current" />
+                </button>
+            </section>
+        )}
+
+        {/* 4. TERTIARY CARD: FYSISK AKTIVITET (FaR) */}
+        <section className={`rounded-2xl p-5 border flex items-center gap-4 transition-all cursor-pointer ${
+            isActivityDone ? 'bg-green-50 border-green-200' : 'bg-white border-slate-200 hover:border-blue-300'
+        }`} onClick={handleToggleActivity}>
+            
+            <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                isActivityDone ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-300'
+            }`}>
+                {isActivityDone ? <Check className="w-6 h-6" /> : <Activity className="w-6 h-6" />}
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Varför gör det ont när det regnar?</h3>
-            <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                Lufttrycket påverkar vätsketrycket i leden.
-            </p>
-            <button className="text-blue-600 text-sm font-bold flex items-center hover:underline">
-                Läs hela artikeln <ExternalLink className="w-3 h-3 ml-1" />
-            </button>
-        </div>
+
+            <div className="flex-grow">
+                <div className="flex justify-between items-start">
+                    <h3 className={`font-bold ${isActivityDone ? 'text-green-900' : 'text-slate-900'}`}>
+                        {activityConfig.title}
+                    </h3>
+                    {!isActivityDone && <span className="text-xs font-bold text-green-600">+10 XP</span>}
+                </div>
+                <p className={`text-sm ${isActivityDone ? 'text-green-700' : 'text-slate-500'}`}>
+                    {activityConfig.desc}
+                </p>
+            </div>
+        </section>
+
       </div>
     </div>
   );

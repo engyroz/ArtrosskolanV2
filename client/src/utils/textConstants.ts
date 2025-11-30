@@ -60,3 +60,46 @@ export const BOSS_FIGHT_QUESTIONS = {
       { id: 'bf3_3', text: 'Upplever du att leden begränsar dig i vardagen? (Svar: Nej)' }
   ]
 };
+
+// --- DASHBOARD CONSTANTS ---
+
+export const ACTION_CARD_CONFIG = {
+  1: {
+    time: "10 min",
+    xp: 100,
+    activeSubtitle: "Smärtlindring & Cirkulation",
+    recoverySubtitle: "Låt kroppen vila idag"
+  },
+  2: {
+    time: "15 min",
+    xp: 100,
+    activeSubtitle: "Grundstyrka & Kontroll",
+    recoverySubtitle: "Vila bygger starka muskler"
+  },
+  3: {
+    time: "20 min",
+    xp: 100,
+    activeSubtitle: "Tålighet & Balans",
+    recoverySubtitle: "Senorna anpassar sig nu"
+  },
+  4: {
+    time: "25 min",
+    xp: 100,
+    activeSubtitle: "Prestation & Funktion",
+    recoverySubtitle: "Ladda inför nästa pass"
+  }
+};
+
+export const PHYSICAL_ACTIVITY_TASKS = {
+  1: { title: "Rörelsesnacks", desc: "Res dig upp en gång i timmen. Gå ett varv runt bordet." },
+  2: { title: "Vardagsmotion", desc: "Promenad 20 min, Cykling eller Simning." },
+  3: { title: "Kondition", desc: "Rask promenad 30 min (få upp pulsen)." },
+  4: { title: "Prestation", desc: "Valfri pulshöjande aktivitet, Sport eller Padel." }
+};
+
+export const PHASE_NAMES = {
+  1: "Fas 1: Smärtlindring",
+  2: "Fas 2: Grundstyrka",
+  3: "Fas 3: Uppbyggnad",
+  4: "Fas 4: Återgång"
+};
