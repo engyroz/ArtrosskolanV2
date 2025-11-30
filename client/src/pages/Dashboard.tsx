@@ -5,7 +5,7 @@ import { useTime } from '../contexts/TimeContext';
 import { Exercise } from '../types';
 import { db } from '../firebase';
 import { collection, getDocs, doc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { Play, Check, Circle, Activity } from 'lucide-react';
+import { Play, Check, Circle, Activity, CheckCircle } from 'lucide-react';
 import { toLocalISOString, isSameDay } from '../utils/dateHelpers';
 import { generateLevelPlan, getWorkoutSession } from '../utils/workoutEngine';
 import { getMaxXP } from '../utils/progressionEngine';
@@ -46,6 +46,7 @@ const Dashboard = () => {
   
   // Find logs for today
   const rehabLog = history.find(h => h.date === selectedDateStr && h.type === 'rehab');
+  const circulationLog = history.find(h => h.date === selectedDateStr && h.type === 'circulation');
   const activityLog = history.find(h => h.date === selectedDateStr && h.type === 'daily_activity');
   
   // Calculate Week/Day since start
@@ -102,7 +103,9 @@ const Dashboard = () => {
   }, [userProfile, location.state]);
 
   // --- SECONDARY CARD LOGIC (Daglig Medicin) ---
-  const showDailyMedicine = (currentLevel === 2 || currentLevel === 3) && !rehabLog; 
+  // Always show for Level 2 & 3. 
+  // If completed (circulationLog exists), show green state.
+  const showDailyMedicine = (currentLevel === 2 || currentLevel === 3); 
 
   // --- TERTIARY CARD CONFIG ---
   const activityConfig = PHYSICAL_ACTIVITY_TASKS[currentLevel as keyof typeof PHYSICAL_ACTIVITY_TASKS] || PHYSICAL_ACTIVITY_TASKS[1];
@@ -160,6 +163,7 @@ const Dashboard = () => {
   };
 
   const handleMedicineClick = () => {
+      if (circulationLog) return; // Already done
       setPreFlightType('circulation');
       setShowPreFlight(true);
   };
@@ -295,19 +299,32 @@ const Dashboard = () => {
 
         {/* 3. SECONDARY CARD: DAGLIG MEDICIN */}
         {showDailyMedicine && (
-            <section className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex justify-between items-center">
+            <section className={`rounded-2xl p-6 shadow-sm border flex justify-between items-center transition-all ${
+                circulationLog 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-white border-slate-100'
+            }`}>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-1">Daglig Medicin</h3>
-                    <p className="text-slate-500 text-sm mb-2">Smörj leden (Cirkulation)</p>
-                    <div className="inline-flex items-center text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
-                        +30 XP
-                    </div>
+                    <h3 className={`text-lg font-bold mb-1 ${circulationLog ? 'text-green-900' : 'text-slate-900'}`}>Daglig Medicin</h3>
+                    <p className={`text-sm mb-2 ${circulationLog ? 'text-green-700' : 'text-slate-500'}`}>
+                        {circulationLog ? 'Utförd' : 'Smörj leden (Cirkulation)'}
+                    </p>
+                    {!circulationLog && (
+                        <div className="inline-flex items-center text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
+                            +30 XP
+                        </div>
+                    )}
                 </div>
                 <button 
                     onClick={handleMedicineClick}
-                    className="h-12 w-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors"
+                    disabled={!!circulationLog}
+                    className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors ${
+                        circulationLog 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                    }`}
                 >
-                    <Play className="w-5 h-5 ml-1 fill-current" />
+                    {circulationLog ? <Check className="w-6 h-6" /> : <Play className="w-5 h-5 ml-1 fill-current" />}
                 </button>
             </section>
         )}
