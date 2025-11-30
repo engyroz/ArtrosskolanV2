@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import { Exercise } from '../types';
@@ -26,6 +26,7 @@ const Dashboard = () => {
   const { userProfile, refreshProfile } = useAuth();
   const { currentDate: today } = useTime(); 
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [loading, setLoading] = useState(true);
   const [showPreFlight, setShowPreFlight] = useState(false);
@@ -34,6 +35,9 @@ const Dashboard = () => {
   
   // State for optimistic UI updates
   const [activityCompletedToday, setActivityCompletedToday] = useState(false);
+  
+  // State for animated XP bar
+  const [displayedXP, setDisplayedXP] = useState(0);
 
   // --- DERIVED STATE ---
   const history = userProfile?.activityHistory || [];
@@ -72,12 +76,33 @@ const Dashboard = () => {
       heroMode = 'recovery';
   }
 
+  // --- XP ANIMATION EFFECT ---
+  useEffect(() => {
+    if (!userProfile) return;
+    const realXP = userProfile.progression?.experiencePoints || 0;
+    
+    // Check if we just returned from a workout with earned XP
+    const earnedXP = location.state?.xpEarned;
+
+    if (earnedXP) {
+        // Start animation from "previous" total
+        const startXP = Math.max(0, realXP - earnedXP);
+        setDisplayedXP(startXP);
+        
+        // Trigger fill animation after mount
+        const timer = setTimeout(() => {
+            setDisplayedXP(realXP);
+        }, 300); // Small delay to let user see the "before" state briefly if loading is fast
+        
+        return () => clearTimeout(timer);
+    } else {
+        // No animation needed, just show current
+        setDisplayedXP(realXP);
+    }
+  }, [userProfile, location.state]);
+
   // --- SECONDARY CARD LOGIC (Daglig Medicin) ---
-  // Level 2 & 3 show it. Level 1 & 4 hide it.
   const showDailyMedicine = (currentLevel === 2 || currentLevel === 3) && !rehabLog; 
-  // Note: Only show if rehab not done? Or always? PDF says "Synlig (Varje dag)" for Lvl 2. 
-  // Let's show it always for Lvl 2/3 unless user finished it (we don't track circulation separate status strictly in this simplified logic, but let's assume if rehab is done, maybe hide? 
-  // Actually, specs say "Vid behov" for Lvl 3. Let's keep it visible always for 2/3 for simplicity of access).
 
   // --- TERTIARY CARD CONFIG ---
   const activityConfig = PHYSICAL_ACTIVITY_TASKS[currentLevel as keyof typeof PHYSICAL_ACTIVITY_TASKS] || PHYSICAL_ACTIVITY_TASKS[1];
@@ -163,7 +188,7 @@ const Dashboard = () => {
             date: selectedDateStr,
             type: 'daily_activity',
             completedAt: new Date().toISOString(),
-            painScore: 0, // Not relevant for this lightweight log
+            painScore: 0, 
             exertion: 'light',
             feedbackMessage: 'Aktivitet registrerad',
             xpEarned: 10
@@ -258,11 +283,11 @@ const Dashboard = () => {
                 meta={heroMeta}
                 onClick={handleHeroClick}
             />
-            {/* Gamification Progress */}
-            {heroMode !== 'recovery' && heroMode !== 'completed' && (
+            {/* Gamification Progress - ALWAYS visible now */}
+            {heroMode !== 'recovery' && (
                 <LevelProgressBar 
                     level={currentLevel} 
-                    currentXP={userProfile?.progression?.experiencePoints || 0} 
+                    currentXP={displayedXP} 
                     maxXP={getMaxXP(currentLevel)} 
                 />
             )}

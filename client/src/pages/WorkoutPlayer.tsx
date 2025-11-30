@@ -105,7 +105,9 @@ const WorkoutPlayer = () => {
         });
 
         await refreshProfile();
-        navigate('/dashboard');
+        
+        // Navigate back with XP data for animation
+        navigate('/dashboard', { state: { xpEarned: result.xpEarned } });
 
     } catch (e) {
         console.error("Error saving session:", e);
