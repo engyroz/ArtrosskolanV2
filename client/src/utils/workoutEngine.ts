@@ -102,17 +102,40 @@ export const getWorkoutSession = (
     }).filter(Boolean) as WorkoutExercise[];
   
   } else {
-    // Circulation: Level 1 Mobility exercises
+    // Circulation: Level 1 Exercises (Fixed 3 distinct types)
+    // Rule: 1 Flexor, 1 Extensor, 1 Mobility (regardless of user level)
+    // Fixed Dose: 2 sets x 15 reps/sec
     const userJoint = mapJoint(userProfile.program?.joint);
     
-    const circExercises = exercisesDB.filter(e => {
-        const dbJoint = mapJoint(e.joint);
-        return e.level === 1 && e.category === 'mobility' && dbJoint === userJoint;
-    });
+    // Find candidates from Level 1
+    const l1Exercises = exercisesDB.filter(e => e.level === 1 && mapJoint(e.joint) === userJoint);
+    
+    const selectedCirculation: Exercise[] = [];
+    
+    // Helper to pick one by category logic (similar to generateLevelPlan but for session)
+    // Ideally we pick distinct ones to ensure variety
+    if (userJoint === 'knee') {
+        const ext = l1Exercises.find(e => e.category === 'knee_extensor');
+        const flex = l1Exercises.find(e => e.category === 'knee_flexor');
+        const mob = l1Exercises.find(e => e.category === 'mobility');
+        if (ext) selectedCirculation.push(ext);
+        if (flex) selectedCirculation.push(flex);
+        if (mob) selectedCirculation.push(mob);
+    } else if (userJoint === 'hip') {
+        const abd = l1Exercises.find(e => e.category === 'hip_abductor');
+        const ext = l1Exercises.find(e => e.category === 'hip_extensor');
+        const mob = l1Exercises.find(e => e.category === 'mobility');
+        if (abd) selectedCirculation.push(abd);
+        if (ext) selectedCirculation.push(ext);
+        if (mob) selectedCirculation.push(mob);
+    } else {
+        // Fallback: Take first 3
+        l1Exercises.slice(0, 3).forEach(e => selectedCirculation.push(e));
+    }
 
-    sessionExercises = circExercises.map(e => ({
+    sessionExercises = selectedCirculation.map(e => ({
         ...e,
-        config: { sets: 1, reps: 10 } // Standard circulation dose
+        config: { sets: 2, reps: 15 } // Fixed dose for circulation
     }));
   }
 

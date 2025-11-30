@@ -7,20 +7,17 @@ import { calculateSessionProgression } from '../utils/progressionEngine';
 import { toLocalISOString } from '../utils/dateHelpers';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebase';
-import { X, Play, Pause, CheckCircle, ChevronRight, Clock, Info } from 'lucide-react';
+import { X, CheckCircle, ChevronRight, AlertTriangle } from 'lucide-react';
 
 const WorkoutPlayer = () => {
   const navigate = useNavigate();
-  const { state } = useLocation(); // Expecting { session: WorkoutSession }
+  const { state } = useLocation(); 
   const { userProfile, refreshProfile } = useAuth();
   const { currentDate } = useTime(); 
   
   const [session, setSession] = useState<WorkoutSession | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
-  
-  const [timerActive, setTimerActive] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0);
   
   const [painScore, setPainScore] = useState(2);
   const [exertion, setExertion] = useState<ExertionLevel>('perfect');
@@ -30,23 +27,40 @@ const WorkoutPlayer = () => {
     if (state && state.session) {
       setSession(state.session);
     } else {
+      console.warn("No session state found, redirecting to dashboard");
       navigate('/dashboard'); 
     }
   }, [state, navigate]);
 
-  useEffect(() => {
-    let interval: any;
-    if (timerActive && timeLeft > 0) {
-      interval = setInterval(() => setTimeLeft((t) => t - 1), 1000);
-    } else if (timeLeft === 0 && timerActive) {
-      setTimerActive(false);
-    }
-    return () => clearInterval(interval);
-  }, [timerActive, timeLeft]);
+  if (!userProfile) return null;
 
-  if (!session || !userProfile) return null;
+  // --- ERROR STATE: Empty Session ---
+  if (session && session.exercises.length === 0) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md">
+                <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Inga övningar hittades</h2>
+                <p className="text-slate-600 mb-6">
+                    Kunde inte ladda övningar för {session.type === 'circulation' ? 'cirkulation' : 'rehab'}. 
+                    Detta kan bero på att inga matchande övningar finns i databasen för din led.
+                </p>
+                <button 
+                    onClick={() => navigate('/dashboard')}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold"
+                >
+                    Tillbaka till Dashboard
+                </button>
+            </div>
+        </div>
+      );
+  }
+
+  if (!session) return <div className="min-h-screen bg-slate-50"></div>; 
 
   const currentExercise = session.exercises[currentIndex];
+  if (!currentExercise) return null; 
+
   const isLastExercise = currentIndex === session.exercises.length - 1;
   const progressPct = ((currentIndex) / session.exercises.length) * 100;
 
@@ -56,29 +70,21 @@ const WorkoutPlayer = () => {
     if (isLastExercise) {
       // If it's circulation, skip feedback and finish immediately
       if (session.type === 'circulation') {
-          handleFinishSession(true); // true = skipFeedback
+          handleFinishSession(true); 
       } else {
           setIsComplete(true);
       }
     } else {
       setCurrentIndex(prev => prev + 1);
-      setTimerActive(false);
     }
-  };
-
-  const startTimer = (seconds: number) => {
-    setTimeLeft(seconds);
-    setTimerActive(true);
   };
 
   const handleFinishSession = async (skipFeedback = false) => {
     setSaving(true);
     
-    // Default values if skipping feedback
     const finalPain = skipFeedback ? 0 : painScore;
     const finalExertion = skipFeedback ? 'perfect' : exertion;
 
-    // 1. Calc Progression
     const exerciseIds = session.exercises.map(e => e.id);
     const result = calculateSessionProgression(
         userProfile, 
@@ -87,7 +93,6 @@ const WorkoutPlayer = () => {
         finalPain
     );
 
-    // Override XP for circulation (fixed low amount)
     const earnedXP = session.type === 'circulation' ? 30 : result.xpEarned;
 
     try {
@@ -108,14 +113,12 @@ const WorkoutPlayer = () => {
             "progression.experiencePoints": (userProfile.progression?.experiencePoints || 0) + earnedXP,
         };
 
-        // Only update exercise progress logic for REHAB sessions
         if (session.type === 'rehab') {
             updatePayload.exerciseProgress = result.updatedProgress;
             updatePayload["progression.levelMaxedOut"] = result.levelMaxedOut;
         }
 
         await updateDoc(userRef, updatePayload);
-
         await refreshProfile();
         
         navigate('/dashboard', { state: { xpEarned: earnedXP } });
@@ -139,7 +142,6 @@ const WorkoutPlayer = () => {
                 <h1 className="text-3xl font-bold text-slate-900 mb-2">Bra jobbat!</h1>
                 <p className="text-slate-500 mb-8">Passet är avklarat. Hur kändes det?</p>
 
-                {/* Feedback Form */}
                 <div className="text-left space-y-6">
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2">Smärta under passet (0-10)</label>
@@ -187,6 +189,9 @@ const WorkoutPlayer = () => {
     );
   }
 
+  // Display 'sek' for Level 1 or Circulation, otherwise 'reps'
+  const unit = (currentExercise.level === 1 || session.type === 'circulation') ? 'sek' : 'reps';
+
   return (
     <div className="fixed inset-0 bg-white flex flex-col z-50">
       {/* 1. Header & Progress */}
@@ -212,20 +217,6 @@ const WorkoutPlayer = () => {
                 alt={currentExercise.title} 
             />
         )}
-        
-        {timerActive && (
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm animate-fade-in">
-                <div className="text-center text-white">
-                    <div className="text-8xl font-black font-mono mb-4">{timeLeft}</div>
-                    <button 
-                        onClick={() => setTimerActive(false)}
-                        className="px-6 py-2 border border-white/30 rounded-full text-sm font-bold hover:bg-white/10"
-                    >
-                        Pausa
-                    </button>
-                </div>
-            </div>
-        )}
       </div>
 
       {/* 3. Instructions & Controls */}
@@ -237,7 +228,7 @@ const WorkoutPlayer = () => {
                     {currentExercise.config.sets} set
                 </span>
                 <span className="text-xl font-bold text-slate-900">
-                    x {currentExercise.config.reps} {currentExercise.level === 1 || session.type === 'circulation' ? 'sek' : 'reps'}
+                    x {currentExercise.config.reps} {unit}
                 </span>
             </div>
             
@@ -248,22 +239,13 @@ const WorkoutPlayer = () => {
             </div>
         </div>
 
-        {/* Action Button */}
-        {(currentExercise.level === 1 || session.type === 'circulation') && !timerActive ? (
-            <button 
-                onClick={() => startTimer(currentExercise.config.reps)} 
-                className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-600/30 hover:bg-blue-700 flex items-center justify-center transition-all active:scale-[0.98]"
-            >
-                <Clock className="w-6 h-6 mr-2" /> Starta Timer ({currentExercise.config.reps}s)
-            </button>
-        ) : (
-            <button 
-                onClick={handleNextExercise}
-                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-slate-800 flex items-center justify-center transition-all active:scale-[0.98]"
-            >
-                {isLastExercise ? 'Avsluta Passet' : 'Nästa Övning'} <ChevronRight className="w-6 h-6 ml-2" />
-            </button>
-        )}
+        {/* Action Button: Always 'Next' now, no Timer */}
+        <button 
+            onClick={handleNextExercise}
+            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-slate-800 flex items-center justify-center transition-all active:scale-[0.98]"
+        >
+            {isLastExercise ? (session.type === 'circulation' ? 'Avsluta Passet' : 'Gå till utvärdering') : 'Nästa Övning'} <ChevronRight className="w-6 h-6 ml-2" />
+        </button>
       </div>
     </div>
   );
