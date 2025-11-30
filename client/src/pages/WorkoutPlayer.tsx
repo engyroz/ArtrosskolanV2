@@ -13,17 +13,15 @@ const WorkoutPlayer = () => {
   const navigate = useNavigate();
   const { state } = useLocation(); // Expecting { session: WorkoutSession }
   const { userProfile, refreshProfile } = useAuth();
-  const { currentDate } = useTime(); // Use simulated date
+  const { currentDate } = useTime(); 
   
   const [session, setSession] = useState<WorkoutSession | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   
-  // Timer State (for Level 1/Isometric)
   const [timerActive, setTimerActive] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   
-  // Feedback State
   const [painScore, setPainScore] = useState(2);
   const [exertion, setExertion] = useState<ExertionLevel>('perfect');
   const [saving, setSaving] = useState(false);
@@ -32,18 +30,16 @@ const WorkoutPlayer = () => {
     if (state && state.session) {
       setSession(state.session);
     } else {
-      navigate('/dashboard'); // Fallback if no session passed
+      navigate('/dashboard'); 
     }
   }, [state, navigate]);
 
-  // Timer Logic
   useEffect(() => {
     let interval: any;
     if (timerActive && timeLeft > 0) {
       interval = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     } else if (timeLeft === 0 && timerActive) {
       setTimerActive(false);
-      // Optional: Play sound?
     }
     return () => clearInterval(interval);
   }, [timerActive, timeLeft]);
@@ -58,7 +54,12 @@ const WorkoutPlayer = () => {
 
   const handleNextExercise = () => {
     if (isLastExercise) {
-      setIsComplete(true);
+      // If it's circulation, skip feedback and finish immediately
+      if (session.type === 'circulation') {
+          handleFinishSession(true); // true = skipFeedback
+      } else {
+          setIsComplete(true);
+      }
     } else {
       setCurrentIndex(prev => prev + 1);
       setTimerActive(false);
@@ -70,44 +71,54 @@ const WorkoutPlayer = () => {
     setTimerActive(true);
   };
 
-  const handleFinishSession = async () => {
+  const handleFinishSession = async (skipFeedback = false) => {
     setSaving(true);
     
+    // Default values if skipping feedback
+    const finalPain = skipFeedback ? 0 : painScore;
+    const finalExertion = skipFeedback ? 'perfect' : exertion;
+
     // 1. Calc Progression
     const exerciseIds = session.exercises.map(e => e.id);
     const result = calculateSessionProgression(
         userProfile, 
         exerciseIds, 
-        exertion, 
-        painScore
+        finalExertion, 
+        finalPain
     );
 
-    // 2. Update Firestore
+    // Override XP for circulation (fixed low amount)
+    const earnedXP = session.type === 'circulation' ? 30 : result.xpEarned;
+
     try {
         const userRef = doc(db, 'users', userProfile.uid);
         
-        // Log Entry using SIMULATED DATE
         const newLog = {
-            date: toLocalISOString(currentDate), // Correctly use the time travel date
+            date: toLocalISOString(currentDate), 
             type: session.type,
-            completedAt: new Date().toISOString(), // Keep timestamp real for audit
-            painScore,
-            exertion,
+            completedAt: new Date().toISOString(), 
+            painScore: finalPain,
+            exertion: finalExertion,
             feedbackMessage: result.message,
-            xpEarned: result.xpEarned
+            xpEarned: earnedXP
         };
 
-        await updateDoc(userRef, {
+        const updatePayload: any = {
             activityHistory: arrayUnion(newLog),
-            "progression.experiencePoints": (userProfile.progression?.experiencePoints || 0) + result.xpEarned,
-            exerciseProgress: result.updatedProgress, // Save the new config/history
-            "progression.levelMaxedOut": result.levelMaxedOut
-        });
+            "progression.experiencePoints": (userProfile.progression?.experiencePoints || 0) + earnedXP,
+        };
+
+        // Only update exercise progress logic for REHAB sessions
+        if (session.type === 'rehab') {
+            updatePayload.exerciseProgress = result.updatedProgress;
+            updatePayload["progression.levelMaxedOut"] = result.levelMaxedOut;
+        }
+
+        await updateDoc(userRef, updatePayload);
 
         await refreshProfile();
         
-        // Navigate back with XP data for animation
-        navigate('/dashboard', { state: { xpEarned: result.xpEarned } });
+        navigate('/dashboard', { state: { xpEarned: earnedXP } });
 
     } catch (e) {
         console.error("Error saving session:", e);
@@ -165,7 +176,7 @@ const WorkoutPlayer = () => {
                 </div>
 
                 <button 
-                    onClick={handleFinishSession}
+                    onClick={() => handleFinishSession(false)}
                     disabled={saving}
                     className="w-full mt-8 py-4 bg-slate-900 text-white rounded-xl font-bold text-lg shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center"
                 >
@@ -184,9 +195,9 @@ const WorkoutPlayer = () => {
             <X className="w-6 h-6" />
         </button>
         <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">
-            Övning {currentIndex + 1} av {session.exercises.length}
+            {session.type === 'circulation' ? 'Daglig Medicin' : `Övning ${currentIndex + 1} av ${session.exercises.length}`}
         </span>
-        <div className="w-6"></div> {/* Spacer */}
+        <div className="w-6"></div> 
       </div>
       <div className="w-full bg-slate-100 h-1">
         <div className="bg-blue-600 h-1 transition-all duration-300" style={{ width: `${progressPct}%` }}></div>
@@ -202,7 +213,6 @@ const WorkoutPlayer = () => {
             />
         )}
         
-        {/* Timer Overlay (if active) */}
         {timerActive && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm animate-fade-in">
                 <div className="text-center text-white">
@@ -227,7 +237,7 @@ const WorkoutPlayer = () => {
                     {currentExercise.config.sets} set
                 </span>
                 <span className="text-xl font-bold text-slate-900">
-                    x {currentExercise.config.reps} {currentExercise.level === 1 ? 'sek' : 'reps'}
+                    x {currentExercise.config.reps} {currentExercise.level === 1 || session.type === 'circulation' ? 'sek' : 'reps'}
                 </span>
             </div>
             
@@ -239,9 +249,9 @@ const WorkoutPlayer = () => {
         </div>
 
         {/* Action Button */}
-        {currentExercise.level === 1 && !timerActive ? (
+        {(currentExercise.level === 1 || session.type === 'circulation') && !timerActive ? (
             <button 
-                onClick={() => startTimer(currentExercise.config.reps)} // Using reps as seconds for lvl 1
+                onClick={() => startTimer(currentExercise.config.reps)} 
                 className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-600/30 hover:bg-blue-700 flex items-center justify-center transition-all active:scale-[0.98]"
             >
                 <Clock className="w-6 h-6 mr-2" /> Starta Timer ({currentExercise.config.reps}s)
