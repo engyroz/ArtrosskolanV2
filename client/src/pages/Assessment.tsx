@@ -39,23 +39,31 @@ const Assessment = () => {
       const state = getAssessmentState(selectedJoint, answers);
       setAssessmentState(state);
       
+      // Only reset local value if we are actually moving to a new question
+      // This prevents flickering if re-renders happen
       if (state.status !== 'COMPLETE') {
           setLocalValue(null);
       }
 
+      // Auto-trigger completion if logic says we are done
       if (state.status === 'COMPLETE' && state.result && !loading) {
+        console.log("Assessment State Complete. Triggering finish...");
         finishAssessment(state.result);
       }
     }
   }, [selectedJoint, answers]);
 
   const finishAssessment = async (result: any) => {
+    if (loading) return; // Prevent double submission
     setLoading(true);
+    console.log("Finishing Assessment...", result);
 
     try {
         if (user) {
+            console.log("User is authenticated. Saving to Firestore...");
             // Authenticated User: Save to Firestore
-            // We fetch exercises to generate the plan immediately
+            
+            // 1. Fetch exercises to generate plan
             const querySnapshot = await getDocs(collection(db, "exercises"));
             const allExercises: Exercise[] = [];
             querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
@@ -65,20 +73,27 @@ const Assessment = () => {
 
             const userRef = doc(db, 'users', user.uid);
             
-            // CRITICAL FIX: Use setDoc with merge: true. 
-            // This creates the document if it doesn't exist (e.g. if collection was deleted).
-            await setDoc(userRef, {
+            const payload = {
                 onboardingCompleted: true,
                 assessmentData: answers,
                 currentLevel: result.level,
                 program: result,
                 activePlanIds: planIds,
                 exerciseProgress: {} 
-            }, { merge: true });
+            };
 
+            console.log("Saving payload:", payload);
+
+            // CRITICAL FIX: Use setDoc with merge: true to handle missing docs
+            await setDoc(userRef, payload, { merge: true });
+
+            console.log("Save successful. Refreshing profile...");
             await refreshProfile();
+            
+            console.log("Navigating to dashboard...");
             navigate('/dashboard');
         } else {
+            console.log("User is anonymous. Saving to LocalStorage...");
             // Anonymous User: Save to LocalStorage
             saveAssessmentToStorage({
                 joint: selectedJoint!,
@@ -89,12 +104,14 @@ const Assessment = () => {
                 programConfig: result
             });
 
+            console.log("Navigating to results...");
             setTimeout(() => {
                 navigate('/results');
-            }, 2000);
+            }, 1000); // Reduced delay for better UX
         }
     } catch (error) {
         console.error("Error saving assessment:", error);
+        alert("Ett fel uppstod när din plan skulle sparas. Försök igen.");
         setLoading(false);
     }
   };
@@ -160,6 +177,10 @@ const Assessment = () => {
   );
 
   const renderQuestion = (q: Question) => {
+    // Determine button label
+    const isLastQuestion = assessmentState.progress >= 90;
+    const buttonLabel = isLastQuestion ? 'Analysera mina svar' : 'Nästa';
+
     if (q.type === 'scale') {
         return (
             <div className="animate-fade-in-up">
@@ -184,7 +205,7 @@ const Assessment = () => {
                     }}
                     className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 shadow-lg"
                 >
-                    Nästa
+                    {buttonLabel}
                 </button>
             </div>
         );
@@ -225,8 +246,8 @@ const Assessment = () => {
                 : 'bg-slate-200 text-slate-400 cursor-not-allowed'
             }`}
         >
-            {assessmentState.progress > 90 ? 'Analysera mina svar' : 'Nästa'} 
-            {assessmentState.progress <= 90 && <ArrowRight className="ml-2 w-5 h-5" />}
+            {buttonLabel} 
+            {!isLastQuestion && <ArrowRight className="ml-2 w-5 h-5" />}
         </button>
       </div>
     );
