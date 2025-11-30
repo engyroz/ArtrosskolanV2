@@ -8,6 +8,16 @@ const DEFAULT_CONFIGS: Record<number, ExerciseConfig> = {
   4: { sets: 3, reps: 8 }
 };
 
+// Helper to map UI joint names to DB keys
+const mapJoint = (joint?: string): string => {
+    if (!joint) return '';
+    const j = joint.toLowerCase();
+    if (j === 'knä' || j === 'knee') return 'knee';
+    if (j === 'höft' || j === 'hip') return 'hip';
+    if (j === 'axel' || j === 'shoulder') return 'shoulder';
+    return j;
+};
+
 /**
  * GENERATE LEVEL PLAN
  * Runs once when a user enters a new level.
@@ -18,7 +28,13 @@ export const generateLevelPlan = (
   level: number, 
   joint: string
 ): string[] => {
-  const candidates = allExercises.filter(e => e.level === level && (e.joint === joint || e.joint?.includes(joint)));
+  const targetJoint = mapJoint(joint);
+  
+  // Filter candidates (checking mapped joint)
+  const candidates = allExercises.filter(e => 
+      e.level === level && (mapJoint(e.joint) === targetJoint)
+  );
+  
   const selectedIds: string[] = [];
 
   // Group by category
@@ -33,32 +49,27 @@ export const generateLevelPlan = (
   const pickOne = (category: string) => {
     const list = byCategory[category];
     if (list && list.length > 0) {
-      // Simple randomizer for now, could be smarter
       const random = list[Math.floor(Math.random() * list.length)];
       selectedIds.push(random.id);
     }
   };
 
   if (level === 1) {
-    // 1 Flexor, 1 Extensor, 1 Mobility
-    if (joint === 'knee') {
+    if (targetJoint === 'knee') {
         pickOne('knee_extensor');
         pickOne('knee_flexor');
         pickOne('mobility');
-    } else if (joint === 'hip') {
+    } else if (targetJoint === 'hip') {
         pickOne('hip_abductor');
         pickOne('hip_extensor');
         pickOne('mobility');
     } else {
-        // Fallback: Pick 3 random
         candidates.slice(0, 3).forEach(e => selectedIds.push(e.id));
     }
   } else {
-    // Level 2+: Pick one from each available category to form a routine of 3-5 exercises
     Object.keys(byCategory).forEach(cat => pickOne(cat));
   }
 
-  // Ensure we don't have too many (cap at 5)
   return selectedIds.slice(0, 5);
 };
 
@@ -81,7 +92,6 @@ export const getWorkoutSession = (
       const exercise = exercisesDB.find(e => e.id === id);
       if (!exercise) return null;
 
-      // Get progress or default
       const progress = userProfile.exerciseProgress?.[id];
       const config = progress ? progress.currentConfig : DEFAULT_CONFIGS[userProfile.currentLevel || 1];
 
@@ -93,8 +103,13 @@ export const getWorkoutSession = (
   
   } else {
     // Circulation: Level 1 Mobility exercises
-    // Usually these don't progress in reps, they are time/feeling based
-    const circExercises = exercisesDB.filter(e => e.level === 1 && e.category === 'mobility' && e.joint === userProfile.program?.joint);
+    const userJoint = mapJoint(userProfile.program?.joint);
+    
+    const circExercises = exercisesDB.filter(e => {
+        const dbJoint = mapJoint(e.joint);
+        return e.level === 1 && e.category === 'mobility' && dbJoint === userJoint;
+    });
+
     sessionExercises = circExercises.map(e => ({
         ...e,
         config: { sets: 1, reps: 10 } // Standard circulation dose
