@@ -7,6 +7,9 @@ export interface UserProfile {
   displayName?: string;
   program?: ProgramConfig; 
   
+  // Add this field back
+  assessmentData?: Record<string, any>;
+
   progression?: ProgressionState;
   
   activePlanIds?: string[]; 
