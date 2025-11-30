@@ -34,36 +34,28 @@ const Assessment = () => {
     }
   }, [searchParams]);
 
+  // Recalculate state when answers or joint change
   useEffect(() => {
     if (selectedJoint) {
       const state = getAssessmentState(selectedJoint, answers);
       setAssessmentState(state);
       
-      // Only reset local value if we are actually moving to a new question
-      // This prevents flickering if re-renders happen
-      if (state.status !== 'COMPLETE') {
+      // Reset local value when moving to a NEW question
+      // We check if the question ID has changed to avoid resetting during re-renders of same question
+      if (state.status === 'QUESTION' && state.nextQuestion?.id !== assessmentState.nextQuestion?.id) {
           setLocalValue(null);
-      }
-
-      // Auto-trigger completion if logic says we are done
-      if (state.status === 'COMPLETE' && state.result && !loading) {
-        console.log("Assessment State Complete. Triggering finish...");
-        finishAssessment(state.result);
       }
     }
   }, [selectedJoint, answers]);
 
-  const finishAssessment = async (result: any) => {
-    if (loading) return; // Prevent double submission
+  const finishAssessment = async (finalAnswers: Record<string, any>, result: any) => {
+    if (loading) return; 
     setLoading(true);
     console.log("Finishing Assessment...", result);
 
     try {
         if (user) {
             console.log("User is authenticated. Saving to Firestore...");
-            // Authenticated User: Save to Firestore
-            
-            // 1. Fetch exercises to generate plan
             const querySnapshot = await getDocs(collection(db, "exercises"));
             const allExercises: Exercise[] = [];
             querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
@@ -75,50 +67,49 @@ const Assessment = () => {
             
             const payload = {
                 onboardingCompleted: true,
-                assessmentData: answers,
+                assessmentData: finalAnswers,
                 currentLevel: result.level,
                 program: result,
                 activePlanIds: planIds,
                 exerciseProgress: {} 
             };
 
-            console.log("Saving payload:", payload);
-
-            // CRITICAL FIX: Use setDoc with merge: true to handle missing docs
             await setDoc(userRef, payload, { merge: true });
-
-            console.log("Save successful. Refreshing profile...");
             await refreshProfile();
-            
-            console.log("Navigating to dashboard...");
             navigate('/dashboard');
         } else {
             console.log("User is anonymous. Saving to LocalStorage...");
-            // Anonymous User: Save to LocalStorage
             saveAssessmentToStorage({
                 joint: selectedJoint!,
                 level: result.level,
-                functionalAnswers: answers, 
-                activityLevel: answers['activityProfile'],
-                goal: answers['mainGoal'],
+                functionalAnswers: finalAnswers, 
+                activityLevel: finalAnswers['activityProfile'],
+                goal: finalAnswers['mainGoal'],
                 programConfig: result
             });
 
-            console.log("Navigating to results...");
             setTimeout(() => {
                 navigate('/results');
-            }, 1000); // Reduced delay for better UX
+            }, 500); 
         }
     } catch (error) {
         console.error("Error saving assessment:", error);
-        alert("Ett fel uppstod när din plan skulle sparas. Försök igen.");
+        alert("Ett fel uppstod. Försök igen.");
         setLoading(false);
     }
   };
 
   const handleNext = () => {
     if (assessmentState.nextQuestion && localValue !== null) {
-        setAnswers(prev => ({ ...prev, [assessmentState.nextQuestion!.id]: localValue }));
+        const newAnswers = { ...answers, [assessmentState.nextQuestion.id]: localValue };
+        setAnswers(newAnswers);
+
+        // Check immediately if this was the last question
+        const nextState = getAssessmentState(selectedJoint!, newAnswers);
+        
+        if (nextState.status === 'COMPLETE' && nextState.result) {
+            finishAssessment(newAnswers, nextState.result);
+        }
     }
   };
 
@@ -148,7 +139,15 @@ const Assessment = () => {
                 Ja, något av detta stämmer
             </button>
             <button 
-                onClick={() => setAnswers(prev => ({ ...prev, safetyCheck: 'pass' }))}
+                onClick={() => {
+                    const newAnswers = { ...answers, safetyCheck: 'pass' };
+                    setAnswers(newAnswers);
+                    // Check if complete immediately (Level 1 fast track)
+                    const nextState = getAssessmentState(selectedJoint!, newAnswers);
+                    if (nextState.status === 'COMPLETE' && nextState.result) {
+                        finishAssessment(newAnswers, nextState.result);
+                    }
+                }}
                 className="w-full p-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg transition-all text-center"
             >
                 Nej, inget av detta stämmer (Gå vidare)
@@ -177,7 +176,7 @@ const Assessment = () => {
   );
 
   const renderQuestion = (q: Question) => {
-    // Determine button label
+    // Determine button label based on progress
     const isLastQuestion = assessmentState.progress >= 90;
     const buttonLabel = isLastQuestion ? 'Analysera mina svar' : 'Nästa';
 
@@ -200,8 +199,19 @@ const Assessment = () => {
                 </div>
                 <button
                     onClick={() => {
-                        if (localValue === null) setLocalValue(5); 
-                        setAnswers(prev => ({ ...prev, [q.id]: localValue !== null ? localValue : 5 }));
+                        // Special handling for scale: confirm local value then next
+                        const val = localValue !== null ? localValue : 5;
+                        setLocalValue(val); // Ensure local value is set
+                        // Need to manually trigger logic similar to handleNext since handleNext relies on state being ready
+                        // But handleNext uses localValue, so we can just call it
+                        // We set localValue first to be safe, though state update is async.
+                        // Better to pass val directly to logic.
+                        const newAnswers = { ...answers, [q.id]: val };
+                        setAnswers(newAnswers);
+                        const nextState = getAssessmentState(selectedJoint!, newAnswers);
+                        if (nextState.status === 'COMPLETE' && nextState.result) {
+                            finishAssessment(newAnswers, nextState.result);
+                        }
                     }}
                     className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 shadow-lg"
                 >
