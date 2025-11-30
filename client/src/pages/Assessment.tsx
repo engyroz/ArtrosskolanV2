@@ -10,7 +10,7 @@ import {
 import { generateLevelPlan } from '../utils/workoutEngine';
 import { JointType, Question, Exercise } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore'; // ÄNDRING: setDoc istället för updateDoc
 import { db } from '../firebase';
 
 const Assessment = () => {
@@ -38,6 +38,7 @@ const Assessment = () => {
     if (selectedJoint) {
       const state = getAssessmentState(selectedJoint, answers);
       setAssessmentState(state);
+      
       // Nollställ bara localValue om vi faktiskt byter fråga (dvs inte är klara)
       if (state.status !== 'COMPLETE') {
           setLocalValue(null);
@@ -67,18 +68,20 @@ const Assessment = () => {
             const mappedJoint = selectedJoint === 'Knä' ? 'knee' : (selectedJoint === 'Höft' ? 'hip' : 'shoulder');
             
             // Generera plan-IDn
-            // OBS: Om generateLevelPlan kastar fel kommer vi till catch-blocket
             const planIds = generateLevelPlan(allExercises, result.level, mappedJoint);
 
             const userRef = doc(db, 'users', user.uid);
-            await updateDoc(userRef, {
+            
+            // ÄNDRING HÄR: setDoc med { merge: true } skapar dokumentet om det saknas
+            await setDoc(userRef, {
                 onboardingCompleted: true,
                 assessmentData: answers,
                 currentLevel: result.level,
                 program: result,
                 activePlanIds: planIds,
                 exerciseProgress: {} 
-            });
+            }, { merge: true });
+
             await refreshProfile();
             navigate('/dashboard');
         } else {
@@ -99,7 +102,7 @@ const Assessment = () => {
         }
     } catch (error) {
         console.error("Error generating/saving assessment:", error);
-        // Här kan du visa ett felmeddelande till användaren om du vill
+        alert("Ett fel uppstod när din plan skulle sparas. Se konsolen för detaljer."); // Enkel feedback
         setLoading(false); // Sluta ladda så användaren inte fastnar
     }
   };
