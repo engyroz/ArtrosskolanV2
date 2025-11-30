@@ -15,18 +15,13 @@ import WorkoutPlayer from './pages/WorkoutPlayer';
 import ProtectedRoute from './components/ProtectedRoute';
 import TimeTravelDebug from './components/TimeTravelDebug';
 
-// Helper component to conditionally render navigation
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { user } = useAuth();
   
-  // Hide Top Navbar on Dashboard to use the new mobile header logic?
-  // Or keep it for desktop. For this specific request "The Daily Driver", 
-  // it implies a mobile-first app experience where BottomNav replaces TopNav for logged-in users.
-  
   const isAppRoute = ['/dashboard', '/plan', '/progress', '/profile', '/workout'].includes(location.pathname);
   const showBottomNav = user && isAppRoute;
-  const showTopNav = !showBottomNav; // Hide top nav inside the "App" part
+  const showTopNav = !showBottomNav; 
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
@@ -84,7 +79,6 @@ const App: React.FC = () => {
                 } 
               />
               
-              {/* Placeholders for new tabs to prevent 404 */}
               <Route path="/plan" element={<div className="p-8 text-center">Kalender kommer snart...</div>} />
               <Route path="/progress" element={<div className="p-8 text-center">Statistik kommer snart...</div>} />
               <Route path="/profile" element={<div className="p-8 text-center">Profil kommer snart...</div>} />

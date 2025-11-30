@@ -10,7 +10,7 @@ import {
 import { generateLevelPlan } from '../utils/workoutEngine';
 import { JointType, Question, Exercise } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, getDocs, doc, setDoc } from 'firebase/firestore'; // ÄNDRING: setDoc istället för updateDoc
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore'; 
 import { db } from '../firebase';
 
 const Assessment = () => {
@@ -39,12 +39,10 @@ const Assessment = () => {
       const state = getAssessmentState(selectedJoint, answers);
       setAssessmentState(state);
       
-      // Nollställ bara localValue om vi faktiskt byter fråga (dvs inte är klara)
       if (state.status !== 'COMPLETE') {
           setLocalValue(null);
       }
 
-      // Trigga avslut om status är COMPLETE
       if (state.status === 'COMPLETE' && state.result && !loading) {
         finishAssessment(state.result);
       }
@@ -56,23 +54,19 @@ const Assessment = () => {
 
     try {
         if (user) {
-            // Inloggad användare: Spara till Firestore
-            console.log("Saving assessment for user:", user.uid);
-            
-            // 1. Hämta alla övningar för att kunna generera planen
+            // Authenticated User: Save to Firestore
+            // We fetch exercises to generate the plan immediately
             const querySnapshot = await getDocs(collection(db, "exercises"));
             const allExercises: Exercise[] = [];
             querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
             
-            // Mappa lednamn
             const mappedJoint = selectedJoint === 'Knä' ? 'knee' : (selectedJoint === 'Höft' ? 'hip' : 'shoulder');
-            
-            // Generera plan-IDn
             const planIds = generateLevelPlan(allExercises, result.level, mappedJoint);
 
             const userRef = doc(db, 'users', user.uid);
             
-            // ÄNDRING HÄR: setDoc med { merge: true } skapar dokumentet om det saknas
+            // CRITICAL FIX: Use setDoc with merge: true. 
+            // This creates the document if it doesn't exist (e.g. if collection was deleted).
             await setDoc(userRef, {
                 onboardingCompleted: true,
                 assessmentData: answers,
@@ -85,8 +79,7 @@ const Assessment = () => {
             await refreshProfile();
             navigate('/dashboard');
         } else {
-            // Anonym användare: Spara till LocalStorage
-            console.log("Saving assessment to local storage");
+            // Anonymous User: Save to LocalStorage
             saveAssessmentToStorage({
                 joint: selectedJoint!,
                 level: result.level,
@@ -101,15 +94,13 @@ const Assessment = () => {
             }, 2000);
         }
     } catch (error) {
-        console.error("Error generating/saving assessment:", error);
-        alert("Ett fel uppstod när din plan skulle sparas. Se konsolen för detaljer."); // Enkel feedback
-        setLoading(false); // Sluta ladda så användaren inte fastnar
+        console.error("Error saving assessment:", error);
+        setLoading(false);
     }
   };
 
   const handleNext = () => {
     if (assessmentState.nextQuestion && localValue !== null) {
-        console.log("Answering:", assessmentState.nextQuestion.id, "Value:", localValue);
         setAnswers(prev => ({ ...prev, [assessmentState.nextQuestion!.id]: localValue }));
     }
   };
@@ -277,7 +268,6 @@ const Assessment = () => {
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
       <div className="w-full max-w-xl">
         
-        {/* Progress Bar */}
         {selectedJoint && assessmentState.status !== 'COMPLETE' && assessmentState.status !== 'HARD_STOP' && (
             <div className="mb-8">
                 <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
@@ -293,7 +283,6 @@ const Assessment = () => {
             </div>
         )}
 
-        {/* Main Card */}
         <div className="bg-white shadow-xl rounded-2xl p-8 sm:p-10 border border-slate-100 min-h-[400px] flex flex-col justify-center">
             
             {loading || assessmentState.status === 'COMPLETE' ? renderLoading() : (
