@@ -12,6 +12,7 @@ import Results from './pages/Results';
 import Payment from './pages/Payment';
 import Dashboard from './pages/Dashboard';
 import WorkoutPlayer from './pages/WorkoutPlayer';
+import CalendarDiary from './pages/CalendarDiary'; // Import
 import ProtectedRoute from './components/ProtectedRoute';
 import TimeTravelDebug from './components/TimeTravelDebug';
 
@@ -19,7 +20,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { user } = useAuth();
   
-  const isAppRoute = ['/dashboard', '/plan', '/progress', '/profile', '/workout'].includes(location.pathname);
+  const isAppRoute = ['/dashboard', '/calendar', '/plan', '/progress', '/profile', '/workout'].includes(location.pathname);
   const showBottomNav = user && isAppRoute;
   const showTopNav = !showBottomNav; 
 
@@ -44,42 +45,35 @@ const App: React.FC = () => {
         <Router>
           <Layout>
             <Routes>
-              {/* Public Funnel */}
               <Route path="/" element={<Landing />} />
               <Route path="/assessment" element={<Assessment />} />
               <Route path="/results" element={<Results />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
 
-              {/* Protected App */}
               <Route 
                 path="/payment" 
-                element={
-                  <ProtectedRoute>
-                    <Payment />
-                  </ProtectedRoute>
-                } 
+                element={<ProtectedRoute><Payment /></ProtectedRoute>} 
               />
 
               <Route 
                 path="/dashboard" 
-                element={
-                  <ProtectedRoute requireSubscription={true}>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
+                element={<ProtectedRoute requireSubscription={true}><Dashboard /></ProtectedRoute>} 
+              />
+
+              {/* Calendar Route */}
+              <Route 
+                path="/calendar" 
+                element={<ProtectedRoute requireSubscription={true}><CalendarDiary /></ProtectedRoute>} 
               />
 
               <Route 
                 path="/workout" 
-                element={
-                  <ProtectedRoute requireSubscription={true}>
-                    <WorkoutPlayer />
-                  </ProtectedRoute>
-                } 
+                element={<ProtectedRoute requireSubscription={true}><WorkoutPlayer /></ProtectedRoute>} 
               />
               
-              <Route path="/plan" element={<div className="p-8 text-center">Kalender kommer snart...</div>} />
+              {/* Redirect old /plan to /calendar if needed, or keep placeholder */}
+              <Route path="/plan" element={<CalendarDiary />} /> 
               <Route path="/progress" element={<div className="p-8 text-center">Statistik kommer snart...</div>} />
               <Route path="/profile" element={<div className="p-8 text-center">Profil kommer snart...</div>} />
 

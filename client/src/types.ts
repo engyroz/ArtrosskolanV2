@@ -7,34 +7,31 @@ export interface UserProfile {
   displayName?: string;
   program?: ProgramConfig; 
   
-  // Progression & Gamification
   progression?: ProgressionState;
   
-  // Workout Engine Data
-  activePlanIds?: string[]; // The fixed list of exercises for current level
-  exerciseProgress?: Record<string, ExerciseProgressEntry>; // Tracking specific stats per exercise
+  activePlanIds?: string[]; 
+  exerciseProgress?: Record<string, ExerciseProgressEntry>; 
   
-  // History
   trainingSchedule?: number[]; 
   activityHistory?: ActivityLogEntry[];
 }
 
 export interface ExerciseProgressEntry {
   exerciseId: string;
-  history: ExertionLevel[]; // Keep last 3-5 sessions
+  history: ExertionLevel[]; 
   currentConfig: ExerciseConfig;
-  phaseIndex: number; // 0 to 3 (matching the 4 steps in SOP)
-  nextMilestone?: string; // e.g. "3x10"
+  phaseIndex: number; 
+  nextMilestone?: string; 
 }
 
 export interface ExerciseConfig {
   sets: number;
-  reps: number; // or seconds for isometric
+  reps: number; 
   holdTimeSeconds?: number;
 }
 
 export interface WorkoutSession {
-  id: string; // unique session ID
+  id: string; 
   type: 'rehab' | 'circulation';
   exercises: WorkoutExercise[];
 }
@@ -43,7 +40,6 @@ export interface WorkoutExercise extends Exercise {
   config: ExerciseConfig;
 }
 
-// Decoupled Assessment Data (for anonymous storage)
 export interface AssessmentData {
   joint: JointType;
   painRest?: string;
@@ -83,11 +79,9 @@ export interface Exercise {
   category?: string; 
   imageUrl: string;
   description: string;
-  instructions?: string | string[]; // Can be string (legacy) or array
+  instructions?: string | string[]; 
   durationMinutes: number;
 }
-
-// --- Assessment & Program Types ---
 
 export type IrritabilityLevel = 'Low' | 'Moderate' | 'High';
 export type JointType = 'Knä' | 'Höft' | 'Rygg' | 'Axel' | 'Handled/Tumbas';
@@ -121,4 +115,19 @@ export interface ProgramConfig {
   circulationDaysPerWeek: number;
   activityPrescription?: ActivityPrescription; 
   focusAreas: string[]; 
+}
+
+// --- CALENDAR & DIARY TYPES ---
+
+export type SessionStatus = 'planned' | 'completed' | 'missed';
+
+export interface WorkoutLog {
+  id?: string; // Optional if derived from ActivityLogEntry
+  date: string; // YYYY-MM-DD
+  status: SessionStatus;
+  workoutType: 'rehab' | 'daily_activity' | 'circulation'; 
+  level?: number;
+  painScore?: number;
+  focusText?: string;
+  userNote?: string;
 }

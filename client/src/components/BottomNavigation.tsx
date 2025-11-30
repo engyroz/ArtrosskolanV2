@@ -6,12 +6,11 @@ const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide nav on workout player
   if (location.pathname === '/workout') return null;
 
   const tabs = [
     { id: 'dashboard', label: 'Idag', icon: Home, path: '/dashboard' },
-    { id: 'plan', label: 'Min Plan', icon: Calendar, path: '/plan' },
+    { id: 'plan', label: 'Min Plan', icon: Calendar, path: '/calendar' }, // Updated path
     { id: 'progress', label: 'Framsteg', icon: TrendingUp, path: '/progress' },
     { id: 'profile', label: 'Profil', icon: User, path: '/profile' },
   ];
