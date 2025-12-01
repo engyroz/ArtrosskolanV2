@@ -1,6 +1,6 @@
 import React from 'react';
 import { WorkoutLog } from '../types';
-import { Play, CheckCircle, Clock, XCircle, Dumbbell, Activity, Check, Lock } from 'lucide-react';
+import { Play, CheckCircle, Clock, XCircle, Dumbbell, Activity, Check, Lock, Coffee, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface DayDetailCardProps {
@@ -83,7 +83,7 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
     <div className="px-4 pb-20 animate-slide-up">
       <h3 className="text-lg font-bold text-slate-900 capitalize mb-4 px-2">{formattedDate}</h3>
       
-      {/* A. Rehab Card (Aligned with Dashboard Design) */}
+      {/* A. Rehab Card OR Recovery Card */}
       {hasRehabPlanned ? (
           <div className={`rounded-2xl p-6 mb-6 relative overflow-hidden shadow-sm transition-all border
               ${isToday 
@@ -132,10 +132,28 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
             </div>
           </div>
       ) : (
-          // Vilodag Card
-          <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 mb-6 text-center">
-              <p className="text-slate-500 font-medium">Ingen tung rehab planerad.</p>
-              <p className="text-slate-400 text-sm">Njut av vilan!</p>
+          // Vilodag / Recovery Card (Aligned with Dashboard Design)
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 relative overflow-hidden shadow-sm group">
+              <div className="relative z-10">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold mb-3 uppercase tracking-wider">
+                      <Coffee className="w-3 h-3" /> Återhämtning
+                  </div>
+                  <h4 className="text-xl font-bold text-slate-800 mb-1">Vila & Lärande</h4>
+                  <p className="text-slate-500 text-sm mb-4">Ingen tung rehab planerad idag.</p>
+                  
+                  <button 
+                    onClick={() => navigate('/knowledge')}
+                    className="inline-flex items-center px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-colors"
+                  >
+                      <BookOpen className="w-4 h-4 mr-2 text-slate-400" />
+                      Gå till Kunskap
+                  </button>
+              </div>
+              
+              {/* Background Decor */}
+              <div className="absolute -bottom-2 -right-2 opacity-5 transform rotate-12">
+                  <Coffee className="w-24 h-24" />
+              </div>
           </div>
       )}
 
