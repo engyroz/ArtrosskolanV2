@@ -33,36 +33,27 @@ const Dashboard = () => {
   const [showBossFight, setShowBossFight] = useState(false);
   const [preFlightType, setPreFlightType] = useState<'rehab' | 'circulation'>('rehab');
   
-  // State for optimistic UI updates
   const [activityCompletedToday, setActivityCompletedToday] = useState(false);
-  
-  // State for animated XP bar
   const [displayedXP, setDisplayedXP] = useState(0);
 
-  // --- DERIVED STATE ---
   const history = userProfile?.activityHistory || [];
   const currentLevel = userProfile?.currentLevel || 1;
   const selectedDateStr = toLocalISOString(today);
   
-  // Find logs for today
   const rehabLog = history.find(h => h.date === selectedDateStr && h.type === 'rehab');
   const circulationLog = history.find(h => h.date === selectedDateStr && h.type === 'circulation');
   const activityLog = history.find(h => h.date === selectedDateStr && h.type === 'daily_activity');
   
-  // Calculate Week/Day since start
   const startDate = userProfile?.assessmentData?.timestamp 
     ? new Date(userProfile.assessmentData.timestamp) 
-    : new Date(); // Fallback to today if missing
+    : new Date();
   const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   const currentWeek = Math.ceil(daysSinceStart / 7);
   const currentDayInWeek = ((daysSinceStart - 1) % 7) + 1;
 
-  // Schedule Logic (Active vs Recovery)
   const dayIndex = today.getDay();
-  // Level 1: Rehab every day. Level 2+: Mon/Wed/Fri
   const isRehabDay = currentLevel === 1 || [1, 3, 5].includes(dayIndex);
   
-  // --- HERO CARD STATE ---
   let heroMode: 'active' | 'recovery' | 'completed' | 'boss_fight' = 'active';
   
   if (rehabLog) {
@@ -77,49 +68,33 @@ const Dashboard = () => {
       heroMode = 'recovery';
   }
 
-  // --- XP ANIMATION EFFECT ---
   useEffect(() => {
     if (!userProfile) return;
     const realXP = userProfile.progression?.experiencePoints || 0;
-    
-    // Check if we just returned from a workout with earned XP
     const earnedXP = location.state?.xpEarned;
 
     if (earnedXP) {
-        // Start animation from "previous" total
         const startXP = Math.max(0, realXP - earnedXP);
         setDisplayedXP(startXP);
-        
-        // Trigger fill animation after mount
         const timer = setTimeout(() => {
             setDisplayedXP(realXP);
-        }, 300); // Small delay to let user see the "before" state briefly if loading is fast
-        
+        }, 300); 
         return () => clearTimeout(timer);
     } else {
-        // No animation needed, just show current
         setDisplayedXP(realXP);
     }
   }, [userProfile, location.state]);
 
-  // --- SECONDARY CARD LOGIC (Daglig Medicin) ---
-  // Always show for Level 2 & 3. 
-  // If completed (circulationLog exists), show green state.
   const showDailyMedicine = (currentLevel === 2 || currentLevel === 3); 
 
-  // --- TERTIARY CARD CONFIG ---
   const activityConfig = PHYSICAL_ACTIVITY_TASKS[currentLevel as keyof typeof PHYSICAL_ACTIVITY_TASKS] || PHYSICAL_ACTIVITY_TASKS[1];
   const isActivityDone = !!activityLog || activityCompletedToday;
 
-  // --- EFFECTS ---
-
   useEffect(() => {
-    // Sync local state with DB history
     if (activityLog) setActivityCompletedToday(true);
     else setActivityCompletedToday(false);
   }, [activityLog, selectedDateStr]);
 
-  // Plan Generation
   useEffect(() => {
     const initPlan = async () => {
       if (!userProfile) return;
@@ -142,28 +117,24 @@ const Dashboard = () => {
     initPlan();
   }, [userProfile, currentLevel]);
 
-  // --- HANDLERS ---
-
   const handleHeroClick = () => {
     if (heroMode === 'completed') {
-        // Maybe go to stats?
         return; 
     }
     if (heroMode === 'recovery') {
-        navigate('/journey'); // Go to education
+        navigate('/journey'); 
         return;
     }
     if (heroMode === 'boss_fight') {
         setShowBossFight(true);
         return;
     }
-    // Active
     setPreFlightType('rehab');
     setShowPreFlight(true);
   };
 
   const handleMedicineClick = () => {
-      if (circulationLog) return; // Already done
+      if (circulationLog) return; 
       setPreFlightType('circulation');
       setShowPreFlight(true);
   };
@@ -177,14 +148,13 @@ const Dashboard = () => {
     querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
 
     const session = getWorkoutSession(userProfile, allExercises, preFlightType);
-    
     navigate('/workout', { state: { session } });
   };
 
   const handleToggleActivity = async () => {
-      if (isActivityDone) return; // Already done
+      if (isActivityDone) return; 
       
-      setActivityCompletedToday(true); // Optimistic
+      setActivityCompletedToday(true); 
       
       if (!userProfile) return;
       try {
@@ -205,7 +175,7 @@ const Dashboard = () => {
           await refreshProfile();
       } catch (e) {
           console.error(e);
-          setActivityCompletedToday(false); // Revert
+          setActivityCompletedToday(false); 
       }
   };
 
@@ -228,7 +198,6 @@ const Dashboard = () => {
     } catch (e) { console.error(e); }
   };
 
-  // --- RENDER HELPERS ---
   const levelConfig = ACTION_CARD_CONFIG[currentLevel as keyof typeof ACTION_CARD_CONFIG] || ACTION_CARD_CONFIG[1];
   
   const heroTitle = heroMode === 'active' ? "Dagens Rehabpass" :
@@ -261,24 +230,24 @@ const Dashboard = () => {
         level={currentLevel}
       />
 
-      {/* 1. HEADER */}
-      <div className="pt-12 pb-4 px-6 bg-white sticky top-0 z-30 border-b border-slate-100 flex justify-between items-start">
-        <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                Hej {userProfile?.displayName || 'Kämpe'}!
-            </h1>
-            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-1">
-                Vecka {currentWeek}, Dag {currentDayInWeek}
-            </p>
-        </div>
-        <div className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 text-xs font-bold">
-            {PHASE_NAMES[currentLevel as keyof typeof PHASE_NAMES]}
-        </div>
+      {/* Header - Constrained Width */}
+      <div className="bg-white sticky top-0 z-30 border-b border-slate-100">
+          <div className="max-w-md mx-auto px-4 pt-8 pb-4 flex justify-between items-start">
+            <div>
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                    Hej {userProfile?.displayName || 'Kämpe'}!
+                </h1>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-1">
+                    Vecka {currentWeek}, Dag {currentDayInWeek}
+                </p>
+            </div>
+            <div className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 text-xs font-bold">
+                {PHASE_NAMES[currentLevel as keyof typeof PHASE_NAMES]}
+            </div>
+          </div>
       </div>
 
-      <div className="px-6 max-w-md mx-auto mt-6 space-y-8 animate-fade-in">
-        
-        {/* 2. HERO SECTION */}
+      <div className="px-4 max-w-md mx-auto mt-6 space-y-8 animate-fade-in">
         <section>
             <ActionCard 
                 mode={heroMode}
@@ -287,7 +256,6 @@ const Dashboard = () => {
                 meta={heroMeta}
                 onClick={handleHeroClick}
             />
-            {/* Gamification Progress - ALWAYS visible now */}
             {heroMode !== 'recovery' && (
                 <LevelProgressBar 
                     level={currentLevel} 
@@ -297,7 +265,6 @@ const Dashboard = () => {
             )}
         </section>
 
-        {/* 3. SECONDARY CARD: DAGLIG MEDICIN */}
         {showDailyMedicine && (
             <section className={`rounded-2xl p-6 shadow-sm border flex justify-between items-center transition-all ${
                 circulationLog 
@@ -329,7 +296,6 @@ const Dashboard = () => {
             </section>
         )}
 
-        {/* 4. TERTIARY CARD: FYSISK AKTIVITET (FaR) */}
         <section className={`rounded-2xl p-5 border flex items-center gap-4 transition-all cursor-pointer ${
             isActivityDone ? 'bg-green-50 border-green-200' : 'bg-white border-slate-200 hover:border-blue-300'
         }`} onClick={handleToggleActivity}>
@@ -352,7 +318,6 @@ const Dashboard = () => {
                 </p>
             </div>
         </section>
-
       </div>
     </div>
   );

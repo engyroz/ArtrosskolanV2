@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { CheckCircle, Lock, Trophy, Map } from 'lucide-react';
+import { CheckCircle, Lock, Trophy } from 'lucide-react';
 import { LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
 import { getMaxXP } from '../utils/progressionEngine';
 
@@ -18,47 +18,46 @@ const MyJourney = () => {
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
       
-      {/* 1. Header & Timeline */}
-      <div className="bg-white px-6 pt-8 pb-8 shadow-sm rounded-b-3xl mb-6">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Min Resa</h1>
-        <p className="text-slate-500 mb-8">
-            Mot målet: <span className="font-semibold text-slate-900 capitalize">{userGoal.replace(/_/g, ' ')}</span>
-        </p>
-        
-        {/* Timeline Visual */}
-        <div className="relative flex justify-between items-center px-2">
-            <div className="absolute left-0 right-0 top-1/2 h-1 bg-slate-100 -z-10 transform -translate-y-1/2 mx-4"></div>
+      <div className="bg-white shadow-sm rounded-b-3xl mb-6">
+          <div className="max-w-md mx-auto px-6 pt-8 pb-8">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Min Resa</h1>
+            <p className="text-slate-500 mb-8">
+                Mot målet: <span className="font-semibold text-slate-900 capitalize">{userGoal.replace(/_/g, ' ')}</span>
+            </p>
             
-            {[1, 2, 3, 4].map((level) => {
-                const isCompleted = level < currentLevel;
-                const isCurrent = level === currentLevel;
-                const isLocked = level > currentLevel;
+            <div className="relative flex justify-between items-center px-2">
+                <div className="absolute left-0 right-0 top-1/2 h-1 bg-slate-100 -z-10 transform -translate-y-1/2 mx-4"></div>
+                
+                {[1, 2, 3, 4].map((level) => {
+                    const isCompleted = level < currentLevel;
+                    const isCurrent = level === currentLevel;
+                    const isLocked = level > currentLevel;
 
-                return (
-                    <div key={level} className="flex flex-col items-center gap-2">
-                        <div 
-                            className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all z-10
-                                ${isCompleted ? 'bg-green-100 border-green-500 text-green-600' : ''}
-                                ${isCurrent ? 'bg-blue-600 border-blue-200 shadow-lg shadow-blue-200 text-white scale-110' : ''}
-                                ${isLocked ? 'bg-slate-100 border-slate-200 text-slate-400' : ''}
-                            `}
-                        >
-                            {isCompleted ? <CheckCircle className="w-6 h-6" /> : 
-                             isLocked ? <Lock className="w-5 h-5" /> : 
-                             <span className="font-bold text-lg">{level}</span>}
+                    return (
+                        <div key={level} className="flex flex-col items-center gap-2">
+                            <div 
+                                className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all z-10
+                                    ${isCompleted ? 'bg-green-100 border-green-500 text-green-600' : ''}
+                                    ${isCurrent ? 'bg-blue-600 border-blue-200 shadow-lg shadow-blue-200 text-white scale-110' : ''}
+                                    ${isLocked ? 'bg-slate-100 border-slate-200 text-slate-400' : ''}
+                                `}
+                            >
+                                {isCompleted ? <CheckCircle className="w-6 h-6" /> : 
+                                isLocked ? <Lock className="w-5 h-5" /> : 
+                                <span className="font-bold text-lg">{level}</span>}
+                            </div>
+                            <span className={`text-xs font-bold uppercase tracking-wider ${isCurrent ? 'text-blue-600' : 'text-slate-400'}`}>
+                                Fas {level}
+                            </span>
                         </div>
-                        <span className={`text-xs font-bold uppercase tracking-wider ${isCurrent ? 'text-blue-600' : 'text-slate-400'}`}>
-                            Fas {level}
-                        </span>
-                    </div>
-                );
-            })}
+                    );
+                })}
+            </div>
         </div>
       </div>
 
       <div className="px-4 space-y-6 max-w-lg mx-auto">
         
-        {/* 2. Current Status & Progress (Boss Fight Tracker) */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             <div className="flex justify-between items-start mb-4">
                 <div>

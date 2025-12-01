@@ -18,7 +18,6 @@ const KnowledgeBase = () => {
               completedEducationIds: arrayUnion(articleId)
           });
           await refreshProfile();
-          // In a real app, this would open a Modal with the article content here
           alert("Artikel öppnad (Demo)");
       } catch (e) {
           console.error("Failed to mark article as read", e);
@@ -27,26 +26,24 @@ const KnowledgeBase = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
-      {/* Header */}
-      <div className="bg-white px-6 pt-8 pb-6 shadow-sm border-b border-slate-100">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Kunskap</h1>
-        <p className="text-slate-500 text-sm">Lär dig mer om din kropp och artros.</p>
-        
-        {/* Search Bar Placeholder */}
-        <div className="mt-6 relative">
-            <input 
-                type="text" 
-                placeholder="Sök artiklar..." 
-                className="w-full pl-10 pr-4 py-3 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-            />
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
-        </div>
+      
+      <div className="bg-white shadow-sm border-b border-slate-100">
+          <div className="max-w-md mx-auto px-4 pt-8 pb-6">
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">Kunskap</h1>
+            <p className="text-slate-500 text-sm">Lär dig mer om din kropp och artros.</p>
+            
+            <div className="mt-6 relative">
+                <input 
+                    type="text" 
+                    placeholder="Sök artiklar..." 
+                    className="w-full pl-10 pr-4 py-3 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
+            </div>
+          </div>
       </div>
 
-      {/* Content List */}
       <div className="px-4 py-6 max-w-lg mx-auto space-y-4">
-        
-        {/* Group by Categories or Levels? Let's use simple list for now as per spec */}
         
         {EDUCATION_MODULES.map((module) => {
             const isLocked = module.requiredLevel > currentLevel;
