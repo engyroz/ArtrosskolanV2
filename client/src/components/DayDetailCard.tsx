@@ -10,9 +10,11 @@ interface DayDetailCardProps {
   onStartRehab: () => void;
   onToggleActivity: () => void;
   isActivityDone: boolean;
+  activityConfig: { title: string; desc: string }; // New Prop
+  isFuture: boolean; // New Prop
 }
 
-const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isActivityDone }: DayDetailCardProps) => {
+const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isActivityDone, activityConfig, isFuture }: DayDetailCardProps) => {
   const navigate = useNavigate();
 
   const formattedDate = new Intl.DateTimeFormat('sv-SE', { 
@@ -78,6 +80,7 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
   // 3. FUTURE / TODAY (PLANNING)
   
   const hasRehabPlanned = log && log.status === 'planned';
+  const canToggleActivity = !isFuture; // Only allow toggling if not in future
 
   return (
     <div className="px-4 pb-20 animate-slide-up">
@@ -132,7 +135,7 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
             </div>
           </div>
       ) : (
-          // Vilodag / Recovery Card (Aligned with Dashboard Design)
+          // Vilodag / Recovery Card
           <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 relative overflow-hidden shadow-sm group">
               <div className="relative z-10">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold mb-3 uppercase tracking-wider">
@@ -157,32 +160,30 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
           </div>
       )}
 
-      {/* B. Secondary List (Checklist) */}
+      {/* B. Activity List (FaR) - No Header */}
       <div className="space-y-3 opacity-90">
-        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">Livsstil & Aktivitet</h4>
-        
         {/* Activity Item (FaR) */}
         <button 
-            onClick={isToday ? onToggleActivity : undefined}
-            disabled={!isToday}
+            onClick={canToggleActivity ? onToggleActivity : undefined}
+            disabled={!canToggleActivity}
             className={`w-full flex items-center p-4 rounded-xl border transition-all ${
                 isActivityDone 
                 ? 'bg-green-50 border-green-200' 
                 : 'bg-white border-slate-200'
-            } ${!isToday ? 'opacity-60 cursor-not-allowed' : 'hover:border-blue-300 cursor-pointer'}`}
+            } ${!canToggleActivity ? 'opacity-60 cursor-not-allowed' : 'hover:border-blue-300 cursor-pointer'}`}
         >
             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors ${
                 isActivityDone 
                 ? 'bg-green-500 border-green-500 text-white' 
                 : 'border-slate-300 bg-white'
             }`}>
-                {isActivityDone && <Check className="w-3.5 h-3.5" />}
+                {isActivityDone ? <Check className="w-3.5 h-3.5" /> : (isFuture ? null : <Activity className="w-3.5 h-3.5 text-slate-300"/>)}
             </div>
             <div className="text-left">
                 <span className={`block font-bold ${isActivityDone ? 'text-green-900' : 'text-slate-900'}`}>
-                    Fysisk Aktivitet
+                    {activityConfig.title}
                 </span>
-                <span className="text-xs text-slate-500">Promenad eller cykling</span>
+                <span className="text-xs text-slate-500">{activityConfig.desc}</span>
             </div>
         </button>
       </div>
