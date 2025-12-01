@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ChevronDown, ChevronUp, Dumbbell, Heart, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ChevronDown, ChevronUp, Dumbbell, Heart, Check, Coffee, Activity } from 'lucide-react';
 import { 
   toLocalISOString, 
   isSameDay, 
@@ -35,28 +34,40 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
   };
 
   const renderWeekIcon = (marker: CalendarMarker | undefined, isToday: boolean) => {
-    if (!marker) return <div className="h-4 w-4" />; // Spacer to keep alignment
+    const defaultIconColor = isToday ? 'text-white/80' : 'text-slate-300';
 
-    // Completed (Filled) -> Colored Circle with Check
+    // 1. No marker -> Assume Rest if no explicit logic, or just empty
+    if (!marker) {
+        // Optional: Logic to show Coffee cup if explicitly a rest day, but marker data drives this.
+        // If we want to show Coffee for empty days, we need a 'rest' marker type.
+        // Assuming 'markers' includes all relevant status info.
+        return <div className="h-4 w-4" />;
+    }
+
+    // 2. Completed (Filled) -> Colored Circle with Check
     if (marker.type === 'filled') {
         return (
             <div 
-                className="w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
+                className="w-6 h-6 rounded-full flex items-center justify-center shadow-sm"
                 style={{ backgroundColor: marker.color }}
             >
-                <Check size={12} className="text-white" strokeWidth={4} />
+                <Check size={14} className="text-white" strokeWidth={3} />
             </div>
         );
     }
     
-    // Planned / Missed (Hollow/Cross) -> Outline Icon
-    const iconColor = isToday ? 'text-white/90' : 'text-slate-300';
+    // 3. Planned / Missed (Hollow/Cross) -> Specific Icons
+    const iconColor = isToday ? 'text-white' : marker.color === '#CBD5E1' ? 'text-slate-400' : marker.color; // Use slate for planned, red/color for missed
     
     if (marker.iconType === 'rehab') {
-         return <Dumbbell size={18} className={iconColor} strokeWidth={2} />;
+         return <Dumbbell size={20} className={iconColor} strokeWidth={2} />;
     }
     if (marker.iconType === 'activity') {
-         return <Heart size={18} className={iconColor} strokeWidth={2} />;
+         // Shoe isn't in Lucide basic set usually, Activity/Heart works
+         return <Activity size={20} className={iconColor} strokeWidth={2} />;
+    }
+    if (marker.iconType === 'rest') {
+        return <Coffee size={18} className={iconColor} strokeWidth={2} />;
     }
     
     return <div className="h-4 w-4" />;
@@ -88,30 +99,34 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
     
     const marker = markers.find(m => m.date === dateStr);
 
-    // --- WEEK VIEW STYLING (Pill Shape) ---
+    // --- WEEK VIEW STYLING (Vertical Pill) ---
     if (viewMode === 'week') {
-        let pillClasses = "relative w-12 h-24 flex flex-col items-center justify-between py-3 rounded-full transition-all cursor-pointer select-none border";
+        let pillClasses = "relative w-14 h-28 flex flex-col items-center justify-between py-3 rounded-full transition-all cursor-pointer select-none border";
         
         if (isToday) {
             // Solid Blue for Today
             pillClasses += " bg-blue-600 border-blue-600 text-white shadow-lg transform scale-105 z-10";
         } else if (isSelected) {
             // Selected but not today (Ring)
-            pillClasses += " bg-white border-blue-600 text-slate-900 ring-1 ring-blue-600";
+            pillClasses += " bg-white border-blue-600 text-slate-900 ring-2 ring-blue-600 z-10";
         } else {
             // Standard Day
-            pillClasses += " bg-white border-slate-100 text-slate-500 hover:border-blue-200";
+            pillClasses += " bg-white border-slate-100 text-slate-500 hover:border-blue-200 hover:bg-slate-50";
         }
 
         return (
-            <div key={dateStr} className="flex flex-col items-center justify-center">
+            <div key={dateStr} className="flex flex-col items-center justify-center px-0.5">
                 <div onClick={() => onSelectDate(date)} className={pillClasses}>
+                    {/* Top: Day Name */}
                     <span className={`text-[10px] font-bold uppercase tracking-wider ${isToday ? 'text-blue-100' : 'text-slate-400'}`}>
                         {SWEDISH_DAYS_SHORT[date.getDay() === 0 ? 6 : date.getDay() - 1]}
                     </span>
-                    <span className="text-xl font-bold leading-none">{date.getDate()}</span>
                     
-                    <div className="h-6 flex items-center justify-center">
+                    {/* Middle: Date Number */}
+                    <span className="text-2xl font-bold leading-none">{date.getDate()}</span>
+                    
+                    {/* Bottom: Icon */}
+                    <div className="h-8 flex items-center justify-center">
                         {renderWeekIcon(marker, isToday)}
                     </div>
                 </div>
@@ -176,7 +191,7 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
       </div>
 
       {/* Grid */}
-      <div className="px-4 pb-4">
+      <div className="px-2 pb-6">
         {/* Days Header for Month View Only */}
         {viewMode === 'month' && (
             <div className="grid grid-cols-7 mb-2">
@@ -188,7 +203,7 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
             </div>
         )}
 
-        <div className={`grid grid-cols-7 ${viewMode === 'week' ? 'gap-2' : 'gap-1'} transition-all duration-300`}>
+        <div className={`grid grid-cols-7 ${viewMode === 'week' ? 'gap-1' : 'gap-1'} transition-all duration-300`}>
           {displayedDays.map(date => {
             const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
             return renderDayCell(date, isCurrentMonth);
