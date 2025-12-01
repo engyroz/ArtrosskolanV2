@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { WorkoutLog } from '../types';
 import { Play, CheckCircle, Clock, XCircle, Dumbbell, Activity, Check, Lock, Coffee, BookOpen, Edit2, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ACTION_CARD_CONFIG } from '../utils/textConstants';
 
 interface DayDetailCardProps {
   date: Date;
@@ -12,10 +13,11 @@ interface DayDetailCardProps {
   isActivityDone: boolean;
   activityConfig: { title: string; desc: string }; 
   isFuture: boolean; 
-  onSaveNote?: (note: string) => void; // New prop
+  onSaveNote?: (note: string) => void;
+  level?: number; // New prop
 }
 
-const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isActivityDone, activityConfig, isFuture, onSaveNote }: DayDetailCardProps) => {
+const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isActivityDone, activityConfig, isFuture, onSaveNote, level = 1 }: DayDetailCardProps) => {
   const navigate = useNavigate();
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteText, setNoteText] = useState(log?.userNote || '');
@@ -33,16 +35,20 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
       setIsEditingNote(false);
   };
 
-  // Helper for RPE emoji
   const getRpeIcon = (rpe: string) => {
       if (rpe === 'light') return '🪶';
       if (rpe === 'heavy') return '🥵';
       return '👌';
   };
 
+  // Get dynamic text for Recovery Card
+  // Safe lookup for level config
+  const levelConfig = ACTION_CARD_CONFIG[level as keyof typeof ACTION_CARD_CONFIG] || ACTION_CARD_CONFIG[1];
+  const recoveryText = levelConfig.recoverySubtitle; // "Låt kroppen vila idag" etc.
+
   // --- RENDER LOGIC ---
 
-  // 1. PAST / COMPLETED REHAB (Detailed Logbook)
+  // 1. PAST / COMPLETED REHAB
   if (log && log.status === 'completed') {
     const painColor = (log.painScore || 0) <= 3 ? 'text-green-600 border-green-200 bg-green-50' : 
                       (log.painScore || 0) <= 5 ? 'text-yellow-600 border-yellow-200 bg-yellow-50' : 
@@ -57,7 +63,6 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
             <span className="text-xs font-bold text-slate-400">Kl {completedTime}</span>
         </div>
         
-        {/* Result Card */}
         <div className={`rounded-2xl p-6 border mb-4 relative overflow-hidden bg-white shadow-sm`}>
             
             <div className="flex justify-between items-start mb-6">
@@ -75,7 +80,6 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                 </div>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className={`p-4 rounded-xl border ${painColor} flex flex-col items-center justify-center text-center`}>
                     <span className="text-3xl font-black mb-1">{log.painScore}</span>
@@ -87,7 +91,6 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                 </div>
             </div>
 
-            {/* Note Section */}
             <div className="border-t border-slate-100 pt-4">
                 <div className="flex justify-between items-center mb-2">
                     <span className="text-xs font-bold text-slate-400 uppercase">Anteckning</span>
@@ -153,7 +156,6 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                 : 'bg-slate-50 border-slate-200 text-slate-400 grayscale'
               }
           `}>
-            {/* Background Decor */}
             <div className="absolute -bottom-4 -right-4 opacity-10 transform rotate-12">
                 <Dumbbell className="w-24 h-24" />
             </div>
@@ -195,33 +197,47 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
           </div>
       ) : (
           // Vilodag / Recovery Card
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 relative overflow-hidden shadow-sm group">
+          <div className={`border rounded-2xl p-6 mb-6 relative overflow-hidden shadow-sm group transition-all
+              ${isFuture 
+                 ? 'bg-slate-50 border-slate-200 opacity-70' 
+                 : 'bg-white border-slate-200'
+              }
+          `}>
               <div className="relative z-10">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold mb-3 uppercase tracking-wider">
+                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-3 uppercase tracking-wider ${isFuture ? 'bg-slate-200 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
                       <Coffee className="w-3 h-3" /> Återhämtning
                   </div>
-                  <h4 className="text-xl font-bold text-slate-800 mb-1">Vila & Lärande</h4>
-                  <p className="text-slate-500 text-sm mb-4">Ingen tung rehab planerad idag.</p>
+                  <h4 className={`text-xl font-bold mb-1 ${isFuture ? 'text-slate-400' : 'text-slate-800'}`}>
+                    Återhämtning
+                  </h4>
+                  <p className={`text-sm mb-4 ${isFuture ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {recoveryText}
+                  </p>
                   
-                  <button 
-                    onClick={() => navigate('/knowledge')}
-                    className="inline-flex items-center px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-colors"
-                  >
-                      <BookOpen className="w-4 h-4 mr-2 text-slate-400" />
-                      Gå till Kunskap
-                  </button>
+                  {isFuture ? (
+                      <div className="inline-flex items-center px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-400 cursor-not-allowed">
+                          <Lock className="w-4 h-4 mr-2" />
+                          Planerat
+                      </div>
+                  ) : (
+                      <button 
+                        onClick={() => navigate('/knowledge')}
+                        className="inline-flex items-center px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-colors"
+                      >
+                          <BookOpen className="w-4 h-4 mr-2 text-slate-400" />
+                          Gå till Kunskap
+                      </button>
+                  )}
               </div>
               
-              {/* Background Decor */}
               <div className="absolute -bottom-2 -right-2 opacity-5 transform rotate-12">
                   <Coffee className="w-24 h-24" />
               </div>
           </div>
       )}
 
-      {/* B. Activity List (FaR) - No Header */}
+      {/* B. Activity List (FaR) */}
       <div className="space-y-3 opacity-90">
-        {/* Activity Item (FaR) */}
         <button 
             onClick={canToggleActivity ? onToggleActivity : undefined}
             disabled={!canToggleActivity}

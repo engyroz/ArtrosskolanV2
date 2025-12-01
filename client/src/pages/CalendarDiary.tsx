@@ -44,7 +44,6 @@ const CalendarDiary = () => {
         
         const entry = history.find(h => h.date === dateStr && h.type !== 'daily_activity'); 
         
-        // Prioritize Completed Rehab Log
         if (entry) {
             generatedLogs.push({
                 id: entry.completedAt,
@@ -65,7 +64,6 @@ const CalendarDiary = () => {
             const iconType = entry.type === 'rehab' ? 'rehab' : 'activity';
             generatedMarkers.push({ date: dateStr, color, type: 'filled', iconType });
         } 
-        // Then Check Scheduled Rehab
         else if (schedule.includes(dayIndex)) {
             if (date < today && !isSameDay(date, today)) {
                 generatedLogs.push({
@@ -86,17 +84,6 @@ const CalendarDiary = () => {
                     focusText: level === 1 ? "Kontakt & Ro" : "Styrka & Balans"
                 });
                 generatedMarkers.push({ date: dateStr, color: '#CBD5E1', type: 'hollow', iconType: 'rehab' }); 
-            }
-        }
-        // Finally Check Activity / Rest
-        else {
-            // If an activity was logged on a rest day, show it
-            const actLog = history.find(h => h.date === dateStr && h.type === 'daily_activity');
-            if (actLog) {
-                generatedMarkers.push({ date: dateStr, color: '#3B82F6', type: 'filled', iconType: 'activity' });
-            } else {
-                // Planned Activity Day (No Rehab) -> Show Shoe Icon (Hollow)
-                generatedMarkers.push({ date: dateStr, color: '#CBD5E1', type: 'hollow', iconType: 'activity' });
             }
         }
     });
@@ -194,6 +181,7 @@ const CalendarDiary = () => {
                 activityConfig={activityConfig}
                 isFuture={selectedDate > today}
                 onSaveNote={handleUpdateNote}
+                level={currentLevel} // Pass level for dynamic text
             />
         </div>
 
