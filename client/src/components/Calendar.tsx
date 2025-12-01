@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ChevronDown, ChevronUp, Dumbbell, Heart, Check, Coffee, Activity } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ChevronDown, ChevronUp, Dumbbell, Heart, Check, Coffee, Activity, Footprints } from 'lucide-react';
 import { 
   toLocalISOString, 
   isSameDay, 
@@ -11,10 +11,10 @@ import {
 } from '../utils/dateHelpers';
 
 export interface CalendarMarker {
-  date: string; // YYYY-MM-DD
+  date: string; 
   color: string;
   type: 'filled' | 'hollow' | 'cross'; 
-  iconType?: 'rehab' | 'activity' | 'rest'; // For Week View icons
+  iconType?: 'rehab' | 'activity' | 'rest'; 
 }
 
 interface CalendarProps {
@@ -36,15 +36,10 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
   const renderWeekIcon = (marker: CalendarMarker | undefined, isToday: boolean) => {
     const defaultIconColor = isToday ? 'text-white/80' : 'text-slate-300';
 
-    // 1. No marker -> Assume Rest if no explicit logic, or just empty
     if (!marker) {
-        // Optional: Logic to show Coffee cup if explicitly a rest day, but marker data drives this.
-        // If we want to show Coffee for empty days, we need a 'rest' marker type.
-        // Assuming 'markers' includes all relevant status info.
         return <div className="h-4 w-4" />;
     }
 
-    // 2. Completed (Filled) -> Colored Circle with Check
     if (marker.type === 'filled') {
         return (
             <div 
@@ -56,15 +51,14 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
         );
     }
     
-    // 3. Planned / Missed (Hollow/Cross) -> Specific Icons
-    const iconColor = isToday ? 'text-white' : marker.color === '#CBD5E1' ? 'text-slate-400' : marker.color; // Use slate for planned, red/color for missed
+    const iconColor = isToday ? 'text-white' : marker.color === '#CBD5E1' ? 'text-slate-400' : marker.color; 
     
     if (marker.iconType === 'rehab') {
          return <Dumbbell size={20} className={iconColor} strokeWidth={2} />;
     }
     if (marker.iconType === 'activity') {
-         // Shoe isn't in Lucide basic set usually, Activity/Heart works
-         return <Activity size={20} className={iconColor} strokeWidth={2} />;
+         // Use Footprints for "Shoe"
+         return <Footprints size={20} className={iconColor} strokeWidth={2} />;
     }
     if (marker.iconType === 'rest') {
         return <Coffee size={18} className={iconColor} strokeWidth={2} />;
@@ -74,7 +68,6 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
   };
 
   const renderMonthDot = (marker: CalendarMarker) => {
-      // Completed -> Large Filled Dot
       if (marker.type === 'filled') {
           return (
               <div 
@@ -83,7 +76,6 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
               />
           );
       }
-      // Planned -> Large Hollow Ring
       return (
           <div 
               className="w-2 h-2 rounded-full border-2 bg-transparent"
@@ -104,28 +96,20 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
         let pillClasses = "relative w-14 h-28 flex flex-col items-center justify-between py-3 rounded-full transition-all cursor-pointer select-none border";
         
         if (isToday) {
-            // Solid Blue for Today
             pillClasses += " bg-blue-600 border-blue-600 text-white shadow-lg transform scale-105 z-10";
         } else if (isSelected) {
-            // Selected but not today (Ring)
             pillClasses += " bg-white border-blue-600 text-slate-900 ring-2 ring-blue-600 z-10";
         } else {
-            // Standard Day
             pillClasses += " bg-white border-slate-100 text-slate-500 hover:border-blue-200 hover:bg-slate-50";
         }
 
         return (
             <div key={dateStr} className="flex flex-col items-center justify-center px-0.5">
                 <div onClick={() => onSelectDate(date)} className={pillClasses}>
-                    {/* Top: Day Name */}
                     <span className={`text-[10px] font-bold uppercase tracking-wider ${isToday ? 'text-blue-100' : 'text-slate-400'}`}>
                         {SWEDISH_DAYS_SHORT[date.getDay() === 0 ? 6 : date.getDay() - 1]}
                     </span>
-                    
-                    {/* Middle: Date Number */}
                     <span className="text-2xl font-bold leading-none">{date.getDate()}</span>
-                    
-                    {/* Bottom: Icon */}
                     <div className="h-8 flex items-center justify-center">
                         {renderWeekIcon(marker, isToday)}
                     </div>
@@ -153,8 +137,6 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
       <div key={dateStr} className="flex items-center justify-center p-1">
         <div onClick={() => onSelectDate(date)} className={cellClasses}>
           <span>{date.getDate()}</span>
-          
-          {/* Month Marker */}
           {marker && (
             <div className="absolute bottom-1.5">
                {renderMonthDot(marker)}
@@ -172,7 +154,6 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
   return (
     <div className="bg-white rounded-b-3xl shadow-sm border-b border-slate-200 overflow-hidden">
       
-      {/* Header / Month Navigator */}
       <div className="flex items-center justify-between px-6 pt-6 pb-4">
         <h2 className="text-lg font-bold text-slate-900 capitalize flex items-center gap-2">
           {SWEDISH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
@@ -190,9 +171,7 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
         )}
       </div>
 
-      {/* Grid */}
       <div className="px-2 pb-6">
-        {/* Days Header for Month View Only */}
         {viewMode === 'month' && (
             <div className="grid grid-cols-7 mb-2">
             {SWEDISH_DAYS_SHORT.map((day, i) => (
@@ -211,7 +190,6 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
         </div>
       </div>
 
-      {/* Expand/Collapse Handle */}
       <button 
         onClick={toggleView}
         className="w-full py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors uppercase tracking-wider"
