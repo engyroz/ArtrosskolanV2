@@ -1,6 +1,6 @@
 import React from 'react';
 import { WorkoutLog } from '../types';
-import { Play, CheckCircle, Clock, AlertCircle, XCircle, Dumbbell, Activity, Check } from 'lucide-react';
+import { Play, CheckCircle, Clock, XCircle, Dumbbell, Activity, Check, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface DayDetailCardProps {
@@ -52,7 +52,6 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                         <span className="block text-xs font-bold opacity-70 uppercase">Smärta</span>
                         <span className="text-2xl font-bold">{log.painScore}/10</span>
                     </div>
-                    {/* Add Exertion here if available in log */}
                 </div>
             </div>
         </div>
@@ -77,7 +76,6 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
   }
 
   // 3. FUTURE / TODAY (PLANNING)
-  // Logic: Show Rehab Card (if planned) AND Activity List
   
   const hasRehabPlanned = log && log.status === 'planned';
 
@@ -85,27 +83,49 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
     <div className="px-4 pb-20 animate-slide-up">
       <h3 className="text-lg font-bold text-slate-900 capitalize mb-4 px-2">{formattedDate}</h3>
       
-      {/* A. Rehab Card */}
+      {/* A. Rehab Card (Aligned with Dashboard Design) */}
       {hasRehabPlanned ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-            <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600">
-                    <Dumbbell className="w-6 h-6" />
+          <div className={`rounded-2xl p-6 mb-6 relative overflow-hidden shadow-sm transition-all border
+              ${isToday 
+                ? 'bg-blue-600 border-blue-600 text-white' 
+                : 'bg-slate-50 border-slate-200 text-slate-400 grayscale'
+              }
+          `}>
+            {/* Background Decor */}
+            <div className="absolute -bottom-4 -right-4 opacity-10 transform rotate-12">
+                <Dumbbell className="w-24 h-24" />
+            </div>
+
+            <div className="relative z-10 flex flex-col h-full">
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-lg mb-2 inline-block ${isToday ? 'bg-blue-500 text-blue-50' : 'bg-slate-200 text-slate-500'}`}>
+                            {isToday ? 'Dagens Pass' : 'Planerat'}
+                        </span>
+                        <h4 className={`text-xl font-extrabold ${isToday ? 'text-white' : 'text-slate-500'}`}>
+                            Rehabstyrka
+                        </h4>
+                        <p className={`text-sm font-medium ${isToday ? 'text-blue-100' : 'text-slate-400'}`}>
+                            {log.focusText}
+                        </p>
+                    </div>
                 </div>
-                <div className="flex-1">
-                    <h4 className="text-lg font-bold text-slate-900">Rehabstyrka</h4>
-                    <p className="text-slate-500 text-sm mb-4">4 övningar • ca 15 min</p>
-                    
+
+                <div className="flex items-center justify-between mt-2">
+                    <div className={`text-xs font-bold flex items-center ${isToday ? 'text-blue-100' : 'text-slate-400'}`}>
+                        <Clock className="w-3.5 h-3.5 mr-1.5" /> 15 min
+                    </div>
+
                     {isToday ? (
                         <button 
-                            onClick={onStartRehab}
-                            className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center justify-center"
+                            onClick={() => navigate('/dashboard')}
+                            className="px-5 py-2.5 bg-white text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-lg flex items-center"
                         >
-                            <Play className="w-4 h-4 mr-2 fill-current" /> Starta
+                            Starta <Play className="w-3.5 h-3.5 ml-1.5 fill-current" />
                         </button>
                     ) : (
-                        <div className="inline-flex items-center text-slate-400 text-sm font-medium bg-slate-50 px-3 py-1.5 rounded-lg">
-                            <Clock className="w-4 h-4 mr-2" /> Planerat
+                        <div className="px-4 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-400 flex items-center">
+                            <Lock className="w-3 h-3 mr-1.5" /> Låst
                         </div>
                     )}
                 </div>
@@ -120,17 +140,18 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
       )}
 
       {/* B. Secondary List (Checklist) */}
-      <div className="space-y-3">
+      <div className="space-y-3 opacity-90">
         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">Livsstil & Aktivitet</h4>
         
         {/* Activity Item (FaR) */}
         <button 
-            onClick={onToggleActivity}
+            onClick={isToday ? onToggleActivity : undefined}
+            disabled={!isToday}
             className={`w-full flex items-center p-4 rounded-xl border transition-all ${
                 isActivityDone 
                 ? 'bg-green-50 border-green-200' 
-                : 'bg-white border-slate-200 hover:border-blue-300'
-            }`}
+                : 'bg-white border-slate-200'
+            } ${!isToday ? 'opacity-60 cursor-not-allowed' : 'hover:border-blue-300 cursor-pointer'}`}
         >
             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors ${
                 isActivityDone 
