@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Maximize2, Minimize2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ChevronDown, ChevronUp, Dumbbell, Heart, Coffee } from 'lucide-react';
 import { 
   toLocalISOString, 
   isSameDay, 
@@ -7,13 +7,15 @@ import {
   getDaysInMonthGrid, 
   SWEDISH_MONTHS, 
   SWEDISH_DAYS_SHORT,
-  addMonths
+  addMonths,
+  addDays
 } from '../utils/dateHelpers';
 
 export interface CalendarMarker {
   date: string; // YYYY-MM-DD
   color: string;
-  type: 'filled' | 'hollow' | 'cross'; // Added 'cross' for missed
+  type: 'filled' | 'hollow' | 'cross'; 
+  iconType?: 'rehab' | 'activity' | 'rest'; // For Week View icons
 }
 
 interface CalendarProps {
@@ -26,8 +28,33 @@ interface CalendarProps {
 }
 
 const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, markers, currentDate }: CalendarProps) => {
-  // We can keep viewMode local as it doesn't affect data fetching requirements usually
-  const [viewMode, setViewMode] = React.useState<'week' | 'month'>('month'); 
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week'); // Default to Week
+
+  const toggleView = () => {
+    setViewMode(prev => prev === 'week' ? 'month' : 'week');
+  };
+
+  const renderMarkerIcon = (marker: CalendarMarker, isSelected: boolean) => {
+    // Week View: Show Icons
+    const iconClass = `w-3 h-3 ${isSelected ? 'text-white' : ''}`;
+    const style = { color: isSelected ? 'white' : marker.color };
+
+    if (marker.type === 'hollow' && marker.color === '#CBD5E1') return null; // Don't show planned icons in small view if distracting
+
+    if (marker.iconType === 'rehab') return <Dumbbell className={iconClass} style={style} />;
+    if (marker.iconType === 'activity') return <Heart className={iconClass} style={style} />;
+    
+    // Default dot if no specific icon or for simple markers
+    return (
+        <div 
+            className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'ring-1 ring-white' : ''}`}
+            style={{ 
+               backgroundColor: marker.type === 'filled' ? marker.color : 'transparent',
+               border: marker.type === 'hollow' || marker.type === 'cross' ? `1.5px solid ${marker.color}` : 'none'
+            }} 
+        />
+    );
+  };
 
   const renderDayCell = (date: Date, isCurrentMonth = true) => {
     const dateStr = toLocalISOString(date);
@@ -36,17 +63,17 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
     
     const marker = markers.find(m => m.date === dateStr);
 
-    let cellClasses = "relative w-10 h-10 flex flex-col items-center justify-center rounded-full text-sm font-medium transition-all cursor-pointer select-none";
+    let cellClasses = "relative w-10 h-14 flex flex-col items-center justify-center rounded-xl text-sm font-medium transition-all cursor-pointer select-none border";
     
     if (isSelected) {
-      cellClasses += " bg-slate-900 text-white shadow-lg transform scale-105 z-10";
+      cellClasses += " bg-blue-600 border-blue-600 text-white shadow-md transform scale-105 z-10";
     } else if (isToday) {
-      cellClasses += " bg-blue-50 text-blue-700 border-2 border-blue-200 font-bold";
+      cellClasses += " bg-blue-50 border-blue-200 text-blue-700 font-bold";
     } else {
-      cellClasses += " text-slate-700 hover:bg-slate-100";
+      cellClasses += " bg-white border-transparent text-slate-700 hover:bg-slate-50";
     }
 
-    if (!isCurrentMonth) {
+    if (!isCurrentMonth && viewMode === 'month') {
       cellClasses += " opacity-30";
     }
 
@@ -56,17 +83,29 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
           onClick={() => onSelectDate(date)}
           className={cellClasses}
         >
-          <span>{date.getDate()}</span>
+          <span className="text-[10px] font-bold uppercase mb-1 opacity-70">
+            {SWEDISH_DAYS_SHORT[date.getDay() === 0 ? 6 : date.getDay() - 1]}
+          </span>
+          <span className="text-lg leading-none mb-1">{date.getDate()}</span>
           
-          {marker && (
-            <div 
-                className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${isSelected ? 'ring-2 ring-slate-900' : ''}`}
-                style={{ 
-                   backgroundColor: marker.type === 'filled' ? marker.color : 'transparent',
-                   border: marker.type === 'hollow' || marker.type === 'cross' ? `1.5px solid ${marker.color}` : 'none'
-                }} 
-            />
-          )}
+          {/* Marker Logic */}
+          <div className="h-4 flex items-center justify-center">
+             {marker ? (
+                 viewMode === 'week' ? renderMarkerIcon(marker, isSelected) : (
+                    // Month View: Always Dots
+                    <div 
+                        className={`w-1.5 h-1.5 rounded-full`}
+                        style={{ 
+                        backgroundColor: marker.type === 'filled' ? marker.color : 'transparent',
+                        border: marker.type === 'hollow' || marker.type === 'cross' ? `1.5px solid ${marker.color}` : 'none'
+                        }} 
+                    />
+                 )
+             ) : (
+                 // Placeholder for layout stability
+                 <div className="w-1.5 h-1.5" />
+             )}
+          </div>
         </div>
       </div>
     );
@@ -77,72 +116,48 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
     : getDaysInMonthGrid(currentMonth);
 
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200">
+    <div className="bg-white rounded-b-3xl shadow-sm border-b border-slate-200 overflow-hidden">
       
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="w-5 h-5 text-blue-600" />
-          <h2 className="text-lg font-bold text-slate-900 capitalize">
-            {SWEDISH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-          </h2>
-        </div>
+      {/* Header / Month Navigator */}
+      <div className="flex items-center justify-between px-6 pt-6 pb-4">
+        <h2 className="text-lg font-bold text-slate-900 capitalize flex items-center gap-2">
+          {SWEDISH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+        </h2>
         
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-           <button 
-             onClick={() => setViewMode('week')}
-             className={`p-2 rounded-lg transition-all ${viewMode === 'week' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-           >
-             <Minimize2 className="w-4 h-4" />
-           </button>
-           <button 
-             onClick={() => setViewMode('month')}
-             className={`p-2 rounded-lg transition-all ${viewMode === 'month' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-           >
-             <Maximize2 className="w-4 h-4" />
-           </button>
-        </div>
+        {viewMode === 'month' && (
+            <div className="flex items-center gap-2">
+                <button onClick={() => onMonthChange(addMonths(currentMonth, -1))} className="p-1 hover:bg-slate-100 rounded">
+                    <ChevronLeft className="w-5 h-5 text-slate-500" />
+                </button>
+                <button onClick={() => onMonthChange(addMonths(currentMonth, 1))} className="p-1 hover:bg-slate-100 rounded">
+                    <ChevronRight className="w-5 h-5 text-slate-500" />
+                </button>
+            </div>
+        )}
       </div>
 
       {/* Grid */}
-      <div className="space-y-2">
-        <div className="grid grid-cols-7 mb-2">
-          {SWEDISH_DAYS_SHORT.map((day, i) => (
-            <div key={i} className="text-center text-xs font-bold text-slate-400">
-              {day}
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-y-3">
+      <div className="px-4 pb-4">
+        <div className={`grid grid-cols-7 gap-y-2 transition-all duration-300 ${viewMode === 'week' ? 'gap-x-1' : 'gap-x-1'}`}>
           {displayedDays.map(date => {
-            // Check if day belongs to the month being viewed
             const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
-            const showOpaque = viewMode === 'week' || isCurrentMonth;
-            return renderDayCell(date, showOpaque);
+            // In week view, show all. In month view, fade non-current.
+            return renderDayCell(date, isCurrentMonth);
           })}
         </div>
       </div>
 
-      {/* Navigation */}
-      {viewMode === 'month' && (
-        <div className="flex justify-between mt-6 pt-4 border-t border-slate-100">
-           <button 
-             onClick={() => onMonthChange(addMonths(currentMonth, -1))}
-             className="flex items-center text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors"
-           >
-             <ChevronLeft className="w-4 h-4 mr-1" />
-             Föregående
-           </button>
-           <button 
-             onClick={() => onMonthChange(addMonths(currentMonth, 1))}
-             className="flex items-center text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors"
-           >
-             Nästa
-             <ChevronRight className="w-4 h-4 ml-1" />
-           </button>
-        </div>
-      )}
+      {/* Expand/Collapse Handle */}
+      <button 
+        onClick={toggleView}
+        className="w-full py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors uppercase tracking-wider"
+      >
+        {viewMode === 'week' ? (
+            <>Visa Månad <ChevronDown className="w-3 h-3 ml-1" /></>
+        ) : (
+            <>Visa Vecka <ChevronUp className="w-3 h-3 ml-1" /></>
+        )}
+      </button>
     </div>
   );
 };

@@ -1,15 +1,18 @@
 import React from 'react';
 import { WorkoutLog } from '../types';
-import { Play, CheckCircle, Calendar, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { Play, CheckCircle, Clock, AlertCircle, XCircle, Dumbbell, Activity, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface DayDetailCardProps {
   date: Date;
   log?: WorkoutLog; 
   isToday: boolean;
+  onStartRehab: () => void;
+  onToggleActivity: () => void;
+  isActivityDone: boolean;
 }
 
-const DayDetailCard = ({ date, log, isToday }: DayDetailCardProps) => {
+const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isActivityDone }: DayDetailCardProps) => {
   const navigate = useNavigate();
 
   const formattedDate = new Intl.DateTimeFormat('sv-SE', { 
@@ -18,99 +21,133 @@ const DayDetailCard = ({ date, log, isToday }: DayDetailCardProps) => {
     month: 'long' 
   }).format(date);
 
-  // 1. Completed
+  // --- RENDER LOGIC ---
+
+  // 1. PAST / COMPLETED REHAB
   if (log && log.status === 'completed') {
-    const painColor = (log.painScore || 0) <= 3 ? 'text-green-600 bg-green-50' : 
-                      (log.painScore || 0) <= 5 ? 'text-yellow-600 bg-yellow-50' : 
-                      'text-red-600 bg-red-50';
+    const painColor = (log.painScore || 0) <= 3 ? 'text-green-600 bg-green-50 border-green-100' : 
+                      (log.painScore || 0) <= 5 ? 'text-yellow-600 bg-yellow-50 border-yellow-100' : 
+                      'text-red-600 bg-red-50 border-red-100';
 
     return (
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 animate-slide-up">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-xl font-bold text-slate-900 capitalize">{formattedDate}</h3>
-            <span className="inline-flex items-center text-green-600 font-bold text-sm mt-1">
-              <CheckCircle className="w-4 h-4 mr-1.5" /> Genomfört
-            </span>
-          </div>
-          <div className={`px-3 py-1.5 rounded-lg font-bold text-sm ${painColor}`}>
-            Smärta: {log.painScore}/10
-          </div>
-        </div>
+      <div className="px-4 animate-slide-up">
+        <h3 className="text-lg font-bold text-slate-900 capitalize mb-4 px-2">{formattedDate}</h3>
         
-        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-4">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Typ av pass</div>
-          <div className="font-bold text-slate-800 capitalize">{log.workoutType === 'rehab' ? 'Rehabstyrka' : 'Cirkulation'}</div>
+        {/* Result Card */}
+        <div className={`rounded-2xl p-6 border ${painColor} mb-4 relative overflow-hidden`}>
+            <div className="relative z-10">
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 bg-white rounded-full shadow-sm">
+                            <CheckCircle className="w-5 h-5 text-current" />
+                        </div>
+                        <span className="font-bold text-lg">Genomfört</span>
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider bg-white/50 px-2 py-1 rounded">
+                        {log.workoutType === 'rehab' ? 'Rehab' : 'Cirkulation'}
+                    </span>
+                </div>
+                <div className="mt-4 flex gap-4">
+                    <div>
+                        <span className="block text-xs font-bold opacity-70 uppercase">Smärta</span>
+                        <span className="text-2xl font-bold">{log.painScore}/10</span>
+                    </div>
+                    {/* Add Exertion here if available in log */}
+                </div>
+            </div>
         </div>
-
-        {log.userNote && <div className="text-sm text-slate-500 italic">"{log.userNote}"</div>}
       </div>
     );
   }
 
-  // 2. Missed (Past)
+  // 2. PAST / MISSED
   if (log && log.status === 'missed') {
     return (
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 animate-slide-up opacity-80">
-        <h3 className="text-xl font-bold text-slate-900 capitalize mb-4">{formattedDate}</h3>
-        <div className="bg-red-50 border border-red-100 rounded-2xl p-5 flex items-center gap-4">
-            <XCircle className="w-8 h-8 text-red-400" />
+      <div className="px-4 animate-slide-up">
+        <h3 className="text-lg font-bold text-slate-900 capitalize mb-4 px-2">{formattedDate}</h3>
+        <div className="bg-slate-100 border border-slate-200 rounded-2xl p-6 flex items-center gap-4 opacity-75">
+            <XCircle className="w-10 h-10 text-slate-400" />
             <div>
-                <h4 className="text-lg font-bold text-red-900 mb-1">Missat pass</h4>
-                <p className="text-red-700 text-sm">Livet kommer emellan ibland. Nya tag!</p>
+                <h4 className="text-lg font-bold text-slate-700">Missat pass</h4>
+                <p className="text-slate-500 text-sm">Livet kommer emellan. Nya tag!</p>
             </div>
         </div>
       </div>
     );
   }
 
-  // 3. Planned (Future or Today)
-  if (log && log.status === 'planned') {
-    return (
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 animate-slide-up">
-        <h3 className="text-xl font-bold text-slate-900 capitalize mb-4">{formattedDate}</h3>
-        
-        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Planerat</span>
-            <div className="flex items-center text-blue-600 text-xs font-bold">
-              <Clock className="w-3 h-3 mr-1" /> 15 min
+  // 3. FUTURE / TODAY (PLANNING)
+  // Logic: Show Rehab Card (if planned) AND Activity List
+  
+  const hasRehabPlanned = log && log.status === 'planned';
+
+  return (
+    <div className="px-4 pb-20 animate-slide-up">
+      <h3 className="text-lg font-bold text-slate-900 capitalize mb-4 px-2">{formattedDate}</h3>
+      
+      {/* A. Rehab Card */}
+      {hasRehabPlanned ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+            <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600">
+                    <Dumbbell className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                    <h4 className="text-lg font-bold text-slate-900">Rehabstyrka</h4>
+                    <p className="text-slate-500 text-sm mb-4">4 övningar • ca 15 min</p>
+                    
+                    {isToday ? (
+                        <button 
+                            onClick={onStartRehab}
+                            className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center justify-center"
+                        >
+                            <Play className="w-4 h-4 mr-2 fill-current" /> Starta
+                        </button>
+                    ) : (
+                        <div className="inline-flex items-center text-slate-400 text-sm font-medium bg-slate-50 px-3 py-1.5 rounded-lg">
+                            <Clock className="w-4 h-4 mr-2" /> Planerat
+                        </div>
+                    )}
+                </div>
             </div>
           </div>
-          <h4 className="text-lg font-bold text-blue-900 mb-1">Rehabpass Nivå {log.level}</h4>
-          <p className="text-blue-700 text-sm">{log.focusText}</p>
-        </div>
+      ) : (
+          // Vilodag Card
+          <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 mb-6 text-center">
+              <p className="text-slate-500 font-medium">Ingen tung rehab planerad.</p>
+              <p className="text-slate-400 text-sm">Njut av vilan!</p>
+          </div>
+      )}
 
-        {isToday ? (
-          <button 
-            onClick={() => navigate('/dashboard')} // Go to dashboard to start
-            className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg shadow-blue-200"
-          >
-            <Play className="w-4 h-4 mr-2 fill-current" /> Starta på Dashboard
-          </button>
-        ) : (
-          <button className="w-full py-3 border border-slate-200 text-slate-400 rounded-xl font-bold text-sm cursor-not-allowed">
-             Kan ej startas än
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  // 4. Rest / Empty
-  return (
-    <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 animate-slide-up text-center">
-      <h3 className="text-xl font-bold text-slate-900 capitalize mb-2">{formattedDate}</h3>
-      <div className="py-8 flex flex-col items-center">
-        <div className="h-14 w-14 bg-slate-100 rounded-full flex items-center justify-center mb-3 text-slate-400">
-          <Calendar className="w-6 h-6" />
-        </div>
-        <p className="text-slate-500 font-medium">Vilodag</p>
-        <p className="text-xs text-slate-400 mt-1">Inget rehabpass inbokat.</p>
-        <button className="mt-4 text-blue-600 font-bold text-sm hover:underline">
-          + Lägg till aktivitet
+      {/* B. Secondary List (Checklist) */}
+      <div className="space-y-3">
+        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">Livsstil & Aktivitet</h4>
+        
+        {/* Activity Item (FaR) */}
+        <button 
+            onClick={onToggleActivity}
+            className={`w-full flex items-center p-4 rounded-xl border transition-all ${
+                isActivityDone 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-white border-slate-200 hover:border-blue-300'
+            }`}
+        >
+            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors ${
+                isActivityDone 
+                ? 'bg-green-500 border-green-500 text-white' 
+                : 'border-slate-300 bg-white'
+            }`}>
+                {isActivityDone && <Check className="w-3.5 h-3.5" />}
+            </div>
+            <div className="text-left">
+                <span className={`block font-bold ${isActivityDone ? 'text-green-900' : 'text-slate-900'}`}>
+                    Fysisk Aktivitet
+                </span>
+                <span className="text-xs text-slate-500">Promenad eller cykling</span>
+            </div>
         </button>
       </div>
+
     </div>
   );
 };

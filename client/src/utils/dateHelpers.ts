@@ -1,4 +1,3 @@
-
 // Helper to get YYYY-MM-DD in local time (prevents timezone issues)
 export const toLocalISOString = (date: Date): string => {
   const offset = date.getTimezoneOffset() * 60000;
@@ -29,9 +28,8 @@ export const addMonths = (date: Date, months: number): Date => {
 export const getStartOfWeek = (date: Date): Date => {
   const d = new Date(date);
   const day = d.getDay();
-  // Adjust so Monday is 0 index for calculation if we want Monday start, 
-  // but standard JS Sunday=0 is fine if we render labels correctly.
-  // Let's assume Week starts on Monday for Sweden.
+  // Adjust so Monday is 0 index for calculation. Standard JS Sunday=0.
+  // If Sunday (0), subtract 6 days. Else subtract day-1.
   const diff = d.getDate() - day + (day === 0 ? -6 : 1); 
   return new Date(d.setDate(diff));
 };
