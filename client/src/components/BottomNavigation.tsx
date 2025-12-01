@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Calendar, Map, User } from 'lucide-react';
+import { Home, Calendar, Map, BookOpen } from 'lucide-react'; // Changed User icon to BookOpen for Kunskap
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -10,9 +10,9 @@ const BottomNavigation = () => {
 
   const tabs = [
     { id: 'dashboard', label: 'Idag', icon: Home, path: '/dashboard' },
-    { id: 'plan', label: 'Min Plan', icon: Calendar, path: '/calendar' },
+    { id: 'calendar', label: 'Kalender', icon: Calendar, path: '/calendar' },
     { id: 'journey', label: 'Resan', icon: Map, path: '/journey' },
-    { id: 'profile', label: 'Profil', icon: User, path: '/profile' },
+    { id: 'knowledge', label: 'Kunskap', icon: BookOpen, path: '/knowledge' }, // New Tab 4
   ];
 
   return (

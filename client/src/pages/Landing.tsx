@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Activity, ShieldCheck } from 'lucide-react';
 
@@ -21,15 +20,14 @@ const Landing = () => {
   const content = getContent();
 
   const startAssessment = () => {
-    // Pass joint param if it exists
     navigate(jointParam ? `/assessment?joint=${jointParam}` : '/assessment');
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero */}
-      <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56 text-center">
+    <div className="bg-white">
+      {/* Hero - Adjusted padding for fixed header */}
+      <div className="relative isolate px-6 pt-10 lg:px-8">
+        <div className="mx-auto max-w-2xl py-20 sm:py-32 lg:py-40 text-center">
           <div className="hidden sm:mb-8 sm:flex sm:justify-center">
             <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-slate-600 ring-1 ring-slate-900/10 hover:ring-slate-900/20">
               Evidensbaserad behandling • <a href="#" className="font-semibold text-blue-600">Läs mer <span aria-hidden="true">&rarr;</span></a>
@@ -44,7 +42,7 @@ const Landing = () => {
           <div className="flex items-center justify-center gap-x-6">
             <button
               onClick={startAssessment}
-              className="rounded-xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all flex items-center"
+              className="rounded-xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg hover:bg-blue-500 transition-all flex items-center transform hover:scale-105"
             >
               Gör smärt-testet <ArrowRight className="ml-2 h-5 w-5" />
             </button>
@@ -53,7 +51,7 @@ const Landing = () => {
       </div>
 
       {/* Social Proof */}
-      <div className="bg-slate-50 py-24 sm:py-32">
+      <div className="bg-slate-50 py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
           <h2 className="text-center text-lg font-semibold leading-8 text-slate-900 mb-10">
             Tryggt, Säkert & Medicinskt

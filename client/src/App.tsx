@@ -1,6 +1,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import Navbar from './components/Navbar'; // Legacy, keeping for reference if needed but unused in new layout
+import TopNavigation from './components/TopNavigation'; // NEW GLOBAL HEADER
 import BottomNavigation from './components/BottomNavigation';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { TimeProvider } from './contexts/TimeContext';
@@ -13,7 +14,9 @@ import Payment from './pages/Payment';
 import Dashboard from './pages/Dashboard';
 import WorkoutPlayer from './pages/WorkoutPlayer';
 import CalendarDiary from './pages/CalendarDiary';
-import MyJourney from './pages/MyJourney'; // Import
+import MyJourney from './pages/MyJourney'; 
+import KnowledgeBase from './pages/KnowledgeBase'; // New Page
+import Settings from './pages/Settings'; // New Page
 import ProtectedRoute from './components/ProtectedRoute';
 import TimeTravelDebug from './components/TimeTravelDebug';
 
@@ -21,13 +24,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { user } = useAuth();
   
-  const isAppRoute = ['/dashboard', '/calendar', '/plan', '/journey', '/progress', '/profile', '/workout'].includes(location.pathname);
+  // App routes where Bottom Nav should appear
+  const isAppRoute = ['/dashboard', '/calendar', '/journey', '/knowledge', '/profile'].includes(location.pathname);
   const showBottomNav = user && isAppRoute;
-  const showTopNav = !showBottomNav; 
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
-      {showTopNav && <Navbar />}
+      {/* Global Header replaces Navbar */}
+      <TopNavigation />
       
       <main className="flex-grow relative">
         {children}
@@ -67,10 +71,20 @@ const App: React.FC = () => {
                 element={<ProtectedRoute requireSubscription={true}><CalendarDiary /></ProtectedRoute>} 
               />
 
-              {/* Journey Route */}
               <Route 
                 path="/journey" 
                 element={<ProtectedRoute requireSubscription={true}><MyJourney /></ProtectedRoute>} 
+              />
+
+              {/* New Knowledge Route */}
+              <Route 
+                path="/knowledge" 
+                element={<ProtectedRoute requireSubscription={true}><KnowledgeBase /></ProtectedRoute>} 
+              />
+
+              <Route 
+                path="/settings" 
+                element={<ProtectedRoute><Settings /></ProtectedRoute>} 
               />
 
               <Route 
@@ -78,9 +92,10 @@ const App: React.FC = () => {
                 element={<ProtectedRoute requireSubscription={true}><WorkoutPlayer /></ProtectedRoute>} 
               />
               
+              {/* Legacy redirects */}
               <Route path="/plan" element={<CalendarDiary />} />
-              <Route path="/progress" element={<MyJourney />} /> {/* Redirect old progress link */}
-              <Route path="/profile" element={<div className="p-8 text-center">Profil kommer snart...</div>} />
+              <Route path="/progress" element={<MyJourney />} /> 
+              <Route path="/profile" element={<Settings />} /> 
 
             </Routes>
           </Layout>

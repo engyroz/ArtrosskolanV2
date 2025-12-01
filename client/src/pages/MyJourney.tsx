@@ -1,42 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { CheckCircle, Lock, BookOpen, ChevronRight, Trophy, Map } from 'lucide-react';
-import { EDUCATION_MODULES, LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
-import { getMaxXP } from '../utils/progressionEngine'; // Updated import
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { db } from '../firebase';
+import { CheckCircle, Lock, Trophy, Map } from 'lucide-react';
+import { LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
+import { getMaxXP } from '../utils/progressionEngine';
 
 const MyJourney = () => {
-  const { user, userProfile, refreshProfile } = useAuth();
+  const { userProfile } = useAuth();
   
   const currentLevel = userProfile?.currentLevel || 1;
   const userGoal = userProfile?.assessmentData?.mainGoal || "Bli smärtfri";
   
-  // Use XP instead of session count for consistent progression bar
   const currentXP = userProfile?.progression?.experiencePoints || 0;
   const maxXP = getMaxXP(currentLevel);
   
   const progressPercentage = Math.min(100, Math.round((currentXP / maxXP) * 100));
-
-  const handleReadArticle = async (articleId: string) => {
-      if (!user) return;
-      try {
-          const userRef = doc(db, 'users', user.uid);
-          await updateDoc(userRef, {
-              completedEducationIds: arrayUnion(articleId)
-          });
-          await refreshProfile();
-      } catch (e) {
-          console.error("Failed to mark article as read", e);
-      }
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
       
       {/* 1. Header & Timeline */}
       <div className="bg-white px-6 pt-8 pb-8 shadow-sm rounded-b-3xl mb-6">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Din Resa</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Min Resa</h1>
         <p className="text-slate-500 mb-8">
             Mot målet: <span className="font-semibold text-slate-900 capitalize">{userGoal.replace(/_/g, ' ')}</span>
         </p>
@@ -117,57 +101,6 @@ const MyJourney = () => {
                     Slutför träningspassen för att låsa upp nivåtestet.
                 </div>
             )}
-        </div>
-
-        {/* 3. Education / Knowledge Base */}
-        <div>
-            <h3 className="text-lg font-bold text-slate-900 mb-3 px-2 flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-blue-600" />
-                Artrosskolan
-            </h3>
-            
-            <div className="space-y-3">
-                {EDUCATION_MODULES.map((module) => {
-                    const isLocked = module.requiredLevel > currentLevel;
-                    const isRead = userProfile?.completedEducationIds?.includes(module.id);
-
-                    return (
-                        <button 
-                            key={module.id}
-                            disabled={isLocked}
-                            onClick={() => !isLocked && !isRead && handleReadArticle(module.id)}
-                            className={`w-full flex items-center p-4 bg-white rounded-xl border transition-all text-left group
-                                ${isLocked ? 'border-slate-100 opacity-60' : 'border-slate-200 hover:border-blue-300 hover:shadow-md'}
-                            `}
-                        >
-                            <div className={`h-10 w-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0
-                                ${isRead ? 'bg-green-100 text-green-600' : 
-                                  isLocked ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600'}
-                            `}>
-                                {isRead ? <CheckCircle className="w-5 h-5" /> : 
-                                 isLocked ? <Lock className="w-5 h-5" /> : 
-                                 <BookOpen className="w-5 h-5" />}
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">
-                                        {module.category}
-                                    </span>
-                                    <span className="text-xs text-slate-400">{module.readTime}</span>
-                                </div>
-                                <h4 className={`font-semibold truncate ${isLocked ? 'text-slate-400' : 'text-slate-900'}`}>
-                                    {module.title}
-                                </h4>
-                            </div>
-                            
-                            {!isLocked && !isRead && (
-                                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-400 ml-2" />
-                            )}
-                        </button>
-                    );
-                })}
-            </div>
         </div>
 
       </div>
