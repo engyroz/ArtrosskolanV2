@@ -94,8 +94,6 @@ const CalendarDiary = () => {
         }
         else {
             // REST / ACTIVITY DAY
-            // Can show activity marker if we want to encourage FaR on off days
-            // For now, leave empty or show small dot if FaR planned
         }
     });
 
@@ -108,14 +106,11 @@ const CalendarDiary = () => {
   
   // Handlers for Detail Card
   const handleStartRehab = () => {
-      navigate('/dashboard'); // Go to dashboard to start context
+      navigate('/dashboard'); 
   };
 
   const handleToggleActivity = async () => {
       if (!user) return;
-      // Add 'daily_activity' log for selected date
-      // Note: In real app, check if date is today or allow past logging?
-      // For now, allow logging on the selected date.
       
       try {
           const newLog = {
@@ -139,30 +134,28 @@ const CalendarDiary = () => {
       }
   };
 
-  // Check if activity exists for selected date (separate from the main log which prioritizes rehab)
-  // We need to check history directly since 'logs' might prioritize the rehab entry
   const activityLog = userProfile?.activityHistory?.find(h => 
       h.date === toLocalISOString(selectedDate) && h.type === 'daily_activity'
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-md mx-auto relative">
+    <div className="min-h-screen bg-slate-50 pb-24">
+      <div className="max-w-md mx-auto relative flex flex-col h-full">
         
-        {/* Calendar Section (Top) */}
-        <div className="sticky top-0 z-20">
+        {/* Calendar Section (No sticky, naturally stacked) */}
+        <div className="z-20 bg-slate-50 pt-2 pb-4 px-2">
             <Calendar 
-            selectedDate={selectedDate} 
-            onSelectDate={setSelectedDate}
-            currentMonth={currentMonth}
-            onMonthChange={setCurrentMonth}
-            markers={markers}
-            currentDate={today}
+                selectedDate={selectedDate} 
+                onSelectDate={setSelectedDate}
+                currentMonth={currentMonth}
+                onMonthChange={setCurrentMonth}
+                markers={markers}
+                currentDate={today}
             />
         </div>
 
-        {/* Details Section (Bottom) */}
-        <div className="pt-4">
+        {/* Details Section (Scrollable content below) */}
+        <div className="flex-grow px-2 animate-fade-in">
             <DayDetailCard 
                 date={selectedDate} 
                 log={selectedLog}
