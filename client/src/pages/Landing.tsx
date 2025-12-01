@@ -1,11 +1,23 @@
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import { ArrowRight, Activity, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext'; // Import Auth Context
 
 const Landing = () => {
+  const { user, loading } = useAuth(); // Get user state
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const jointParam = searchParams.get('joint');
+
+  // 1. Redirect if logged in
+  if (user && !loading) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // Optional: Show loading spinner while auth check completes to prevent flash of content
+  if (loading) {
+      return <div className="min-h-screen bg-white"></div>;
+  }
 
   // Dynamic Content based on Joint
   const getContent = () => {
