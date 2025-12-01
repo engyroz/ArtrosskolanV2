@@ -12,13 +12,15 @@ interface DayDetailCardProps {
   isActivityDone: boolean;
   activityConfig: { title: string; desc: string }; 
   isFuture: boolean; 
-  onSaveNote?: (note: string) => void; 
+  onSaveNote?: (note: string) => void; // New prop
 }
 
 const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isActivityDone, activityConfig, isFuture, onSaveNote }: DayDetailCardProps) => {
   const navigate = useNavigate();
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteText, setNoteText] = useState(log?.userNote || '');
+
+  const canToggleActivity = !isFuture;
 
   const formattedDate = new Intl.DateTimeFormat('sv-SE', { 
     weekday: 'long', 
@@ -31,18 +33,16 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
       setIsEditingNote(false);
   };
 
+  // Helper for RPE emoji
   const getRpeIcon = (rpe: string) => {
       if (rpe === 'light') return '🪶';
       if (rpe === 'heavy') return '🥵';
       return '👌';
   };
 
-  // Define variable here to fix error
-  const canToggleActivity = !isFuture;
-
   // --- RENDER LOGIC ---
 
-  // 1. PAST / COMPLETED REHAB
+  // 1. PAST / COMPLETED REHAB (Detailed Logbook)
   if (log && log.status === 'completed') {
     const painColor = (log.painScore || 0) <= 3 ? 'text-green-600 border-green-200 bg-green-50' : 
                       (log.painScore || 0) <= 5 ? 'text-yellow-600 border-yellow-200 bg-yellow-50' : 
@@ -57,6 +57,7 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
             <span className="text-xs font-bold text-slate-400">Kl {completedTime}</span>
         </div>
         
+        {/* Result Card */}
         <div className={`rounded-2xl p-6 border mb-4 relative overflow-hidden bg-white shadow-sm`}>
             
             <div className="flex justify-between items-start mb-6">
@@ -74,6 +75,7 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                 </div>
             </div>
 
+            {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className={`p-4 rounded-xl border ${painColor} flex flex-col items-center justify-center text-center`}>
                     <span className="text-3xl font-black mb-1">{log.painScore}</span>
@@ -85,6 +87,7 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                 </div>
             </div>
 
+            {/* Note Section */}
             <div className="border-t border-slate-100 pt-4">
                 <div className="flex justify-between items-center mb-2">
                     <span className="text-xs font-bold text-slate-400 uppercase">Anteckning</span>
@@ -150,6 +153,7 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                 : 'bg-slate-50 border-slate-200 text-slate-400 grayscale'
               }
           `}>
+            {/* Background Decor */}
             <div className="absolute -bottom-4 -right-4 opacity-10 transform rotate-12">
                 <Dumbbell className="w-24 h-24" />
             </div>
@@ -208,14 +212,16 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                   </button>
               </div>
               
+              {/* Background Decor */}
               <div className="absolute -bottom-2 -right-2 opacity-5 transform rotate-12">
                   <Coffee className="w-24 h-24" />
               </div>
           </div>
       )}
 
-      {/* B. Activity List (FaR) */}
+      {/* B. Activity List (FaR) - No Header */}
       <div className="space-y-3 opacity-90">
+        {/* Activity Item (FaR) */}
         <button 
             onClick={canToggleActivity ? onToggleActivity : undefined}
             disabled={!canToggleActivity}

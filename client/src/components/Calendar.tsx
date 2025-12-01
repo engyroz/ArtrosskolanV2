@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ChevronDown, ChevronUp, Dumbbell, Heart, Coffee } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ChevronDown, ChevronUp, Dumbbell, Heart, Check } from 'lucide-react';
 import { 
   toLocalISOString, 
   isSameDay, 
@@ -7,8 +8,7 @@ import {
   getDaysInMonthGrid, 
   SWEDISH_MONTHS, 
   SWEDISH_DAYS_SHORT,
-  addMonths,
-  addDays
+  addMonths
 } from '../utils/dateHelpers';
 
 export interface CalendarMarker {
@@ -28,32 +28,57 @@ interface CalendarProps {
 }
 
 const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, markers, currentDate }: CalendarProps) => {
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week'); // Default to Week
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week'); 
 
   const toggleView = () => {
     setViewMode(prev => prev === 'week' ? 'month' : 'week');
   };
 
-  const renderMarkerIcon = (marker: CalendarMarker, isSelected: boolean) => {
-    // Week View: Show Icons
-    const iconClass = `w-3 h-3 ${isSelected ? 'text-white' : ''}`;
-    const style = { color: isSelected ? 'white' : marker.color };
+  const renderWeekIcon = (marker: CalendarMarker | undefined, isToday: boolean) => {
+    if (!marker) return <div className="h-4 w-4" />; // Spacer to keep alignment
 
-    if (marker.type === 'hollow' && marker.color === '#CBD5E1') return null; // Don't show planned icons in small view if distracting
-
-    if (marker.iconType === 'rehab') return <Dumbbell className={iconClass} style={style} />;
-    if (marker.iconType === 'activity') return <Heart className={iconClass} style={style} />;
+    // Completed (Filled) -> Colored Circle with Check
+    if (marker.type === 'filled') {
+        return (
+            <div 
+                className="w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
+                style={{ backgroundColor: marker.color }}
+            >
+                <Check size={12} className="text-white" strokeWidth={4} />
+            </div>
+        );
+    }
     
-    // Default dot if no specific icon or for simple markers
-    return (
-        <div 
-            className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'ring-1 ring-white' : ''}`}
-            style={{ 
-               backgroundColor: marker.type === 'filled' ? marker.color : 'transparent',
-               border: marker.type === 'hollow' || marker.type === 'cross' ? `1.5px solid ${marker.color}` : 'none'
-            }} 
-        />
-    );
+    // Planned / Missed (Hollow/Cross) -> Outline Icon
+    const iconColor = isToday ? 'text-white/90' : 'text-slate-300';
+    
+    if (marker.iconType === 'rehab') {
+         return <Dumbbell size={18} className={iconColor} strokeWidth={2} />;
+    }
+    if (marker.iconType === 'activity') {
+         return <Heart size={18} className={iconColor} strokeWidth={2} />;
+    }
+    
+    return <div className="h-4 w-4" />;
+  };
+
+  const renderMonthDot = (marker: CalendarMarker) => {
+      // Completed -> Large Filled Dot
+      if (marker.type === 'filled') {
+          return (
+              <div 
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: marker.color }} 
+              />
+          );
+      }
+      // Planned -> Large Hollow Ring
+      return (
+          <div 
+              className="w-2 h-2 rounded-full border-2 bg-transparent"
+              style={{ borderColor: marker.color }} 
+          />
+      );
   };
 
   const renderDayCell = (date: Date, isCurrentMonth = true) => {
@@ -63,49 +88,63 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
     
     const marker = markers.find(m => m.date === dateStr);
 
-    let cellClasses = "relative w-10 h-14 flex flex-col items-center justify-center rounded-xl text-sm font-medium transition-all cursor-pointer select-none border";
-    
-    if (isSelected) {
-      cellClasses += " bg-blue-600 border-blue-600 text-white shadow-md transform scale-105 z-10";
-    } else if (isToday) {
-      cellClasses += " bg-blue-50 border-blue-200 text-blue-700 font-bold";
-    } else {
-      cellClasses += " bg-white border-transparent text-slate-700 hover:bg-slate-50";
+    // --- WEEK VIEW STYLING (Pill Shape) ---
+    if (viewMode === 'week') {
+        let pillClasses = "relative w-12 h-24 flex flex-col items-center justify-between py-3 rounded-full transition-all cursor-pointer select-none border";
+        
+        if (isToday) {
+            // Solid Blue for Today
+            pillClasses += " bg-blue-600 border-blue-600 text-white shadow-lg transform scale-105 z-10";
+        } else if (isSelected) {
+            // Selected but not today (Ring)
+            pillClasses += " bg-white border-blue-600 text-slate-900 ring-1 ring-blue-600";
+        } else {
+            // Standard Day
+            pillClasses += " bg-white border-slate-100 text-slate-500 hover:border-blue-200";
+        }
+
+        return (
+            <div key={dateStr} className="flex flex-col items-center justify-center">
+                <div onClick={() => onSelectDate(date)} className={pillClasses}>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isToday ? 'text-blue-100' : 'text-slate-400'}`}>
+                        {SWEDISH_DAYS_SHORT[date.getDay() === 0 ? 6 : date.getDay() - 1]}
+                    </span>
+                    <span className="text-xl font-bold leading-none">{date.getDate()}</span>
+                    
+                    <div className="h-6 flex items-center justify-center">
+                        {renderWeekIcon(marker, isToday)}
+                    </div>
+                </div>
+            </div>
+        );
     }
 
-    if (!isCurrentMonth && viewMode === 'month') {
-      cellClasses += " opacity-30";
+    // --- MONTH VIEW STYLING (Clean Grid) ---
+    let cellClasses = "relative w-full aspect-square flex flex-col items-center justify-center rounded-full text-sm font-medium transition-all cursor-pointer select-none";
+    
+    if (isSelected) {
+      cellClasses += " bg-slate-900 text-white shadow-md z-10";
+    } else if (isToday) {
+      cellClasses += " text-blue-600 font-bold bg-blue-50";
+    } else {
+      cellClasses += " text-slate-700 hover:bg-slate-50";
+    }
+
+    if (!isCurrentMonth) {
+      cellClasses += " opacity-20";
     }
 
     return (
-      <div key={dateStr} className="flex flex-col items-center justify-center">
-        <div 
-          onClick={() => onSelectDate(date)}
-          className={cellClasses}
-        >
-          <span className="text-[10px] font-bold uppercase mb-1 opacity-70">
-            {SWEDISH_DAYS_SHORT[date.getDay() === 0 ? 6 : date.getDay() - 1]}
-          </span>
-          <span className="text-lg leading-none mb-1">{date.getDate()}</span>
+      <div key={dateStr} className="flex items-center justify-center p-1">
+        <div onClick={() => onSelectDate(date)} className={cellClasses}>
+          <span>{date.getDate()}</span>
           
-          {/* Marker Logic */}
-          <div className="h-4 flex items-center justify-center">
-             {marker ? (
-                 viewMode === 'week' ? renderMarkerIcon(marker, isSelected) : (
-                    // Month View: Always Dots
-                    <div 
-                        className={`w-1.5 h-1.5 rounded-full`}
-                        style={{ 
-                        backgroundColor: marker.type === 'filled' ? marker.color : 'transparent',
-                        border: marker.type === 'hollow' || marker.type === 'cross' ? `1.5px solid ${marker.color}` : 'none'
-                        }} 
-                    />
-                 )
-             ) : (
-                 // Placeholder for layout stability
-                 <div className="w-1.5 h-1.5" />
-             )}
-          </div>
+          {/* Month Marker */}
+          {marker && (
+            <div className="absolute bottom-1.5">
+               {renderMonthDot(marker)}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -126,11 +165,11 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
         
         {viewMode === 'month' && (
             <div className="flex items-center gap-2">
-                <button onClick={() => onMonthChange(addMonths(currentMonth, -1))} className="p-1 hover:bg-slate-100 rounded">
-                    <ChevronLeft className="w-5 h-5 text-slate-500" />
+                <button onClick={() => onMonthChange(addMonths(currentMonth, -1))} className="p-1 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700">
+                    <ChevronLeft className="w-5 h-5" />
                 </button>
-                <button onClick={() => onMonthChange(addMonths(currentMonth, 1))} className="p-1 hover:bg-slate-100 rounded">
-                    <ChevronRight className="w-5 h-5 text-slate-500" />
+                <button onClick={() => onMonthChange(addMonths(currentMonth, 1))} className="p-1 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700">
+                    <ChevronRight className="w-5 h-5" />
                 </button>
             </div>
         )}
@@ -138,10 +177,20 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
 
       {/* Grid */}
       <div className="px-4 pb-4">
-        <div className={`grid grid-cols-7 gap-y-2 transition-all duration-300 ${viewMode === 'week' ? 'gap-x-1' : 'gap-x-1'}`}>
+        {/* Days Header for Month View Only */}
+        {viewMode === 'month' && (
+            <div className="grid grid-cols-7 mb-2">
+            {SWEDISH_DAYS_SHORT.map((day, i) => (
+                <div key={i} className="text-center text-[10px] font-bold text-slate-400">
+                {day}
+                </div>
+            ))}
+            </div>
+        )}
+
+        <div className={`grid grid-cols-7 ${viewMode === 'week' ? 'gap-2' : 'gap-1'} transition-all duration-300`}>
           {displayedDays.map(date => {
             const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
-            // In week view, show all. In month view, fade non-current.
             return renderDayCell(date, isCurrentMonth);
           })}
         </div>
@@ -150,7 +199,7 @@ const Calendar = ({ selectedDate, onSelectDate, currentMonth, onMonthChange, mar
       {/* Expand/Collapse Handle */}
       <button 
         onClick={toggleView}
-        className="w-full py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors uppercase tracking-wider"
+        className="w-full py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors uppercase tracking-wider"
       >
         {viewMode === 'week' ? (
             <>Visa Månad <ChevronDown className="w-3 h-3 ml-1" /></>
