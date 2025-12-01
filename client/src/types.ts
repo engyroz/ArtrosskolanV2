@@ -76,7 +76,6 @@ export type ExertionLevel = 'light' | 'perfect' | 'heavy';
 
 export interface ActivityLogEntry {
   date: string; 
-  // Updated type definition to include 'daily_activity'
   type: 'rehab' | 'light' | 'circulation' | 'daily_activity';
   painScore?: number;
   completedAt: string; 
@@ -142,4 +141,7 @@ export interface WorkoutLog {
   painScore?: number;
   focusText?: string;
   userNote?: string;
+  // New fields for detailed history
+  exertion?: ExertionLevel;
+  completedAt?: string; 
 }

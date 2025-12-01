@@ -4,7 +4,7 @@ import { useTime } from '../contexts/TimeContext';
 import { useNavigate } from 'react-router-dom';
 import Calendar, { CalendarMarker } from '../components/Calendar';
 import DayDetailCard from '../components/DayDetailCard';
-import { WorkoutLog, SessionStatus } from '../types';
+import { WorkoutLog, SessionStatus, ActivityLogEntry } from '../types';
 import { toLocalISOString, isSameDay, getDaysInMonthGrid } from '../utils/dateHelpers';
 import { db } from '../firebase';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
@@ -42,11 +42,8 @@ const CalendarDiary = () => {
         const dateStr = toLocalISOString(date);
         const dayIndex = date.getDay();
         
-        const entry = history.find(h => h.date === dateStr && h.type !== 'daily_activity'); // Prioritize rehab logs for main status
+        const entry = history.find(h => h.date === dateStr && h.type !== 'daily_activity'); 
         
-        // Activity marker logic
-        const hasActivity = history.some(h => h.date === dateStr && h.type === 'daily_activity');
-
         if (entry) {
             generatedLogs.push({
                 id: entry.completedAt,
@@ -55,7 +52,9 @@ const CalendarDiary = () => {
                 workoutType: entry.type === 'circulation' ? 'circulation' : 'rehab',
                 level: level,
                 painScore: entry.painScore,
-                userNote: entry.feedbackMessage
+                userNote: entry.feedbackMessage,
+                exertion: entry.exertion,
+                completedAt: entry.completedAt
             });
 
             let color = '#4CAF50'; 
@@ -87,10 +86,6 @@ const CalendarDiary = () => {
                 generatedMarkers.push({ date: dateStr, color: '#CBD5E1', type: 'hollow', iconType: 'rehab' }); 
             }
         }
-        
-        // Add activity marker if no main marker exists but activity is done
-        // (Simple visual improvement for the calendar view)
-        // ... (logic omitted for brevity, main loop handles primary markers)
     });
 
     setLogs(generatedLogs);
@@ -129,11 +124,38 @@ const CalendarDiary = () => {
       }
   };
 
+  const handleUpdateNote = async (note: string) => {
+    if (!user || !selectedLog) return;
+
+    // Update logic is tricky with arrayUnion/Remove on massive arrays.
+    // For prototype simplicity, we pull the whole history, find entry, update, and write back.
+    // A better approach for scale is storing logs in a subcollection.
+    
+    try {
+        const userRef = doc(db, 'users', user.uid);
+        const newHistory = [...(userProfile?.activityHistory || [])];
+        
+        const entryIndex = newHistory.findIndex(h => h.completedAt === selectedLog.id);
+        if (entryIndex !== -1) {
+            newHistory[entryIndex] = {
+                ...newHistory[entryIndex],
+                feedbackMessage: note
+            };
+            
+            await updateDoc(userRef, {
+                activityHistory: newHistory
+            });
+            await refreshProfile();
+        }
+    } catch (e) {
+        console.error("Failed to update note", e);
+    }
+  };
+
   const activityLog = userProfile?.activityHistory?.find(h => 
       h.date === toLocalISOString(selectedDate) && h.type === 'daily_activity'
   );
 
-  // Get Activity Config for current user level
   const currentLevel = userProfile?.currentLevel || 1;
   const activityConfig = PHYSICAL_ACTIVITY_TASKS[currentLevel as keyof typeof PHYSICAL_ACTIVITY_TASKS] || PHYSICAL_ACTIVITY_TASKS[1];
 
@@ -160,8 +182,9 @@ const CalendarDiary = () => {
                 onStartRehab={handleStartRehab}
                 onToggleActivity={handleToggleActivity}
                 isActivityDone={!!activityLog}
-                activityConfig={activityConfig} // Pass config
-                isFuture={selectedDate > today} // Pass future check
+                activityConfig={activityConfig}
+                isFuture={selectedDate > today}
+                onSaveNote={handleUpdateNote} // Pass save handler
             />
         </div>
 

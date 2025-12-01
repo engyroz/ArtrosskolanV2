@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WorkoutLog } from '../types';
-import { Play, CheckCircle, Clock, XCircle, Dumbbell, Activity, Check, Lock, Coffee, BookOpen } from 'lucide-react';
+import { Play, CheckCircle, Clock, XCircle, Dumbbell, Activity, Check, Lock, Coffee, BookOpen, Edit2, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface DayDetailCardProps {
@@ -10,12 +10,15 @@ interface DayDetailCardProps {
   onStartRehab: () => void;
   onToggleActivity: () => void;
   isActivityDone: boolean;
-  activityConfig: { title: string; desc: string }; // New Prop
-  isFuture: boolean; // New Prop
+  activityConfig: { title: string; desc: string }; 
+  isFuture: boolean; 
+  onSaveNote?: (note: string) => void; 
 }
 
-const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isActivityDone, activityConfig, isFuture }: DayDetailCardProps) => {
+const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isActivityDone, activityConfig, isFuture, onSaveNote }: DayDetailCardProps) => {
   const navigate = useNavigate();
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [noteText, setNoteText] = useState(log?.userNote || '');
 
   const formattedDate = new Intl.DateTimeFormat('sv-SE', { 
     weekday: 'long', 
@@ -23,38 +26,92 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
     month: 'long' 
   }).format(date);
 
+  const handleSave = () => {
+      if(onSaveNote) onSaveNote(noteText);
+      setIsEditingNote(false);
+  };
+
+  const getRpeIcon = (rpe: string) => {
+      if (rpe === 'light') return '🪶';
+      if (rpe === 'heavy') return '🥵';
+      return '👌';
+  };
+
+  // Define variable here to fix error
+  const canToggleActivity = !isFuture;
+
   // --- RENDER LOGIC ---
 
   // 1. PAST / COMPLETED REHAB
   if (log && log.status === 'completed') {
-    const painColor = (log.painScore || 0) <= 3 ? 'text-green-600 bg-green-50 border-green-100' : 
-                      (log.painScore || 0) <= 5 ? 'text-yellow-600 bg-yellow-50 border-yellow-100' : 
-                      'text-red-600 bg-red-50 border-red-100';
+    const painColor = (log.painScore || 0) <= 3 ? 'text-green-600 border-green-200 bg-green-50' : 
+                      (log.painScore || 0) <= 5 ? 'text-yellow-600 border-yellow-200 bg-yellow-50' : 
+                      'text-red-600 border-red-200 bg-red-50';
+    
+    const completedTime = log.completedAt ? new Date(log.completedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
 
     return (
       <div className="px-4 animate-slide-up">
-        <h3 className="text-lg font-bold text-slate-900 capitalize mb-4 px-2">{formattedDate}</h3>
+        <div className="flex justify-between items-baseline mb-4 px-2">
+            <h3 className="text-lg font-bold text-slate-900 capitalize">{formattedDate}</h3>
+            <span className="text-xs font-bold text-slate-400">Kl {completedTime}</span>
+        </div>
         
-        {/* Result Card */}
-        <div className={`rounded-2xl p-6 border ${painColor} mb-4 relative overflow-hidden`}>
-            <div className="relative z-10">
-                <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 bg-white rounded-full shadow-sm">
-                            <CheckCircle className="w-5 h-5 text-current" />
-                        </div>
-                        <span className="font-bold text-lg">Genomfört</span>
-                    </div>
-                    <span className="text-xs font-bold uppercase tracking-wider bg-white/50 px-2 py-1 rounded">
-                        {log.workoutType === 'rehab' ? 'Rehab' : 'Cirkulation'}
+        <div className={`rounded-2xl p-6 border mb-4 relative overflow-hidden bg-white shadow-sm`}>
+            
+            <div className="flex justify-between items-start mb-6">
+                <div>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Genomfört</span>
+                    <h4 className="text-xl font-extrabold text-slate-900 mt-1 capitalize">
+                        {log.workoutType === 'rehab' ? 'Rehabstyrka' : 'Cirkulation'}
+                    </h4>
+                    <span className="inline-block bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold mt-2">
+                        Nivå {log.level}
                     </span>
                 </div>
-                <div className="mt-4 flex gap-4">
-                    <div>
-                        <span className="block text-xs font-bold opacity-70 uppercase">Smärta</span>
-                        <span className="text-2xl font-bold">{log.painScore}/10</span>
-                    </div>
+                <div className="p-3 bg-green-100 rounded-full text-green-600">
+                    <CheckCircle className="w-6 h-6" />
                 </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className={`p-4 rounded-xl border ${painColor} flex flex-col items-center justify-center text-center`}>
+                    <span className="text-3xl font-black mb-1">{log.painScore}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide opacity-80">Smärta (0-10)</span>
+                </div>
+                <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex flex-col items-center justify-center text-center">
+                    <span className="text-3xl mb-1">{getRpeIcon(log.exertion || 'perfect')}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Känsla</span>
+                </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-4">
+                <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase">Anteckning</span>
+                    {!isEditingNote && (
+                        <button onClick={() => setIsEditingNote(true)} className="p-1 hover:bg-slate-100 rounded text-slate-400">
+                            <Edit2 className="w-3 h-3" />
+                        </button>
+                    )}
+                </div>
+                
+                {isEditingNote ? (
+                    <div className="flex gap-2">
+                        <textarea 
+                            className="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            rows={2}
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                        />
+                        <button onClick={handleSave} className="self-end p-2 bg-blue-600 text-white rounded-lg shadow-sm">
+                            <Save className="w-4 h-4" />
+                        </button>
+                    </div>
+                ) : (
+                    <p className="text-sm text-slate-600 italic">
+                        "{log.userNote || 'Ingen anteckning'}"
+                    </p>
+                )}
             </div>
         </div>
       </div>
@@ -80,7 +137,6 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
   // 3. FUTURE / TODAY (PLANNING)
   
   const hasRehabPlanned = log && log.status === 'planned';
-  const canToggleActivity = !isFuture; // Only allow toggling if not in future
 
   return (
     <div className="px-4 pb-20 animate-slide-up">
@@ -94,7 +150,6 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                 : 'bg-slate-50 border-slate-200 text-slate-400 grayscale'
               }
           `}>
-            {/* Background Decor */}
             <div className="absolute -bottom-4 -right-4 opacity-10 transform rotate-12">
                 <Dumbbell className="w-24 h-24" />
             </div>
@@ -153,16 +208,14 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                   </button>
               </div>
               
-              {/* Background Decor */}
               <div className="absolute -bottom-2 -right-2 opacity-5 transform rotate-12">
                   <Coffee className="w-24 h-24" />
               </div>
           </div>
       )}
 
-      {/* B. Activity List (FaR) - No Header */}
+      {/* B. Activity List (FaR) */}
       <div className="space-y-3 opacity-90">
-        {/* Activity Item (FaR) */}
         <button 
             onClick={canToggleActivity ? onToggleActivity : undefined}
             disabled={!canToggleActivity}
