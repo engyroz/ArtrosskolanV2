@@ -56,41 +56,48 @@ const App: React.FC = () => {
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
 
-              <Route 
-                path="/payment" 
-                element={<ProtectedRoute><Payment /></ProtectedRoute>} 
-              />
+              <Route path="/payment" element={
+                <ProtectedRoute>
+                  <Payment />
+                </ProtectedRoute>
+              } />
 
-              <Route 
-                path="/dashboard" 
-                element={<ProtectedRoute requireSubscription={true}><Dashboard /></ProtectedRoute>} 
-              />
+              <Route path="/dashboard" element={
+                <ProtectedRoute requireSubscription={true}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
 
-              <Route 
-                path="/calendar" 
-                element={<ProtectedRoute requireSubscription={true}><CalendarDiary /></ProtectedRoute>} 
-              />
+              <Route path="/calendar" element={
+                <ProtectedRoute requireSubscription={true}>
+                  <CalendarDiary />
+                </ProtectedRoute>
+              } />
 
-              <Route 
-                path="/journey" 
-                element={<ProtectedRoute requireSubscription={true}><MyJourney /></ProtectedRoute>} 
-              />
+              <Route path="/journey" element={
+                <ProtectedRoute requireSubscription={true}>
+                  <MyJourney />
+                </ProtectedRoute>
+              } />
 
               {/* New Knowledge Route */}
-              <Route 
-                path="/knowledge" 
-                element={<ProtectedRoute requireSubscription={true}><KnowledgeBase /></ProtectedRoute>} 
-              />
+              <Route path="/knowledge" element={
+                <ProtectedRoute requireSubscription={true}>
+                  <KnowledgeBase />
+                </ProtectedRoute>
+              } />
 
-              <Route 
-                path="/settings" 
-                element={<ProtectedRoute><Settings /></ProtectedRoute>} 
-              />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
 
-              <Route 
-                path="/workout" 
-                element={<ProtectedRoute requireSubscription={true}><WorkoutPlayer /></ProtectedRoute>} 
-              />
+              <Route path="/workout" element={
+                <ProtectedRoute requireSubscription={true}>
+                  <WorkoutPlayer />
+                </ProtectedRoute>
+              } />
               
               {/* Legacy redirects */}
               <Route path="/plan" element={<CalendarDiary />} />

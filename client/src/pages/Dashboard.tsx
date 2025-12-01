@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import { Exercise } from '../types';
 import { db } from '../firebase';
-import { collection, getDocs, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import firebase from 'firebase/compat/app';
 import { Play, Check, Circle, Activity, CheckCircle } from 'lucide-react';
 import { toLocalISOString, isSameDay } from '../utils/dateHelpers';
 import { generateLevelPlan, getWorkoutSession } from '../utils/workoutEngine';
@@ -36,13 +36,13 @@ const Dashboard = () => {
   const [activityCompletedToday, setActivityCompletedToday] = useState(false);
   const [displayedXP, setDisplayedXP] = useState(0);
 
-  const history = userProfile?.activityHistory || [];
+  const userProfileHistory = userProfile?.activityHistory || [];
   const currentLevel = userProfile?.currentLevel || 1;
   const selectedDateStr = toLocalISOString(today);
   
-  const rehabLog = history.find(h => h.date === selectedDateStr && h.type === 'rehab');
-  const circulationLog = history.find(h => h.date === selectedDateStr && h.type === 'circulation');
-  const activityLog = history.find(h => h.date === selectedDateStr && h.type === 'daily_activity');
+  const rehabLog = userProfileHistory.find(h => h.date === selectedDateStr && h.type === 'rehab');
+  const circulationLog = userProfileHistory.find(h => h.date === selectedDateStr && h.type === 'circulation');
+  const activityLog = userProfileHistory.find(h => h.date === selectedDateStr && h.type === 'daily_activity');
   
   const startDate = userProfile?.assessmentData?.timestamp 
     ? new Date(userProfile.assessmentData.timestamp) 
@@ -71,7 +71,8 @@ const Dashboard = () => {
   useEffect(() => {
     if (!userProfile) return;
     const realXP = userProfile.progression?.experiencePoints || 0;
-    const earnedXP = location.state?.xpEarned;
+    const locationState = location.state as any;
+    const earnedXP = locationState?.xpEarned;
 
     if (earnedXP) {
         const startXP = Math.max(0, realXP - earnedXP);
@@ -100,7 +101,7 @@ const Dashboard = () => {
       if (!userProfile) return;
       if (!userProfile.activePlanIds || userProfile.activePlanIds.length === 0) {
         try {
-            const querySnapshot = await getDocs(collection(db, "exercises"));
+            const querySnapshot = await db.collection("exercises").get();
             const allExercises: Exercise[] = [];
             querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
             
@@ -108,7 +109,7 @@ const Dashboard = () => {
             const mappedJoint = joint === 'Knä' ? 'knee' : (joint === 'Höft' ? 'hip' : 'shoulder');
             const newPlanIds = generateLevelPlan(allExercises, currentLevel, mappedJoint);
             
-            await updateDoc(doc(db, 'users', userProfile.uid), { activePlanIds: newPlanIds });
+            await db.collection('users').doc(userProfile.uid).update({ activePlanIds: newPlanIds });
             await refreshProfile();
         } catch (e) { console.error(e); }
       }
@@ -143,7 +144,7 @@ const Dashboard = () => {
     setShowPreFlight(false);
     if (!userProfile) return;
 
-    const querySnapshot = await getDocs(collection(db, "exercises"));
+    const querySnapshot = await db.collection("exercises").get();
     const allExercises: Exercise[] = [];
     querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
 
@@ -168,8 +169,8 @@ const Dashboard = () => {
             xpEarned: 10
           };
           
-          await updateDoc(doc(db, 'users', userProfile.uid), {
-              activityHistory: arrayUnion(newLog),
+          await db.collection('users').doc(userProfile.uid).update({
+              activityHistory: firebase.firestore.FieldValue.arrayUnion(newLog),
               "progression.experiencePoints": (userProfile.progression?.experiencePoints || 0) + 10
           });
           await refreshProfile();
@@ -183,8 +184,8 @@ const Dashboard = () => {
     if (!userProfile) return;
     try {
         const nextLevel = userProfile.currentLevel + 1;
-        const userRef = doc(db, 'users', userProfile.uid);
-        await updateDoc(userRef, {
+        const userRef = db.collection('users').doc(userProfile.uid);
+        await userRef.update({
             currentLevel: nextLevel,
             "progression.experiencePoints": 0,
             "progression.levelMaxedOut": false,

@@ -1,6 +1,6 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
 
 // usage of import.meta.env requires variables to start with VITE_
 // Access environment variables safely by casting import.meta to any
@@ -15,6 +15,7 @@ const firebaseConfig = {
   appId: env.VITE_FIREBASE_APP_ID
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+const app = firebase.initializeApp(firebaseConfig);
+export const auth = app.auth();
+export const db = app.firestore();
+export default app;

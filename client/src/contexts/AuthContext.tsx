@@ -1,11 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { auth, db } from '../firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import firebase from 'firebase/compat/app';
 import { UserProfile } from '../types';
 
 interface AuthContextType {
-  user: User | null;
+  user: firebase.User | null;
   userProfile: UserProfile | null;
   loading: boolean;
   logout: () => Promise<void>;
@@ -23,16 +22,16 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<firebase.User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserProfile = async (currentUser: User) => {
+  const fetchUserProfile = async (currentUser: firebase.User) => {
     try {
-      const docRef = doc(db, 'users', currentUser.uid);
-      const docSnap = await getDoc(docRef);
+      const docRef = db.collection('users').doc(currentUser.uid);
+      const docSnap = await docRef.get();
 
-      if (docSnap.exists()) {
+      if (docSnap.exists) {
         setUserProfile(docSnap.data() as UserProfile);
       } else {
         // Create initial profile if it doesn't exist
@@ -44,7 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           onboardingCompleted: false,
           displayName: currentUser.displayName || 'User',
         };
-        await setDoc(docRef, newProfile);
+        await docRef.set(newProfile);
         setUserProfile(newProfile);
       }
     } catch (error) {
@@ -53,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
         await fetchUserProfile(currentUser);

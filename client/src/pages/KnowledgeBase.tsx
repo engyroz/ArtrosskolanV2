@@ -2,8 +2,8 @@ import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { BookOpen, ChevronRight, Lock, CheckCircle, Search } from 'lucide-react';
 import { EDUCATION_MODULES } from '../utils/contentConfig';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebase';
+import firebase from 'firebase/compat/app';
 
 const KnowledgeBase = () => {
   const { user, userProfile, refreshProfile } = useAuth();
@@ -13,9 +13,9 @@ const KnowledgeBase = () => {
   const handleReadArticle = async (articleId: string) => {
       if (!user) return;
       try {
-          const userRef = doc(db, 'users', user.uid);
-          await updateDoc(userRef, {
-              completedEducationIds: arrayUnion(articleId)
+          const userRef = db.collection('users').doc(user.uid);
+          await userRef.update({
+              completedEducationIds: firebase.firestore.FieldValue.arrayUnion(articleId)
           });
           await refreshProfile();
           alert("Artikel öppnad (Demo)");

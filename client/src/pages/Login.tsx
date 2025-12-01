@@ -1,8 +1,6 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { auth } from '../firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -25,7 +23,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await auth.signInWithEmailAndPassword(email, password);
       navigate('/dashboard');
     } catch (err: any) {
       setError('Fel e-post eller lösenord.');

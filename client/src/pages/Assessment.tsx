@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight, Activity, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { 
   getAssessmentState,
@@ -10,12 +10,12 @@ import {
 import { generateLevelPlan } from '../utils/workoutEngine';
 import { JointType, Question, Exercise } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, getDocs, doc, setDoc } from 'firebase/firestore'; 
 import { db } from '../firebase';
 
 const Assessment = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
   const { user, refreshProfile } = useAuth();
   
   const [selectedJoint, setSelectedJoint] = useState<JointType | null>(null);
@@ -32,7 +32,7 @@ const Assessment = () => {
         else if (jointParam === 'hip') setSelectedJoint('Höft');
         else if (jointParam === 'shoulder') setSelectedJoint('Axel');
     }
-  }, [searchParams]);
+  }, [location.search]);
 
   // Recalculate state when answers or joint change
   useEffect(() => {
@@ -45,8 +45,6 @@ const Assessment = () => {
       if (state.status === 'QUESTION' && state.nextQuestion?.id !== assessmentState.nextQuestion?.id) {
           setLocalValue(null);
       }
-      
-      // NOTE: Removed auto-finish logic from here to prevent race conditions with manual button click.
     }
   }, [selectedJoint, answers]);
 
@@ -58,15 +56,14 @@ const Assessment = () => {
     try {
         if (user) {
             console.log("User is authenticated. Saving to Firestore...");
-            // 1. Fetch exercises to generate plan
-            const querySnapshot = await getDocs(collection(db, "exercises"));
+            const querySnapshot = await db.collection("exercises").get();
             const allExercises: Exercise[] = [];
             querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
             
             const mappedJoint = selectedJoint === 'Knä' ? 'knee' : (selectedJoint === 'Höft' ? 'hip' : 'shoulder');
             const planIds = generateLevelPlan(allExercises, result.level, mappedJoint);
 
-            const userRef = doc(db, 'users', user.uid);
+            const userRef = db.collection('users').doc(user.uid);
             
             const payload = {
                 onboardingCompleted: true,
@@ -77,9 +74,7 @@ const Assessment = () => {
                 exerciseProgress: {} 
             };
 
-            // Safe write with merge
-            await setDoc(userRef, payload, { merge: true });
-            
+            await userRef.set(payload, { merge: true });
             await refreshProfile();
             navigate('/dashboard');
         } else {
@@ -109,7 +104,7 @@ const Assessment = () => {
         const newAnswers = { ...answers, [assessmentState.nextQuestion.id]: localValue };
         setAnswers(newAnswers);
 
-        // Check immediately using the NEW answers if this completes the flow
+        // Check immediately if this was the last question
         const nextState = getAssessmentState(selectedJoint!, newAnswers);
         
         if (nextState.status === 'COMPLETE' && nextState.result) {
@@ -147,7 +142,7 @@ const Assessment = () => {
                 onClick={() => {
                     const newAnswers = { ...answers, safetyCheck: 'pass' };
                     setAnswers(newAnswers);
-                    // Check completion immediately for fast-track L1
+                    // Check if complete immediately (Level 1 fast track)
                     const nextState = getAssessmentState(selectedJoint!, newAnswers);
                     if (nextState.status === 'COMPLETE' && nextState.result) {
                         finishAssessment(newAnswers, nextState.result);
@@ -205,10 +200,9 @@ const Assessment = () => {
                 <button
                     onClick={() => {
                         const val = localValue !== null ? localValue : 5;
-                        setLocalValue(val);
+                        setLocalValue(val); 
                         const newAnswers = { ...answers, [q.id]: val };
                         setAnswers(newAnswers);
-                        // Manual trigger logic for scale input
                         const nextState = getAssessmentState(selectedJoint!, newAnswers);
                         if (nextState.status === 'COMPLETE' && nextState.result) {
                             finishAssessment(newAnswers, nextState.result);
@@ -224,7 +218,9 @@ const Assessment = () => {
 
     return (
       <div className="animate-fade-in-up">
-        <h3 className="text-2xl font-bold text-slate-900 mb-6">{q.text}</h3>
+        <h3 className={`text-2xl font-bold text-slate-900 ${q.subText ? 'mb-2' : 'mb-6'}`}>{q.text}</h3>
+        {q.subText && <p className="text-lg text-slate-600 mb-8">{q.subText}</p>}
+        
         <div className="space-y-4 mb-8">
             {q.options?.map((opt) => (
               <button
@@ -236,9 +232,17 @@ const Assessment = () => {
                     : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
                 }`}
               >
-                <span className={`text-lg font-medium ${localValue === opt.value ? 'text-blue-900' : 'text-slate-700'}`}>
-                    {opt.label}
-                </span>
+                <div className="flex flex-col">
+                    <span className={`text-lg font-bold mb-1 ${localValue === opt.value ? 'text-blue-900' : 'text-slate-800'}`}>
+                        {opt.label}
+                    </span>
+                    {opt.description && (
+                         <span className={`text-sm ${localValue === opt.value ? 'text-blue-700' : 'text-slate-500'}`}>
+                             {opt.description}
+                         </span>
+                    )}
+                </div>
+                
                 {localValue === opt.value && (
                     <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-blue-600">
                         <CheckCircle className="w-6 h-6 fill-current" />

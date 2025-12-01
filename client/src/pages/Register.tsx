@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { getAssessmentFromStorage, clearAssessmentStorage } from '../utils/assessmentEngine';
 import { generateLevelPlan } from '../utils/workoutEngine';
 import { UserProfile, Exercise } from '../types';
@@ -19,13 +17,13 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
       const assessmentData = getAssessmentFromStorage();
       
       let profileData: Partial<UserProfile> = {
-        uid: user.uid,
-        email: user.email!,
+        uid: user!.uid,
+        email: user!.email!,
         subscriptionStatus: 'none',
         onboardingCompleted: false,
         currentLevel: 1,
@@ -34,7 +32,7 @@ const Register = () => {
       if (assessmentData && assessmentData.programConfig) {
         // GENERATE PLAN IDS
         // We need to fetch exercises once to generate the random IDs
-        const querySnapshot = await getDocs(collection(db, "exercises"));
+        const querySnapshot = await db.collection("exercises").get();
         const allExercises: Exercise[] = [];
         querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
         
@@ -50,7 +48,7 @@ const Register = () => {
         };
       }
 
-      await setDoc(doc(db, 'users', user.uid), profileData);
+      await db.collection('users').doc(user!.uid).set(profileData);
       clearAssessmentStorage();
       navigate('/payment');
 

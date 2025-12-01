@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, CheckCircle, ShieldCheck, Loader2 } from 'lucide-react';
 
 const Payment = () => {
   const { user, refreshProfile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   
+  const searchParams = new URLSearchParams(location.search);
   const isSuccess = searchParams.get('success') === 'true';
   const sessionId = searchParams.get('session_id');
 

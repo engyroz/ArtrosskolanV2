@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Lock, Calendar, ChevronDown, ArrowRight, Activity } from 'lucide-react';

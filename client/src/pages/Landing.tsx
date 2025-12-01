@@ -1,12 +1,13 @@
 import React from 'react';
-import { useNavigate, useSearchParams, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { ArrowRight, Activity, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext'; // Import Auth Context
 
 const Landing = () => {
   const { user, loading } = useAuth(); // Get user state
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
   const jointParam = searchParams.get('joint');
 
   // 1. Redirect if logged in

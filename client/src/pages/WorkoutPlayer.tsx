@@ -5,13 +5,14 @@ import { useTime } from '../contexts/TimeContext';
 import { WorkoutSession, ExertionLevel } from '../types';
 import { calculateSessionProgression } from '../utils/progressionEngine';
 import { toLocalISOString } from '../utils/dateHelpers';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebase';
+import firebase from 'firebase/compat/app';
 import { X, CheckCircle, ChevronRight, AlertTriangle } from 'lucide-react';
 
 const WorkoutPlayer = () => {
   const navigate = useNavigate();
-  const { state } = useLocation(); 
+  const location = useLocation();
+  const state = location.state as any; 
   const { userProfile, refreshProfile } = useAuth();
   const { currentDate } = useTime(); 
   
@@ -96,7 +97,7 @@ const WorkoutPlayer = () => {
     const earnedXP = session.type === 'circulation' ? 30 : result.xpEarned;
 
     try {
-        const userRef = doc(db, 'users', userProfile.uid);
+        const userRef = db.collection('users').doc(userProfile.uid);
         
         const newLog = {
             date: toLocalISOString(currentDate), 
@@ -109,7 +110,7 @@ const WorkoutPlayer = () => {
         };
 
         const updatePayload: any = {
-            activityHistory: arrayUnion(newLog),
+            activityHistory: firebase.firestore.FieldValue.arrayUnion(newLog),
             "progression.experiencePoints": (userProfile.progression?.experiencePoints || 0) + earnedXP,
         };
 
@@ -118,7 +119,7 @@ const WorkoutPlayer = () => {
             updatePayload["progression.levelMaxedOut"] = result.levelMaxedOut;
         }
 
-        await updateDoc(userRef, updatePayload);
+        await userRef.update(updatePayload);
         await refreshProfile();
         
         navigate('/dashboard', { state: { xpEarned: earnedXP } });

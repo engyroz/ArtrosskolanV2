@@ -7,7 +7,7 @@ import DayDetailCard from '../components/DayDetailCard';
 import { WorkoutLog, SessionStatus, ActivityLogEntry } from '../types';
 import { toLocalISOString, isSameDay, getDaysInMonthGrid } from '../utils/dateHelpers';
 import { db } from '../firebase';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import firebase from 'firebase/compat/app';
 import { PHYSICAL_ACTIVITY_TASKS } from '../utils/textConstants';
 
 const CalendarDiary = () => {
@@ -113,9 +113,9 @@ const CalendarDiary = () => {
             xpEarned: 10
           };
           
-          const userRef = doc(db, 'users', user.uid);
-          await updateDoc(userRef, {
-              activityHistory: arrayUnion(newLog),
+          const userRef = db.collection('users').doc(user.uid);
+          await userRef.update({
+              activityHistory: firebase.firestore.FieldValue.arrayUnion(newLog),
               "progression.experiencePoints": (userProfile?.progression?.experiencePoints || 0) + 10
           });
           await refreshProfile();
@@ -128,7 +128,7 @@ const CalendarDiary = () => {
     if (!user || !selectedLog) return;
     
     try {
-        const userRef = doc(db, 'users', user.uid);
+        const userRef = db.collection('users').doc(user.uid);
         const newHistory = [...(userProfile?.activityHistory || [])];
         
         const entryIndex = newHistory.findIndex(h => h.completedAt === selectedLog.id);
@@ -138,7 +138,7 @@ const CalendarDiary = () => {
                 feedbackMessage: note
             };
             
-            await updateDoc(userRef, {
+            await userRef.update({
                 activityHistory: newHistory
             });
             await refreshProfile();

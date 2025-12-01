@@ -1,3 +1,4 @@
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -102,11 +103,13 @@ export type JointType = 'Knä' | 'Höft' | 'Rygg' | 'Axel' | 'Handled/Tumbas';
 export interface QuestionOption {
   label: string;
   value: string | number;
+  description?: string; // Support for detailed option text
 }
 
 export interface Question {
   id: string;
   text: string;
+  subText?: string; // Support for secondary question text/instructions
   type: 'choice' | 'scale' | 'info'; 
   options?: QuestionOption[];
 }

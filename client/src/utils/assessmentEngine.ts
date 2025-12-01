@@ -163,42 +163,44 @@ const Q_ACTIVITY: Question = {
   ]
 };
 
-// 5. Goal (Dynamic based on Level/Joint)
-const getGoalQuestion = (joint: JointType, level: number): Question => {
-  let options = [];
-  
-  if (level === 1) {
-    options = [
-      { label: 'Slippa vilovärken (Sova bättre)', value: 'pain_relief' },
-      { label: 'Kunna stödja på benet/armen', value: 'basic_load' },
-      { label: 'Minska stelhet & svullnad', value: 'reduce_swelling' }
-    ];
-  } else if (level === 2) {
-    options = [
-      { label: 'Klara vardagen (Trappor/Klä på mig)', value: 'daily_function' },
-      { label: 'Gå till affären / Handla', value: 'shopping' },
-      { label: 'Komma igång med promenader', value: 'start_walking' }
-    ];
-  } else if (level === 3) {
-    options = [
-      { label: 'Långpromenader i skogen', value: 'long_walks' },
-      { label: 'Leka med barnbarn / Hund', value: 'play' },
-      { label: 'Våga lita på leden igen', value: 'trust' }
-    ];
-  } else {
-    options = [
-      { label: 'Återgå till sport (Golf/Padel/Tennis)', value: 'sport' },
-      { label: 'Tungt trädgårdsarbete', value: 'heavy_work' },
-      { label: 'Springa/Jogga', value: 'run' }
-    ];
-  }
-
-  return {
-    id: 'mainGoal',
-    text: 'Vad är ditt viktigaste mål just nu?',
-    type: 'choice',
-    options
-  };
+// 5. Final Goal Question (Updated per request)
+const Q_FINAL_GOAL: Question = {
+  id: 'mainGoal',
+  text: 'En sista fråga...',
+  subText: 'När du är helt återställd, vad drömmer du om att kunna göra då?',
+  type: 'choice',
+  options: [
+    { 
+      label: '🧸 Familj & Lek', 
+      value: 'family', 
+      description: 'Leka obehindrat med barn eller barnbarn.' 
+    },
+    { 
+      label: '🌲 Natur & Frihet', 
+      value: 'nature', 
+      description: 'Gå långpromenader i skogen och naturen.' 
+    },
+    { 
+      label: '🏆 Sport & Prestation', 
+      value: 'sport', 
+      description: 'Återgå till min idrott (Padel, Golf, Löpning).' 
+    },
+    { 
+      label: '🛍️ Vardagsfrihet', 
+      value: 'daily_life', 
+      description: 'Klara vardagen (handla, städa, greja) utan smärta.' 
+    },
+    { 
+      label: '💼 Arbete', 
+      value: 'work', 
+      description: 'Klara av mitt jobb utan begränsningar.' 
+    },
+    { 
+      label: '❤️ Trygghet', 
+      value: 'security', 
+      description: 'Bara känna mig trygg och lita på kroppen igen.' 
+    }
+  ]
 };
 
 // --- LOGIC ENGINE ---
@@ -278,10 +280,9 @@ const checkProfileQuestions = (joint: JointType, level: number, answers: Record<
     return { status: 'QUESTION', nextQuestion: Q_ACTIVITY, progress: 85, calculatedLevel: level };
   }
 
-  // Goal
-  const goalQ = getGoalQuestion(joint, level);
-  if (answers[goalQ.id] === undefined) {
-    return { status: 'QUESTION', nextQuestion: goalQ, progress: 95, calculatedLevel: level };
+  // Goal (Now static)
+  if (answers[Q_FINAL_GOAL.id] === undefined) {
+    return { status: 'QUESTION', nextQuestion: Q_FINAL_GOAL, progress: 95, calculatedLevel: level };
   }
 
   // COMPLETE
