@@ -1,4 +1,5 @@
 
+
 import { EducationModule } from '../types';
 
 export const contentConfig = {
@@ -46,39 +47,58 @@ export const EDUCATION_MODULES: EducationModule[] = [
   // --- SERIES A: THE GENERAL SERIES (Lifetime Sessions) ---
   {
     id: 'series-a-intro',
-    title: 'Välkommen till Artrosskolan (Intro)',
+    title: 'Välkommen till Artrosskolan',
     category: 'Start',
     readTime: '2 min',
     contentUrl: 'intro-video',
+    imageUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800',
+    type: 'video',
     unlockType: 'lifetime',
     requiredSessions: 0
   },
   {
     id: 'series-a-mechanism',
-    title: 'Varför gör det ont? (Mekanik)',
-    category: 'Kunskapsserie',
+    title: 'Varför gör det ont?',
+    category: 'Mekanik',
     readTime: '5 min',
     contentUrl: 'mechanism-video',
+    imageUrl: 'https://images.unsplash.com/photo-1576091160550-2187d61b36f9?auto=format&fit=crop&q=80&w=800',
+    type: 'video',
     unlockType: 'lifetime',
     requiredSessions: 5
   },
   {
     id: 'series-a-longterm',
     title: 'Långsiktig Hälsa',
-    category: 'Kunskapsserie',
+    category: 'Framtid',
     readTime: '4 min',
     contentUrl: 'longterm-video',
+    imageUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=800',
+    type: 'video',
     unlockType: 'lifetime',
     requiredSessions: 10
   },
   {
     id: 'series-a-lifestyle',
     title: 'Kost och Artros',
-    category: 'Kunskapsserie',
+    category: 'Livsstil',
     readTime: '6 min',
     contentUrl: 'lifestyle-video',
+    imageUrl: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=800',
+    type: 'video',
     unlockType: 'lifetime',
     requiredSessions: 15
+  },
+  {
+    id: 'series-a-stress',
+    title: 'Stress & Smärta',
+    category: 'Hälsa',
+    readTime: '5 min',
+    contentUrl: 'stress-video',
+    imageUrl: 'https://images.unsplash.com/photo-1447452001602-7090c774637d?auto=format&fit=crop&q=80&w=800',
+    type: 'video',
+    unlockType: 'lifetime',
+    requiredSessions: 20
   },
 
   // --- SERIES B: LEVEL SPECIFIC GUIDE (Level + Stage) ---
@@ -87,19 +107,23 @@ export const EDUCATION_MODULES: EducationModule[] = [
   {
     id: 'l1-s1-fakta',
     title: 'Vad är artros egentligen?',
-    category: 'Fas 1 Guide',
+    category: 'Guide',
     readTime: '3 min',
     contentUrl: 'artros-fakta',
+    imageUrl: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=800',
+    type: 'article',
     unlockType: 'level',
     requiredLevel: 1,
     requiredStage: 1
   },
   {
     id: 'l1-s2-trafikljus',
-    title: 'Trafikljuset: Så tolkar du smärta',
-    category: 'Fas 1 Guide',
+    title: 'Så tolkar du smärta',
+    category: 'Guide',
     readTime: '4 min',
     contentUrl: 'smart-modell',
+    imageUrl: 'https://images.unsplash.com/photo-1550505295-69024f2b1c6d?auto=format&fit=crop&q=80&w=800',
+    type: 'article',
     unlockType: 'level',
     requiredLevel: 1,
     requiredStage: 2
@@ -107,9 +131,11 @@ export const EDUCATION_MODULES: EducationModule[] = [
   {
     id: 'l1-s3-vilovark',
     title: 'Varför gör det ont när jag vilar?',
-    category: 'Fas 1 Guide',
+    category: 'Guide',
     readTime: '2 min',
     contentUrl: 'vilovark',
+    imageUrl: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=800',
+    type: 'article',
     unlockType: 'level',
     requiredLevel: 1,
     requiredStage: 3
@@ -119,9 +145,11 @@ export const EDUCATION_MODULES: EducationModule[] = [
   {
     id: 'l2-s1-kontakt',
     title: 'Hitta kontakten med muskeln',
-    category: 'Fas 2 Guide',
+    category: 'Guide',
     readTime: '3 min',
     contentUrl: 'muskelkontakt',
+    imageUrl: 'https://images.unsplash.com/photo-1581009137042-c552e485697a?auto=format&fit=crop&q=80&w=800',
+    type: 'article',
     unlockType: 'level',
     requiredLevel: 2,
     requiredStage: 1
@@ -129,9 +157,11 @@ export const EDUCATION_MODULES: EducationModule[] = [
   {
     id: 'l2-s2-korsett',
     title: 'Muskelkorsetten – Ledens stötdämpare',
-    category: 'Fas 2 Guide',
+    category: 'Guide',
     readTime: '3 min',
     contentUrl: 'muskelkorsett',
+    imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800',
+    type: 'article',
     unlockType: 'level',
     requiredLevel: 2,
     requiredStage: 2
@@ -141,19 +171,23 @@ export const EDUCATION_MODULES: EducationModule[] = [
   {
     id: 'l3-s1-fear',
     title: 'Rädsla för rörelse (Kinesiofobi)',
-    category: 'Fas 3 Guide',
+    category: 'Guide',
     readTime: '5 min',
     contentUrl: 'radsla-rorelse',
+    imageUrl: 'https://images.unsplash.com/photo-1533227297464-909798031e5f?auto=format&fit=crop&q=80&w=800',
+    type: 'article',
     unlockType: 'level',
     requiredLevel: 3,
     requiredStage: 1
   },
   {
     id: 'l3-s2-setbacks',
-    title: 'Hjälp, jag fick ont igen! (Om bakslag)',
-    category: 'Fas 3 Guide',
+    title: 'Hjälp, jag fick ont igen!',
+    category: 'Guide',
     readTime: '3 min',
     contentUrl: 'bakslag',
+    imageUrl: 'https://images.unsplash.com/photo-1596541223131-0da5f0d6194b?auto=format&fit=crop&q=80&w=800',
+    type: 'article',
     unlockType: 'level',
     requiredLevel: 3,
     requiredStage: 2
@@ -163,9 +197,11 @@ export const EDUCATION_MODULES: EducationModule[] = [
   {
     id: 'l4-s1-sport',
     title: 'Återgång till idrott & Padel',
-    category: 'Fas 4 Guide',
+    category: 'Guide',
     readTime: '5 min',
     contentUrl: 'atergang-sport',
+    imageUrl: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800',
+    type: 'article',
     unlockType: 'level',
     requiredLevel: 4,
     requiredStage: 1

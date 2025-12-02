@@ -1,4 +1,5 @@
 
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -27,6 +28,8 @@ export interface EducationModule {
   category: string; 
   readTime: string; 
   contentUrl: string;
+  imageUrl?: string; // New: Thumbnail image
+  type: 'video' | 'article'; // New: Media type
   // New Unlock Criteria
   unlockType: 'level' | 'lifetime';
   requiredLevel?: number; 
