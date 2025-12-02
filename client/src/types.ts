@@ -26,8 +26,12 @@ export interface EducationModule {
   title: string;
   category: string; 
   readTime: string; 
-  contentUrl: string; 
-  requiredLevel: number; 
+  contentUrl: string;
+  // New Unlock Criteria
+  unlockType: 'level' | 'lifetime';
+  requiredLevel?: number; 
+  requiredStage?: number;
+  requiredSessions?: number;
 }
 
 export interface ExerciseProgressEntry {
@@ -68,9 +72,11 @@ export interface AssessmentData {
 
 export interface ProgressionState {
   currentPhase: 1 | 2 | 3 | 4; 
-  consecutivePerfectSessions: number; 
   experiencePoints: number; 
   levelMaxedOut: boolean; 
+  // New Progression Fields
+  lifetimeSessions: number; // Totalt Antal Pass
+  currentStage: 1 | 2 | 3; // Etapp
 }
 
 export type ExertionLevel = 'light' | 'perfect' | 'heavy';

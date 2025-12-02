@@ -1,3 +1,4 @@
+
 import { EducationModule } from '../types';
 
 export const contentConfig = {
@@ -40,97 +41,133 @@ export const LEVEL_DESCRIPTIONS = {
   4: "Maximal funktion och återgång till full aktivitet eller idrott."
 };
 
+// Defined based on PDF "Upplåsning-logiken"
 export const EDUCATION_MODULES: EducationModule[] = [
-  // Level 1 Content
+  // --- SERIES A: THE GENERAL SERIES (Lifetime Sessions) ---
   {
-    id: 'l1-vad-ar-artros',
-    title: 'Vad är artros egentligen?',
-    category: 'Fakta',
-    readTime: '3 min',
-    requiredLevel: 1,
-    contentUrl: 'artros-fakta'
-  },
-  {
-    id: 'l1-trafikljuset',
-    title: 'Trafikljuset: Så tolkar du smärta',
-    category: 'Viktigt',
-    readTime: '4 min',
-    requiredLevel: 1,
-    contentUrl: 'smart-modell'
-  },
-  {
-    id: 'l1-vilovark',
-    title: 'Varför gör det ont när jag vilar?',
-    category: 'Symtom',
+    id: 'series-a-intro',
+    title: 'Välkommen till Artrosskolan (Intro)',
+    category: 'Start',
     readTime: '2 min',
+    contentUrl: 'intro-video',
+    unlockType: 'lifetime',
+    requiredSessions: 0
+  },
+  {
+    id: 'series-a-mechanism',
+    title: 'Varför gör det ont? (Mekanik)',
+    category: 'Kunskapsserie',
+    readTime: '5 min',
+    contentUrl: 'mechanism-video',
+    unlockType: 'lifetime',
+    requiredSessions: 5
+  },
+  {
+    id: 'series-a-longterm',
+    title: 'Långsiktig Hälsa',
+    category: 'Kunskapsserie',
+    readTime: '4 min',
+    contentUrl: 'longterm-video',
+    unlockType: 'lifetime',
+    requiredSessions: 10
+  },
+  {
+    id: 'series-a-lifestyle',
+    title: 'Kost och Artros',
+    category: 'Kunskapsserie',
+    readTime: '6 min',
+    contentUrl: 'lifestyle-video',
+    unlockType: 'lifetime',
+    requiredSessions: 15
+  },
+
+  // --- SERIES B: LEVEL SPECIFIC GUIDE (Level + Stage) ---
+  
+  // LEVEL 1
+  {
+    id: 'l1-s1-fakta',
+    title: 'Vad är artros egentligen?',
+    category: 'Fas 1 Guide',
+    readTime: '3 min',
+    contentUrl: 'artros-fakta',
+    unlockType: 'level',
     requiredLevel: 1,
-    contentUrl: 'vilovark'
+    requiredStage: 1
   },
-  // Level 2 Content
   {
-    id: 'l2-hitta-muskeln',
+    id: 'l1-s2-trafikljus',
+    title: 'Trafikljuset: Så tolkar du smärta',
+    category: 'Fas 1 Guide',
+    readTime: '4 min',
+    contentUrl: 'smart-modell',
+    unlockType: 'level',
+    requiredLevel: 1,
+    requiredStage: 2
+  },
+  {
+    id: 'l1-s3-vilovark',
+    title: 'Varför gör det ont när jag vilar?',
+    category: 'Fas 1 Guide',
+    readTime: '2 min',
+    contentUrl: 'vilovark',
+    unlockType: 'level',
+    requiredLevel: 1,
+    requiredStage: 3
+  },
+
+  // LEVEL 2
+  {
+    id: 'l2-s1-kontakt',
     title: 'Hitta kontakten med muskeln',
-    category: 'Tips',
+    category: 'Fas 2 Guide',
     readTime: '3 min',
+    contentUrl: 'muskelkontakt',
+    unlockType: 'level',
     requiredLevel: 2,
-    contentUrl: 'muskelkontakt'
+    requiredStage: 1
   },
   {
-    id: 'l2-muskelkorsett',
+    id: 'l2-s2-korsett',
     title: 'Muskelkorsetten – Ledens stötdämpare',
-    category: 'Fakta',
+    category: 'Fas 2 Guide',
     readTime: '3 min',
+    contentUrl: 'muskelkorsett',
+    unlockType: 'level',
     requiredLevel: 2,
-    contentUrl: 'muskelkorsett'
+    requiredStage: 2
   },
+  
+  // LEVEL 3
   {
-    id: 'l2-somn',
-    title: 'Sömn och smärta – en ond cirkel',
-    category: 'Livsstil',
-    readTime: '4 min',
-    requiredLevel: 2,
-    contentUrl: 'somn-halsa'
-  },
-  // Level 3 Content
-  {
-    id: 'l3-kinesiofobi',
+    id: 'l3-s1-fear',
     title: 'Rädsla för rörelse (Kinesiofobi)',
-    category: 'Psykologi',
+    category: 'Fas 3 Guide',
     readTime: '5 min',
+    contentUrl: 'radsla-rorelse',
+    unlockType: 'level',
     requiredLevel: 3,
-    contentUrl: 'radsla-rorelse'
+    requiredStage: 1
   },
   {
-    id: 'l3-bakslag',
+    id: 'l3-s2-setbacks',
     title: 'Hjälp, jag fick ont igen! (Om bakslag)',
-    category: 'Viktigt',
+    category: 'Fas 3 Guide',
     readTime: '3 min',
+    contentUrl: 'bakslag',
+    unlockType: 'level',
     requiredLevel: 3,
-    contentUrl: 'bakslag'
+    requiredStage: 2
   },
+
+  // LEVEL 4
   {
-    id: 'l3-gummiband',
-    title: 'Gummiband och tyngre grejer',
-    category: 'Träningslära',
-    readTime: '3 min',
-    requiredLevel: 3,
-    contentUrl: 'progression'
-  },
-  // Level 4 Content
-  {
-    id: 'l4-aktivitet',
-    title: 'Fysiska aktivitetsrekommendationer',
-    category: 'Hälsa',
-    readTime: '4 min',
-    requiredLevel: 4,
-    contentUrl: 'fysisk-aktivitet'
-  },
-  {
-    id: 'l4-idrott',
+    id: 'l4-s1-sport',
     title: 'Återgång till idrott & Padel',
-    category: 'Mål',
+    category: 'Fas 4 Guide',
     readTime: '5 min',
+    contentUrl: 'atergang-sport',
+    unlockType: 'level',
     requiredLevel: 4,
-    contentUrl: 'atergang-sport'
+    requiredStage: 1
   }
 ];

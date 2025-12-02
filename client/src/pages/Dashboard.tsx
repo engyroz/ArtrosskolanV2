@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -5,15 +6,14 @@ import { useTime } from '../contexts/TimeContext';
 import { Exercise } from '../types';
 import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
-import { Play, Check, Circle, Activity, CheckCircle } from 'lucide-react';
-import { toLocalISOString, isSameDay } from '../utils/dateHelpers';
+import { Play, Check, Activity } from 'lucide-react';
+import { toLocalISOString } from '../utils/dateHelpers';
 import { generateLevelPlan, getWorkoutSession } from '../utils/workoutEngine';
-import { getMaxXP } from '../utils/progressionEngine';
+import { getMaxXP, calculateProgressionUpdate } from '../utils/progressionEngine';
 import { 
     ACTION_CARD_CONFIG, 
     PHYSICAL_ACTIVITY_TASKS, 
-    PHASE_NAMES,
-    PRE_FLIGHT_MESSAGES 
+    PHASE_NAMES
 } from '../utils/textConstants';
 
 // Components
@@ -52,18 +52,21 @@ const Dashboard = () => {
   const currentDayInWeek = ((daysSinceStart - 1) % 7) + 1;
 
   const dayIndex = today.getDay();
+  // Simple scheduler: Level 1 everyday, else Mon/Wed/Fri
   const isRehabDay = currentLevel === 1 || [1, 3, 5].includes(dayIndex);
   
+  // --- HERO MODE LOGIC ---
   let heroMode: 'active' | 'recovery' | 'completed' | 'boss_fight' = 'active';
   
+  // Use the new progression engine flag
+  const isLevelMaxed = userProfile?.progression?.levelMaxedOut;
+
   if (rehabLog) {
       heroMode = 'completed';
+  } else if (isLevelMaxed) {
+      heroMode = 'boss_fight';
   } else if (isRehabDay) {
-      if (userProfile?.progression?.levelMaxedOut) {
-          heroMode = 'boss_fight';
-      } else {
-          heroMode = 'active';
-      }
+      heroMode = 'active';
   } else {
       heroMode = 'recovery';
   }
@@ -74,6 +77,7 @@ const Dashboard = () => {
     const locationState = location.state as any;
     const earnedXP = locationState?.xpEarned;
 
+    // Visual animation for XP
     if (earnedXP) {
         const startXP = Math.max(0, realXP - earnedXP);
         setDisplayedXP(startXP);
@@ -96,6 +100,7 @@ const Dashboard = () => {
     else setActivityCompletedToday(false);
   }, [activityLog, selectedDateStr]);
 
+  // Ensure Plan IDs exist
   useEffect(() => {
     const initPlan = async () => {
       if (!userProfile) return;
@@ -119,9 +124,7 @@ const Dashboard = () => {
   }, [userProfile, currentLevel]);
 
   const handleHeroClick = () => {
-    if (heroMode === 'completed') {
-        return; 
-    }
+    if (heroMode === 'completed') return; 
     if (heroMode === 'recovery') {
         navigate('/journey'); 
         return;
@@ -154,10 +157,13 @@ const Dashboard = () => {
 
   const handleToggleActivity = async () => {
       if (isActivityDone) return; 
-      
+      if (!userProfile) return;
+
       setActivityCompletedToday(true); 
       
-      if (!userProfile) return;
+      // Calculate XP update using engine
+      const update = calculateProgressionUpdate(userProfile, 'PHYSICAL_ACTIVITY');
+      
       try {
           const newLog = {
             date: selectedDateStr,
@@ -166,13 +172,20 @@ const Dashboard = () => {
             painScore: 0, 
             exertion: 'light',
             feedbackMessage: 'Aktivitet registrerad',
-            xpEarned: 10
+            xpEarned: update.xpEarned
           };
           
           await db.collection('users').doc(userProfile.uid).update({
               activityHistory: firebase.firestore.FieldValue.arrayUnion(newLog),
-              "progression.experiencePoints": (userProfile.progression?.experiencePoints || 0) + 10
+              "progression.experiencePoints": update.newTotalXP,
+              "progression.currentStage": update.newStage,
+              "progression.levelMaxedOut": update.levelMaxedOut
           });
+          
+          if(update.message && update.stageUp) {
+              alert(update.message); // Simple alert for now, could be a toast
+          }
+
           await refreshProfile();
       } catch (e) {
           console.error(e);
@@ -185,12 +198,14 @@ const Dashboard = () => {
     try {
         const nextLevel = userProfile.currentLevel + 1;
         const userRef = db.collection('users').doc(userProfile.uid);
+        
+        // Reset Progression for next level
         await userRef.update({
             currentLevel: nextLevel,
             "progression.experiencePoints": 0,
+            "progression.currentStage": 1,
             "progression.levelMaxedOut": false,
             "progression.currentPhase": 1,
-            "progression.consecutivePerfectSessions": 0,
             activePlanIds: [], 
             exerciseProgress: {} 
         });
@@ -210,8 +225,8 @@ const Dashboard = () => {
                        heroMode === 'boss_fight' ? "Du är redo för nästa nivå" :
                        "Dagens rehab är avklarad.";
 
-  const heroMeta = heroMode === 'active' ? { time: levelConfig.time, xp: levelConfig.xp } : 
-                   heroMode === 'recovery' ? { xp: 10 } : undefined;
+  const heroMeta = heroMode === 'active' ? { time: levelConfig.time, xp: 100 } : 
+                   heroMode === 'recovery' ? { xp: 0 } : undefined;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-32">
@@ -231,7 +246,7 @@ const Dashboard = () => {
         level={currentLevel}
       />
 
-      {/* Header - Constrained Width */}
+      {/* Header */}
       <div className="bg-white sticky top-0 z-30 border-b border-slate-100">
           <div className="max-w-md mx-auto px-4 pt-8 pb-4 flex justify-between items-start">
             <div>
@@ -257,13 +272,14 @@ const Dashboard = () => {
                 meta={heroMeta}
                 onClick={handleHeroClick}
             />
-            {heroMode !== 'recovery' && (
-                <LevelProgressBar 
-                    level={currentLevel} 
-                    currentXP={displayedXP} 
-                    maxXP={getMaxXP(currentLevel)} 
-                />
-            )}
+            
+            {/* PROGRESS BAR WITH STAGES */}
+            <LevelProgressBar 
+                level={currentLevel} 
+                currentXP={displayedXP} 
+                maxXP={getMaxXP(currentLevel)} 
+                currentStage={userProfile?.progression?.currentStage || 1}
+            />
         </section>
 
         {showDailyMedicine && (

@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import { WorkoutSession, ExertionLevel } from '../types';
-import { calculateSessionProgression } from '../utils/progressionEngine';
+import { calculateProgressionUpdate } from '../utils/progressionEngine'; // Updated import
 import { toLocalISOString } from '../utils/dateHelpers';
 import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
@@ -86,15 +87,9 @@ const WorkoutPlayer = () => {
     const finalPain = skipFeedback ? 0 : painScore;
     const finalExertion = skipFeedback ? 'perfect' : exertion;
 
-    const exerciseIds = session.exercises.map(e => e.id);
-    const result = calculateSessionProgression(
-        userProfile, 
-        exerciseIds, 
-        finalExertion, 
-        finalPain
-    );
-
-    const earnedXP = session.type === 'circulation' ? 30 : result.xpEarned;
+    // Use New Progression Engine
+    const activityType = session.type === 'rehab' ? 'REHAB_SESSION' : 'DAILY_MEDICINE';
+    const result = calculateProgressionUpdate(userProfile, activityType);
 
     try {
         const userRef = db.collection('users').doc(userProfile.uid);
@@ -106,23 +101,25 @@ const WorkoutPlayer = () => {
             painScore: finalPain,
             exertion: finalExertion,
             feedbackMessage: result.message,
-            xpEarned: earnedXP
+            xpEarned: result.xpEarned
         };
 
         const updatePayload: any = {
             activityHistory: firebase.firestore.FieldValue.arrayUnion(newLog),
-            "progression.experiencePoints": (userProfile.progression?.experiencePoints || 0) + earnedXP,
+            "progression.experiencePoints": result.newTotalXP,
+            "progression.currentStage": result.newStage,
+            "progression.levelMaxedOut": result.levelMaxedOut
         };
 
+        // Important: "Totalt Antal Pass" (Lifetime Sessions) increases only for Rehab
         if (session.type === 'rehab') {
-            updatePayload.exerciseProgress = result.updatedProgress;
-            updatePayload["progression.levelMaxedOut"] = result.levelMaxedOut;
+            updatePayload["progression.lifetimeSessions"] = firebase.firestore.FieldValue.increment(1);
         }
 
         await userRef.update(updatePayload);
         await refreshProfile();
         
-        navigate('/dashboard', { state: { xpEarned: earnedXP } });
+        navigate('/dashboard', { state: { xpEarned: result.xpEarned } });
 
     } catch (e) {
         console.error("Error saving session:", e);
