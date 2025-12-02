@@ -2,9 +2,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { CheckCircle, Lock, Trophy, Map, Compass, PlayCircle, Star, ArrowRight } from 'lucide-react';
+import { CheckCircle, Lock, Trophy, Compass, PlayCircle, ArrowRight, MapPin, Sparkles } from 'lucide-react';
 import { getMaxXP } from '../utils/progressionEngine';
-import { BOSS_FIGHT_QUESTIONS } from '../utils/textConstants';
 
 // Helper for dynamic level titles (Uppdraget)
 const getLevelFocus = (level: number) => {
@@ -38,26 +37,7 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
   const gap = 10; 
   const segmentLength = (circumference / 3) - (gap * 2); 
 
-  // Helper to render a segment arc
-  // We rotate the circle to position the 3 segments: 
-  // Seg 1 (Bottom Leftish to Top), Seg 2 (Top to Bottom Right), Seg 3 (Bottom Right to Bottom Left)
-  // Actually, simplest is standard clock: 
-  // 1: 12-4, 2: 4-8, 3: 8-12? 
-  // Let's stick to a visual "Pie" logic roughly rotated.
-  
-  // Using a simpler approach: 3 distinct circles with stroke-dasharray
-  // Total circumference is C.
-  // We want 3 segments of length (C/3) - gap.
-  // Rotation offsets: -90deg (Top), 30deg, 150deg
-  
   const Segment = ({ progress, rotation, colorClass }: any) => {
-    // We only show the "filled" part based on progress
-    // The background track is always full segment length
-    const dashArray = `${segmentLength} ${circumference - segmentLength}`;
-    
-    // Calculate filled portion: simple approach, we mask it or change color
-    // Better: Render background grey segment, then overlay colored segment with varying length
-    
     return (
       <g transform={`rotate(${rotation}, ${center}, ${center})`}>
         {/* Background Track */}
@@ -68,11 +48,11 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          strokeDasharray={dashArray}
-          className="text-slate-100"
+          strokeDasharray={`${segmentLength} ${circumference - segmentLength}`}
+          className="text-slate-200/50" // Subtler background track
           strokeLinecap="round"
         />
-        {/* Filled Track */}
+        {/* Filled Track with Glow */}
         <circle
           cx={center}
           cy={center}
@@ -81,7 +61,7 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
           stroke="currentColor"
           strokeWidth={strokeWidth}
           strokeDasharray={`${segmentLength * progress} ${circumference - (segmentLength * progress)}`}
-          className={`${colorClass} transition-all duration-1000 ease-out`}
+          className={`${colorClass} transition-all duration-1000 ease-out filter drop-shadow-md`}
           strokeLinecap="round"
         />
       </g>
@@ -95,31 +75,19 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
          <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-20 scale-110"></div>
        )}
 
-      <svg width={size} height={size} className="transform -rotate-90">
-        {/* Segment 1: Starts at 0 (Top in standard SVG, but we rotated parent -90, so it starts Right)
-            Wait, let's keep parent normal and rotate segments.
-            -90 puts 0 at top.
-            We want 3 segments.
-            1: Top-Right (0 to 120)
-            2: Bottom (120 to 240)
-            3: Top-Left (240 to 360)
-         */}
-         {/* Adjust rotations to create the gap feel */}
-        <Segment progress={seg1} rotation={0 + 2} colorClass="text-blue-500" />
-        <Segment progress={seg2} rotation={120 + 2} colorClass="text-blue-600" />
-        <Segment progress={seg3} rotation={240 + 2} colorClass="text-blue-700" />
+      <svg width={size} height={size} className="transform -rotate-90 drop-shadow-sm">
+        <Segment progress={seg1} rotation={2} colorClass="text-blue-400" />
+        <Segment progress={seg2} rotation={122} colorClass="text-blue-500" />
+        <Segment progress={seg3} rotation={242} colorClass="text-blue-600" />
       </svg>
       
-      {/* Center Content */}
+      {/* Center Content - Badge Style */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Nivå</span>
-        <span className="text-4xl font-black text-slate-900 leading-none">{level}</span>
+        <div className="w-20 h-20 bg-white rounded-full flex flex-col items-center justify-center shadow-inner border border-slate-100">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Nivå</span>
+            <span className="text-4xl font-black text-slate-900 leading-none">{level}</span>
+        </div>
       </div>
-      
-      {/* Feedback pop (visual only, simplified) */}
-      {/* <div className="absolute -right-4 top-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-bounce">
-         Etapp {seg3 > 0 ? 3 : seg2 > 0 ? 2 : 1}
-      </div> */}
     </div>
   );
 };
@@ -131,7 +99,6 @@ const MyJourney = () => {
   const currentLevel = userProfile?.currentLevel || 1;
   const userGoal = userProfile?.assessmentData?.mainGoal || "Bli smärtfri";
   
-  // Get Goal Description mapping (simplified from Assessment options)
   const getGoalText = (val: string) => {
       const map: Record<string, string> = {
           'family': 'Leka med barnbarnen',
@@ -146,10 +113,9 @@ const MyJourney = () => {
 
   const currentXP = userProfile?.progression?.experiencePoints || 0;
   const maxXP = getMaxXP(currentLevel);
-  const isLevelMaxed = currentXP >= maxXP; // Ready for boss
+  const isLevelMaxed = currentXP >= maxXP; 
   const lifetimeSessions = userProfile?.progression?.lifetimeSessions || 0;
 
-  // Determine Subtext
   const progressPct = currentXP / maxXP;
   let motivationalText = "Bra start! Fortsätt jobba.";
   if (progressPct > 0.3) motivationalText = "Första etappen snart klar!";
@@ -160,39 +126,42 @@ const MyJourney = () => {
 
   const renderTimelineNode = (level: number) => {
       const status = level < currentLevel ? 'completed' : level === currentLevel ? 'active' : 'locked';
-      
-      // Line connector (draw above node unless last)
       const showLine = level < 4;
 
       return (
           <div key={level} className="relative flex flex-col items-center">
-              {/* Vertical Line */}
+              {/* The Trail (Line) */}
               {showLine && (
-                  <div className={`absolute top-12 bottom-[-48px] w-1 z-0 
-                      ${level < currentLevel ? 'bg-green-300' : 'bg-slate-100'}
-                  `}></div>
+                  <div className="absolute top-14 bottom-[-48px] w-0.5 z-0 flex flex-col items-center justify-start">
+                      {/* Future Path (Dashed) */}
+                      <div className="h-full w-full border-l-2 border-dashed border-slate-300 absolute inset-0 opacity-50"></div>
+                      
+                      {/* Past Path (Solid & Glowing) */}
+                      {level < currentLevel && (
+                          <div className="absolute top-0 left-[-1px] right-0 h-full w-0.5 bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)] z-10"></div>
+                      )}
+                  </div>
               )}
 
               {/* Node Content */}
-              <div className="z-10 bg-slate-50 py-2"> {/* Background matching to hide line behind node if needed, or transparent */}
-                  
+              <div className="z-10 py-2"> 
                   {status === 'completed' && (
                       <button 
-                        className="w-12 h-12 rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center text-green-600 shadow-sm transition-transform hover:scale-110"
+                        className="w-12 h-12 rounded-full bg-white border-2 border-green-500 flex items-center justify-center text-green-600 shadow-md transition-transform hover:scale-110"
                         onClick={() => alert(`Historik för Nivå ${level} (Kommer snart)`)}
                       >
-                          <CheckCircle className="w-6 h-6" />
+                          <CheckCircle className="w-6 h-6 fill-green-50" />
                       </button>
                   )}
 
                   {status === 'locked' && (
-                      <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-300">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-300 shadow-sm">
                           <Lock className="w-4 h-4" />
                       </div>
                   )}
 
                   {status === 'active' && (
-                      <div className="py-4">
+                      <div className="py-2 transform scale-100 transition-all">
                           <SegmentedProgressCircle 
                               level={level} 
                               currentXP={currentXP} 
@@ -202,7 +171,7 @@ const MyJourney = () => {
                   )}
               </div>
               
-              {/* Labels for small nodes */}
+              {/* Labels */}
               {status !== 'active' && (
                   <span className={`text-xs font-bold mt-1 ${status === 'completed' ? 'text-green-700' : 'text-slate-400'}`}>
                       Nivå {level}
@@ -213,45 +182,49 @@ const MyJourney = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-slate-50 pb-24 relative overflow-hidden">
       
-      {/* 1. Header: "Kompassen" */}
-      <div className="bg-white border-b border-slate-200 pt-8 pb-8 px-6 text-center shadow-sm">
-          <div className="inline-flex items-center justify-center h-12 w-12 bg-blue-50 rounded-full text-blue-600 mb-4">
+      {/* 1. Background Texture (Topographic Map) */}
+      <div 
+        className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
+      ></div>
+
+      {/* 2. Header: "Kompassen" */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 pt-8 pb-8 px-6 text-center shadow-sm relative z-20">
+          <div className="inline-flex items-center justify-center h-12 w-12 bg-blue-50 rounded-full text-blue-600 mb-4 shadow-sm">
              <Compass className="w-6 h-6" />
           </div>
           
           <h1 className="text-3xl font-extrabold text-slate-900 mb-2 leading-tight">
-              <span className="text-slate-400 text-lg font-bold block mb-1 uppercase tracking-wider">Uppdraget</span>
-              Fokus: {getLevelFocus(currentLevel)}
+              <span className="text-slate-400 text-xs font-bold block mb-2 uppercase tracking-widest">Uppdraget</span>
+              {getLevelFocus(currentLevel)}
           </h1>
           
-          <div className="mt-4 inline-block relative px-6 py-2">
-              {/* Handwritten style mimic */}
-              <p className="font-medium text-slate-600 italic text-lg relative z-10 font-serif">
-                  "För att kunna: {getGoalText(userGoal)}"
-              </p>
-              <div className="absolute inset-0 bg-yellow-100 transform -rotate-1 rounded-lg -z-0 opacity-50"></div>
+          <div className="mt-4 flex items-center justify-center">
+              <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-indigo-500 fill-current" />
+                <p className="font-bold text-indigo-700 text-sm">
+                   Mål: {getGoalText(userGoal)}
+                </p>
+              </div>
           </div>
       </div>
 
-      {/* 2. Main Content: The Map */}
-      <div className="max-w-md mx-auto px-4 mt-8 flex flex-col items-center">
+      {/* 3. Main Content: The Map */}
+      <div className="max-w-md mx-auto px-4 mt-8 flex flex-col items-center relative z-10">
           
           {/* Render Timeline Nodes */}
-          <div className="flex flex-col items-center w-full space-y-4">
+          <div className="flex flex-col items-center w-full space-y-2">
               {[1, 2, 3, 4].map(lvl => renderTimelineNode(lvl))}
           </div>
 
-          {/* 3. XP Meter & Status (Belongs to active level) */}
-          <div className="w-full text-center mt-2 mb-8 animate-fade-in">
-             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">
-                 Nivå-XP
-             </h3>
-             <p className="text-2xl font-black text-slate-900 font-mono">
-                 {currentXP} <span className="text-slate-400 text-lg">/ {maxXP}</span>
+          {/* XP Status Text */}
+          <div className="w-full text-center mt-4 mb-8 animate-fade-in">
+             <p className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                 {currentXP} <span className="text-slate-400 text-lg font-bold">/ {maxXP} XP</span>
              </p>
-             <p className="text-blue-600 font-medium text-sm mt-2">
+             <p className="text-blue-600 font-bold text-sm mt-1">
                  {motivationalText}
              </p>
           </div>
@@ -261,7 +234,7 @@ const MyJourney = () => {
               {isLevelMaxed ? (
                   // UNLOCKED STATE
                   <button 
-                    onClick={() => navigate('/dashboard', { state: { openBossFight: true } })} // Pass intent to dashboard or handle locally? Dashboard has the modal.
+                    onClick={() => navigate('/dashboard', { state: { openBossFight: true } })}
                     className="w-full relative overflow-hidden bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 rounded-2xl shadow-xl transform transition-all hover:scale-[1.02] active:scale-[0.98] group"
                   >
                       <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
@@ -273,51 +246,67 @@ const MyJourney = () => {
                           <div className="bg-white/20 p-3 rounded-full mb-3 animate-pulse">
                               <Trophy className="w-8 h-8 text-white" />
                           </div>
-                          <h3 className="text-xl font-black uppercase tracking-widest mb-1">
+                          <h3 className="text-xl font-black uppercase tracking-widest mb-1 drop-shadow-sm">
                               Gör Nivåtestet
                           </h3>
-                          <p className="text-yellow-100 font-medium text-sm">
+                          <p className="text-yellow-50 font-bold text-sm">
                               Du är redo för nästa nivå!
                           </p>
                       </div>
                   </button>
               ) : (
-                  // LOCKED STATE (Grinding)
-                  <div className="w-full bg-slate-100 border-2 border-slate-200 border-dashed rounded-2xl p-6 flex items-center justify-between opacity-80">
-                      <div className="flex items-center gap-4">
-                          <div className="bg-slate-200 p-3 rounded-full text-slate-400">
-                              <Lock className="w-6 h-6" />
-                          </div>
-                          <div className="text-left">
-                              <h3 className="font-bold text-slate-500">Lås upp Nivåtestet</h3>
-                              <div className="h-1.5 w-24 bg-slate-200 rounded-full mt-2 overflow-hidden">
-                                  <div className="h-full bg-slate-400" style={{ width: `${Math.min(100, progressPct * 100)}%` }}></div>
+                  // LOCKED STATE (Dark Mode "Gate")
+                  <div className="w-full bg-slate-900 rounded-2xl p-1 relative overflow-hidden shadow-lg border border-slate-700">
+                      <div className="bg-slate-800/50 rounded-xl p-6 flex items-center justify-between relative z-10">
+                          <div className="flex items-center gap-4">
+                              <div className="bg-slate-700 p-3 rounded-full text-slate-400 border border-slate-600">
+                                  <Lock className="w-6 h-6" />
+                              </div>
+                              <div className="text-left">
+                                  <h3 className="font-bold text-slate-200 text-sm uppercase tracking-wide">Nivåtest Låst</h3>
+                                  <div className="flex items-center gap-2 mt-1">
+                                      <Sparkles className="w-3 h-3 text-yellow-500" />
+                                      <span className="text-xs font-bold text-yellow-500">
+                                          Samlar kraft...
+                                      </span>
+                                  </div>
                               </div>
                           </div>
+                          
+                          <div className="flex flex-col items-end">
+                              <span className="text-2xl font-black text-slate-500 font-mono leading-none">
+                                  {Math.round(progressPct * 100)}%
+                              </span>
+                          </div>
                       </div>
-                      <span className="text-xs font-bold text-slate-400">
-                          {Math.round(progressPct * 100)}% klart
-                      </span>
+                      
+                      {/* Progress Bar at bottom */}
+                      <div className="h-1 w-full bg-slate-800">
+                          <div 
+                             className="h-full bg-gradient-to-r from-blue-600 to-purple-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
+                             style={{ width: `${Math.min(100, progressPct * 100)}%` }}
+                          ></div>
+                      </div>
                   </div>
               )}
           </div>
 
-          {/* 5. Gamification Stats (Sidospår) */}
+          {/* 5. Gamification Stats */}
           <div className="w-full grid grid-cols-2 gap-4 mb-8">
-              <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
                   <span className="text-3xl font-black text-slate-900 mb-1">{lifetimeSessions}</span>
-                  <span className="text-xs font-bold text-slate-400 uppercase">Totalt antal pass</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pass totalt</span>
               </div>
               
               <button 
                 onClick={() => navigate('/knowledge')}
-                className="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col items-center text-center hover:bg-blue-100 transition-colors group"
+                className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center hover:bg-blue-50 hover:border-blue-200 transition-colors group"
               >
                   <div className="flex items-center gap-1 mb-2 text-blue-600">
                       <PlayCircle className="w-5 h-5" />
-                      <span className="text-xs font-bold uppercase">Nästa Belöning</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Nästa Belöning</span>
                   </div>
-                  <p className="text-xs text-blue-800 font-medium leading-tight">
+                  <p className="text-xs text-slate-600 font-bold leading-tight group-hover:text-blue-800">
                       "Låses upp om 2 pass"
                   </p>
                   <ArrowRight className="w-4 h-4 text-blue-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-1" />
