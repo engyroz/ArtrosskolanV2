@@ -2,8 +2,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { CheckCircle, Lock, Trophy, Compass, PlayCircle, ArrowRight, MapPin, Sparkles } from 'lucide-react';
+import { CheckCircle, Lock, Trophy, Flag, PlayCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { getMaxXP } from '../utils/progressionEngine';
+import { LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
 
 // Helper for dynamic level titles (Uppdraget)
 const getLevelFocus = (level: number) => {
@@ -187,27 +188,35 @@ const MyJourney = () => {
       {/* 1. Background Texture (Topographic Map) */}
       <div 
         className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
+        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
       ></div>
 
-      {/* 2. Header: "Kompassen" */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 pt-8 pb-8 px-6 text-center shadow-sm relative z-20">
-          <div className="inline-flex items-center justify-center h-12 w-12 bg-blue-50 rounded-full text-blue-600 mb-4 shadow-sm">
-             <Compass className="w-6 h-6" />
-          </div>
+      {/* 2. Header: "Hierarkisk Vision" */}
+      <div className="bg-white/90 backdrop-blur-md border-b border-slate-200 pt-6 pb-12 px-6 text-center shadow-sm relative z-20">
           
-          <h1 className="text-3xl font-extrabold text-slate-900 mb-2 leading-tight">
-              <span className="text-slate-400 text-xs font-bold block mb-2 uppercase tracking-widest">Uppdraget</span>
-              {getLevelFocus(currentLevel)}
-          </h1>
-          
-          <div className="mt-4 flex items-center justify-center">
-              <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-indigo-500 fill-current" />
-                <p className="font-bold text-indigo-700 text-sm">
-                   Mål: {getGoalText(userGoal)}
-                </p>
+          {/* Destination Banner */}
+          <div className="flex justify-center mb-8 animate-fade-in-down">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-50 border border-slate-200 rounded-full shadow-sm hover:bg-slate-100 transition-colors cursor-default">
+                <Flag className="w-3.5 h-3.5 text-indigo-600 fill-indigo-600" />
+                <span className="text-xs font-bold text-slate-600 tracking-wide uppercase">
+                   Mot målet: <span className="text-indigo-900 ml-1">{getGoalText(userGoal)}</span>
+                </span>
               </div>
+          </div>
+
+          {/* Level & Focus */}
+          <div className="flex flex-col items-center animate-fade-in-up">
+              <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-widest rounded-md mb-3 shadow-sm">
+                  Nivå {currentLevel}
+              </span>
+              
+              <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tight leading-none uppercase">
+                  {getLevelFocus(currentLevel)}
+              </h1>
+              
+              <p className="text-slate-500 font-medium text-sm max-w-xs mx-auto leading-relaxed">
+                  {LEVEL_DESCRIPTIONS[currentLevel as keyof typeof LEVEL_DESCRIPTIONS]}
+              </p>
           </div>
       </div>
 
