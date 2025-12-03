@@ -152,7 +152,7 @@ const MyJourney = () => {
                   )}
 
                   {status === 'active' && (
-                      <div className="transform scale-100 transition-all -m-16">
+                      <div className="transform scale-100 transition-all -m-14">
                           <SegmentedProgressCircle 
                               level={level} 
                               currentXP={currentXP} 
@@ -216,14 +216,7 @@ const MyJourney = () => {
       <div className="max-w-sm mx-auto px-4 mt-12 relative z-10">
           
           {/* THE TRAIL SVG (Background) */}
-          <svg className="absolute top-6 left-0 w-full h-[600px] pointer-events-none z-0 overflow-visible" viewBox="0 0 320 500">
-             {/* 
-                Coordinates explanation (assuming viewBox 0 0 320 500):
-                Level 1 Node (Left): x=24 (padding pl-8 approx) y=24
-                Level 2 Node (Right): x=296 (padding pr-8 approx) y=168 (24 + 144 spacing)
-                Level 3 Node (Left): x=24 y=312
-                Level 4 Node (Right): x=296 y=456
-             */}
+          <svg className="absolute top-6 left-4 right-4 h-[600px] pointer-events-none z-0 overflow-visible" viewBox="0 0 352 440">
              <defs>
                 <linearGradient id="trailGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#CBD5E1" />
@@ -233,7 +226,7 @@ const MyJourney = () => {
 
              {/* Background Dashed Line (The Map) */}
              <path 
-                d="M 40 24 C 40 100, 280 100, 280 168 C 280 240, 40 240, 40 312 C 40 380, 280 380, 280 456" 
+                d="M 56 0 C 56 72, 296 72, 296 144 C 296 216, 56 216, 56 288 C 56 360, 296 360, 296 432" 
                 fill="none" 
                 stroke="#CBD5E1" 
                 strokeWidth="3" 
@@ -245,7 +238,7 @@ const MyJourney = () => {
              {/* Segment 1: Lvl 1 -> 2 */}
              {currentLevel >= 2 && (
                  <path 
-                    d="M 40 24 C 40 100, 280 100, 280 168" 
+                    d="M 56 0 C 56 72, 296 72, 296 144" 
                     fill="none" 
                     stroke="#4ADE80" 
                     strokeWidth="3" 
@@ -256,7 +249,7 @@ const MyJourney = () => {
              {/* Segment 2: Lvl 2 -> 3 */}
              {currentLevel >= 3 && (
                  <path 
-                    d="M 280 168 C 280 240, 40 240, 40 312" 
+                    d="M 296 144 C 296 216, 56 216, 56 288" 
                     fill="none" 
                     stroke="#4ADE80" 
                     strokeWidth="3" 
@@ -267,7 +260,7 @@ const MyJourney = () => {
              {/* Segment 3: Lvl 3 -> 4 */}
              {currentLevel >= 4 && (
                  <path 
-                    d="M 40 312 C 40 380, 280 380, 280 456" 
+                    d="M 56 288 C 56 360, 296 360, 296 432" 
                     fill="none" 
                     stroke="#4ADE80" 
                     strokeWidth="3" 
@@ -278,7 +271,6 @@ const MyJourney = () => {
           </svg>
 
           {/* Render Nodes */}
-          {/* Note: mb-24 in the node creates the vertical spacing that matches the SVG coordinates */}
           <div className="flex flex-col w-full">
               {[1, 2, 3, 4].map(lvl => renderTimelineNode(lvl))}
           </div>
@@ -359,7 +351,7 @@ const MyJourney = () => {
           <div className="w-full grid grid-cols-2 gap-4 mb-8 relative z-20">
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
                   <span className="text-3xl font-black text-slate-900 mb-1">{lifetimeSessions}</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pass totalt</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pass totalt</span>
               </div>
               
               <button 
@@ -368,7 +360,7 @@ const MyJourney = () => {
               >
                   <div className="flex items-center gap-1 mb-2 text-blue-600">
                       <PlayCircle className="w-5 h-5" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Nästa Belöning</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">Nästa Belöning</span>
                   </div>
                   <p className="text-xs text-slate-600 font-bold leading-tight group-hover:text-blue-800">
                       "Låses upp om 2 pass"
