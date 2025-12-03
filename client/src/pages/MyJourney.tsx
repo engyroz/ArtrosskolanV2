@@ -1,11 +1,11 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Check, Lock, Trophy, Flag, Info, ArrowRight, Sparkles } from 'lucide-react';
+import { Lock, Trophy, Flag, Info } from 'lucide-react';
 import { getMaxXP } from '../utils/progressionEngine';
 import { LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
 import LevelProgressBar from '../components/LevelProgressBar';
+import MapTimeline from '../components/MapTimeline';
 
 // Helper for dynamic level titles (Uppdraget)
 const getLevelFocus = (level: number) => {
@@ -16,81 +16,6 @@ const getLevelFocus = (level: number) => {
     case 4: return "Återgång & Prestation";
     default: return "Rehab";
   }
-};
-
-const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, currentXP: number, maxXP: number }) => {
-  // Calculate progress for the 3 segments (0-1 range)
-  const totalProgress = Math.min(1, Math.max(0, currentXP / maxXP));
-  
-  // Segment 1: 0% - 33%
-  const seg1 = Math.min(1, totalProgress * 3);
-  // Segment 2: 33% - 66%
-  const seg2 = Math.min(1, Math.max(0, (totalProgress - 0.333) * 3));
-  // Segment 3: 66% - 100%
-  const seg3 = Math.min(1, Math.max(0, (totalProgress - 0.666) * 3));
-
-  // The Reactor Core Configuration - Compact Size
-  const size = 100; // Reduced size
-  const center = size / 2;
-  const strokeWidth = 10; 
-  const radius = 42;
-  const circumference = 2 * Math.PI * radius;
-  const gap = 6; 
-  const segmentLength = (circumference / 3) - (gap * 2); 
-
-  const Segment = ({ progress, rotation, colorClass }: any) => {
-    return (
-      <g transform={`rotate(${rotation}, ${center}, ${center})`}>
-        {/* Background Track */}
-        <circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${segmentLength} ${circumference - segmentLength}`}
-          className="text-slate-100" 
-          strokeLinecap="round"
-        />
-        {/* Filled Track with Glow */}
-        <circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${segmentLength * progress} ${circumference - (segmentLength * progress)}`}
-          className={`${colorClass} transition-all duration-1000 ease-out`}
-          strokeLinecap="round"
-        />
-      </g>
-    );
-  };
-
-  return (
-    <div className="relative flex items-center justify-center w-[100px] h-[100px]">
-       {/* Pulse effect if near level up */}
-       {totalProgress >= 1 && (
-         <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-20 scale-110"></div>
-       )}
-
-      <svg width={size} height={size} className="transform -rotate-90 drop-shadow-sm z-0 relative">
-        <Segment progress={seg1} rotation={2} colorClass="text-blue-400" />
-        <Segment progress={seg2} rotation={122} colorClass="text-blue-500" />
-        <Segment progress={seg3} rotation={242} colorClass="text-blue-600" />
-      </svg>
-      
-      {/* Center Content - The Reactor Core */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-        <div className="w-16 h-16 bg-white rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-900/10">
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
-            <span className="text-2xl font-black text-slate-900 leading-none">{level}</span>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 const MyJourney = () => {
@@ -117,61 +42,6 @@ const MyJourney = () => {
   const maxXP = getMaxXP(currentLevel);
   const isLevelMaxed = currentXP >= maxXP; 
   
-  // Compact Vertical Map Logic
-  const renderTimelineNode = (level: number) => {
-      const status = level < currentLevel ? 'completed' : level === currentLevel ? 'active' : 'locked';
-      const isLeft = level % 2 !== 0;
-      
-      // Node alignment - wider spread
-      // Container width max-w-md (approx 448px)
-      // Left align: start
-      // Right align: end
-      let alignClass = isLeft ? 'items-start pl-8' : 'items-end pr-8';
-      
-      return (
-          <div key={level} className={`relative flex flex-col w-full ${alignClass} mb-0 z-10 h-20 justify-center`}>
-              {/* Node Content */}
-              <div className="relative"> 
-                  {status === 'completed' && (
-                      <button 
-                        className="w-16 h-16 rounded-full bg-green-500 flex flex-col items-center justify-center text-white shadow-xl transform transition-transform hover:scale-105 z-20"
-                      >
-                          <Check className="w-6 h-6 mb-1 stroke-[3]" />
-                          <span className="font-bold text-[9px]">NIVÅ {level}</span>
-                      </button>
-                  )}
-
-                  {status === 'locked' && (
-                      <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-slate-200 flex flex-col items-center justify-center text-slate-300 shadow-sm z-10">
-                          <Lock className="w-5 h-5 mb-1" />
-                          <span className="font-bold text-[9px] text-slate-400">NIVÅ {level}</span>
-                      </div>
-                  )}
-
-                  {status === 'active' && (
-                      <div className="transform scale-100 transition-all z-30">
-                          <SegmentedProgressCircle 
-                              level={level} 
-                              currentXP={currentXP} 
-                              maxXP={maxXP} 
-                          />
-                      </div>
-                  )}
-              </div>
-          </div>
-      );
-  };
-
-  // SVG PATHS - Compact Vertical, Wide Horizontal
-  // Width 416. 
-  // Nodes at Y: 40, 120, 200, 280 (Step 80)
-  // X range: ~40 to ~376
-  const PATHS = [
-    { id: 1, d: "M 40 40 C 40 80, 376 80, 376 120" },
-    { id: 2, d: "M 376 120 C 376 160, 40 160, 40 200" },
-    { id: 3, d: "M 40 200 C 40 240, 376 240, 376 280" }
-  ];
-
   return (
     <div className="min-h-screen bg-slate-50 pb-32 relative overflow-hidden">
       
@@ -209,48 +79,12 @@ const MyJourney = () => {
 
       <div className="max-w-md mx-auto px-4 mt-8 relative z-10">
 
-          {/* 3. The Map (Compact & Wide) */}
-          <div className="relative pb-8 mb-4">
-              {/* THE TRAIL SVG */}
-              <svg 
-                className="absolute top-0 left-0 right-0 h-[320px] w-full pointer-events-none z-0 overflow-visible" 
-                viewBox="0 0 416 320" 
-                preserveAspectRatio="none"
-              >
-                 {PATHS.map(p => (
-                     <path 
-                        key={`bg-${p.id}`}
-                        d={p.d} 
-                        fill="none" 
-                        stroke="#CBD5E1" 
-                        strokeWidth="4" 
-                        strokeDasharray="8,8" 
-                        strokeLinecap="round"
-                        className="opacity-60"
-                     />
-                 ))}
-
-                 {PATHS.map(p => {
-                     if (currentLevel < (p.id + 1)) return null;
-                     return (
-                         <path 
-                            key={`active-${p.id}`}
-                            d={p.d} 
-                            fill="none" 
-                            stroke="#22C55E" 
-                            strokeWidth="4" 
-                            strokeLinecap="round"
-                            className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)] animate-draw"
-                         />
-                     );
-                 })}
-              </svg>
-
-              {/* Render Nodes */}
-              <div className="flex flex-col w-full relative pt-0">
-                  {[1, 2, 3, 4].map(lvl => renderTimelineNode(lvl))}
-              </div>
-          </div>
+          {/* 3. The Map (Refactored Component) */}
+          <MapTimeline 
+            currentLevel={currentLevel}
+            currentXP={currentXP}
+            maxXP={maxXP}
+          />
 
           {/* 4. Progress Card */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg relative z-20">
