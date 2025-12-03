@@ -67,9 +67,9 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
       
       {/* Center Content - The Reactor Core */}
       <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-        <div className="w-14 h-14 bg-white rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-900/10">
-            <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
-            <span className="text-xl font-black text-slate-900 leading-none">{level}</span>
+        <div className="w-14 h-14 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-lg shadow-blue-900/20">
+            <span className="text-[8px] text-blue-100 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
+            <span className="text-xl font-black text-white leading-none">{level}</span>
         </div>
       </div>
     </div>
@@ -81,9 +81,10 @@ interface MapTimelineProps {
   currentXP: number;
   maxXP: number;
   startLevel?: number;
+  onLevelClick?: (level: number) => void;
 }
 
-const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1 }: MapTimelineProps) => {
+const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelClick }: MapTimelineProps) => {
     // Coordinate System (416 x 260)
     // Left X: 53 (12.74%)
     // Right X: 363 (87.26%)
@@ -113,10 +114,13 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1 }: MapTime
         const topPct = [12.5, 37.5, 62.5, 87.5][level - 1];
         const leftPct = isLeft ? 12.74 : 87.26;
 
+        const interactClasses = "cursor-pointer transform transition-transform duration-300 hover:scale-110 active:scale-95";
+
         return (
             <div 
                 key={level} 
-                className="absolute flex items-center justify-center w-[90px] h-[90px]"
+                className={`absolute flex items-center justify-center w-[90px] h-[90px] ${interactClasses}`}
+                onClick={() => onLevelClick && onLevelClick(level)}
                 style={{ 
                     top: `${topPct}%`, 
                     left: `${leftPct}%`,
@@ -126,7 +130,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1 }: MapTime
                 <div className="relative flex items-center justify-center"> 
                     
                     {isSkipped && (
-                        <div className="w-14 h-14 rounded-full bg-blue-50/50 border-2 border-dashed border-blue-300 flex flex-col items-center justify-center text-blue-400 shadow-sm z-20">
+                        <div className="w-14 h-14 rounded-full bg-white/50 backdrop-blur-[2px] border-2 border-dashed border-blue-300 flex flex-col items-center justify-center text-blue-400 shadow-sm z-20">
                              <ChevronsRight className="w-5 h-5 mb-0.5" />
                              <span className="font-bold text-[8px] uppercase tracking-wide">Nivå {level}</span>
                         </div>
@@ -134,7 +138,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1 }: MapTime
 
                     {isCompleted && (
                         <div 
-                          className="w-14 h-14 rounded-full bg-green-500 flex flex-col items-center justify-center text-white shadow-xl transform transition-transform hover:scale-105 z-20"
+                          className="w-14 h-14 rounded-full bg-green-500 flex flex-col items-center justify-center text-white shadow-xl z-20"
                         >
                             <Check className="w-5 h-5 mb-0.5 stroke-[3]" />
                             <span className="font-bold text-[8px]">NIVÅ {level}</span>
@@ -184,16 +188,20 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1 }: MapTime
                ))}
 
                {PATHS.map(p => {
-                   if (currentLevel < (p.id + 1)) return null;
+                   if (currentLevel <= p.id) return null;
+                   
+                   const isSkippedPath = p.id < startLevel;
+                   
                    return (
                        <path 
                           key={`active-${p.id}`}
                           d={p.d} 
                           fill="none" 
-                          stroke="#22C55E" 
+                          stroke={isSkippedPath ? "#93C5FD" : "#22C55E"} 
                           strokeWidth="4" 
                           strokeLinecap="round"
-                          className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)] animate-draw"
+                          strokeDasharray={isSkippedPath ? "8,6" : "none"}
+                          className="drop-shadow-[0_0_8px_rgba(0,0,0,0.05)] animate-draw"
                        />
                    );
                })}
