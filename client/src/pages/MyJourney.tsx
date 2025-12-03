@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { CheckCircle, Lock, Trophy, Flag, PlayCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Check, Lock, Trophy, Flag, PlayCircle, ArrowRight, Sparkles, CheckCircle } from 'lucide-react';
 import { getMaxXP } from '../utils/progressionEngine';
 import { LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
 
@@ -130,31 +131,39 @@ const MyJourney = () => {
   const renderTimelineNode = (level: number) => {
       const status = level < currentLevel ? 'completed' : level === currentLevel ? 'active' : 'locked';
       
-      // Determine alignment: Odd levels Left, Even levels Right
-      const alignment = level % 2 !== 0 ? 'items-start pl-8' : 'items-end pr-8';
+      // Determine alignment
+      const isLeft = level % 2 !== 0;
+      // Padding logic: Active node (w-40) needs less padding to center at same X as Passive node (w-28)
+      // Passive Center from edge: 32 (pl-8) + 56 (half w-28) = 88px
+      // Active Center from edge:  8 (pl-2) + 80 (half w-40) = 88px
+      const paddingClass = isLeft 
+          ? (status === 'active' ? 'items-start pl-2' : 'items-start pl-8')
+          : (status === 'active' ? 'items-end pr-2' : 'items-end pr-8');
       
       return (
-          <div key={level} className={`relative flex flex-col w-full ${alignment} mb-24 z-10`}>
+          <div key={level} className={`relative flex flex-col w-full ${paddingClass} mb-24 z-10 h-28 justify-center`}>
               
               {/* Node Content */}
               <div className="relative"> 
                   {status === 'completed' && (
                       <button 
-                        className="w-12 h-12 rounded-full bg-white border-2 border-green-500 flex items-center justify-center text-green-600 shadow-md transition-transform hover:scale-110"
+                        className="w-28 h-28 rounded-full bg-green-500 flex flex-col items-center justify-center text-white shadow-xl transform transition-transform hover:scale-105 z-20"
                         onClick={() => alert(`Historik för Nivå ${level} (Kommer snart)`)}
                       >
-                          <CheckCircle className="w-6 h-6 fill-green-50" />
+                          <Check className="w-10 h-10 mb-1 stroke-[3]" />
+                          <span className="font-bold text-sm">NIVÅ {level}</span>
                       </button>
                   )}
 
                   {status === 'locked' && (
-                      <div className="w-12 h-12 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-300 shadow-sm">
-                          <Lock className="w-5 h-5" />
+                      <div className="w-28 h-28 rounded-full bg-slate-100 border-2 border-slate-200 flex flex-col items-center justify-center text-slate-300 shadow-sm z-10">
+                          <Lock className="w-8 h-8 mb-1" />
+                          <span className="font-bold text-sm text-slate-400">NIVÅ {level}</span>
                       </div>
                   )}
 
                   {status === 'active' && (
-                      <div className="transform scale-100 transition-all -m-14">
+                      <div className="transform scale-100 transition-all z-30">
                           <SegmentedProgressCircle 
                               level={level} 
                               currentXP={currentXP} 
@@ -162,25 +171,19 @@ const MyJourney = () => {
                           />
                       </div>
                   )}
-
-                  {/* Labels positioned based on alignment */}
-                  {status !== 'active' && (
-                      <div className={`absolute top-14 w-32 ${level % 2 !== 0 ? 'text-left' : 'text-right right-0'}`}>
-                          <span className={`text-xs font-bold block ${status === 'completed' ? 'text-green-700' : 'text-slate-400'}`}>
-                              Nivå {level}
-                          </span>
-                      </div>
-                  )}
               </div>
           </div>
       );
   };
 
-  // PATH DATA - Separate paths for each segment to control coloring and perfect alignment
+  // PATH DATA
+  // Coordinates tuned for nodes centered at X=88 and X=264 (based on 352px container width)
+  // Vertical spacing based on 208px interval (Node height 112 + Margin 96)
+  // Start Y offset adjusted for SVG top position (top-6) relative to Node Center (56px) -> Y=32
   const PATHS = [
-    { id: 1, d: "M 56 0 C 56 72, 296 72, 296 144" },
-    { id: 2, d: "M 296 144 C 296 216, 56 216, 56 288" },
-    { id: 3, d: "M 56 288 C 56 360, 296 360, 296 432" }
+    { id: 1, d: "M 88 32 C 88 130, 264 130, 264 240" },
+    { id: 2, d: "M 264 240 C 264 340, 88 340, 88 448" },
+    { id: 3, d: "M 88 448 C 88 540, 264 540, 264 656" }
   ];
 
   return (
@@ -226,8 +229,8 @@ const MyJourney = () => {
           
           {/* THE TRAIL SVG (Background) */}
           <svg 
-            className="absolute top-6 left-4 right-4 h-[576px] w-auto pointer-events-none z-0 overflow-visible" 
-            viewBox="0 0 352 576" 
+            className="absolute top-6 left-4 right-4 h-[700px] w-auto pointer-events-none z-0 overflow-visible" 
+            viewBox="0 0 352 700" 
             preserveAspectRatio="none"
           >
              {/* Render all background paths (dashed) */}
@@ -237,25 +240,26 @@ const MyJourney = () => {
                     d={p.d} 
                     fill="none" 
                     stroke="#CBD5E1" 
-                    strokeWidth="3" 
-                    strokeDasharray="8,8" 
+                    strokeWidth="4" 
+                    strokeDasharray="12,12" 
                     strokeLinecap="round"
+                    className="opacity-50"
                  />
              ))}
 
              {/* Render completed/active paths (solid green) */}
              {PATHS.map(p => {
-                 // Path 1 is active if we are at least on Level 2 (completed L1)
+                 // Path 1 connects L1->L2. Active if L1 is done (Current >= 2)
                  if (currentLevel < (p.id + 1)) return null;
                  return (
                      <path 
                         key={`active-${p.id}`}
                         d={p.d} 
                         fill="none" 
-                        stroke="#4ADE80" 
-                        strokeWidth="3" 
+                        stroke="#22C55E" 
+                        strokeWidth="4" 
                         strokeLinecap="round"
-                        className="drop-shadow-[0_0_6px_rgba(74,222,128,0.6)] animate-draw"
+                        className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)] animate-draw"
                      />
                  );
              })}
