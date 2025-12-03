@@ -29,17 +29,16 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
   // Segment 3: 66% - 100%
   const seg3 = Math.min(1, Math.max(0, (totalProgress - 0.666) * 3));
 
-  // The Reactor Core Configuration
-  const size = 160;
+  // The Reactor Core Configuration - Compact Size
+  const size = 120;
   const center = size / 2;
-  const strokeWidth = 18; 
-  // Ring Radius (center of stroke). 
-  // Core is 112px (w-28). Radius 56px.
-  // We want inner edge of stroke to touch 56px. 
-  // Radius = 56 + (18/2) = 65.
-  const radius = 65;
+  const strokeWidth = 12; 
+  // Ring Radius
+  // Core is 80px (w-20). Radius 40px.
+  // Gap 4px. Stroke center at 40 + 4 + 6 = 50.
+  const radius = 50;
   const circumference = 2 * Math.PI * radius;
-  const gap = 8; 
+  const gap = 6; 
   const segmentLength = (circumference / 3) - (gap * 2); 
 
   const Segment = ({ progress, rotation, colorClass }: any) => {
@@ -74,7 +73,7 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
   };
 
   return (
-    <div className="relative flex items-center justify-center w-[160px] h-[160px]">
+    <div className="relative flex items-center justify-center w-[120px] h-[120px]">
        {/* Pulse effect if near level up */}
        {totalProgress >= 1 && (
          <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-20 scale-110"></div>
@@ -88,9 +87,9 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
       
       {/* Center Content - The Reactor Core */}
       <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-        <div className="w-28 h-28 bg-white rounded-full flex flex-col items-center justify-center shadow-2xl shadow-blue-900/10">
-            <span className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
-            <span className="text-5xl font-black text-slate-900 leading-none">{level}</span>
+        <div className="w-20 h-20 bg-white rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-900/10">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
+            <span className="text-3xl font-black text-slate-900 leading-none">{level}</span>
         </div>
       </div>
     </div>
@@ -134,37 +133,42 @@ const MyJourney = () => {
       const status = level < currentLevel ? 'completed' : level === currentLevel ? 'active' : 'locked';
       
       const isLeft = level % 2 !== 0;
+      const isActive = status === 'active';
       
-      // Alignment Logic for wider distribution (X=68 centers)
-      // Passive node center (56px) -> needs 68px. Diff +12px (pl-3/pr-3).
-      // Active node center (80px) -> needs 68px. Diff -12px (-ml-3/-mr-3).
-      let paddingClass = '';
-      if (isLeft) {
-          paddingClass = status === 'active' ? 'items-start -ml-3' : 'items-start pl-3';
-      } else {
-          paddingClass = status === 'active' ? 'items-end -mr-3' : 'items-end pr-3';
+      // Alignment Logic for wider distribution
+      // Nodes are w-20 (80px). Center is 40px from edge.
+      // SVG Paths ends are at X=40 and X=376.
+      // Container is 416px wide (due to padding).
+      // items-start aligns left (X=0 to X=80, center 40). Matches SVG X=40.
+      // items-end aligns right (X=336 to X=416, center 376). Matches SVG X=376.
+      
+      // If active, node is 120px. Center is 60px.
+      // We need to shift it by 20px (60-40) to align center with SVG line.
+      
+      let alignClass = isLeft ? 'items-start' : 'items-end';
+      if (isActive) {
+           alignClass += isLeft ? ' -ml-[20px]' : ' -mr-[20px]';
       }
       
       return (
-          // Reduced vertical margin from mb-10 to mb-2
-          <div key={level} className={`relative flex flex-col w-full ${paddingClass} mb-2 z-10 h-28 justify-center`}>
+          <div key={level} className={`relative flex flex-col w-full ${alignClass} mb-1 z-10 h-24 justify-center`}>
               
               {/* Node Content */}
               <div className="relative"> 
                   {status === 'completed' && (
                       <button 
-                        className="w-28 h-28 rounded-full bg-green-500 flex flex-col items-center justify-center text-white shadow-xl transform transition-transform hover:scale-105 z-20"
+                        className="w-20 h-20 rounded-full bg-green-500 flex flex-col items-center justify-center text-white shadow-xl transform transition-transform hover:scale-105 z-20"
                         onClick={() => alert(`Historik för Nivå ${level} (Kommer snart)`)}
                       >
-                          <Check className="w-10 h-10 mb-1 stroke-[3]" />
-                          <span className="font-bold text-sm">NIVÅ {level}</span>
+                          <Check className="w-8 h-8 mb-1 stroke-[3]" />
+                          <span className="font-bold text-[10px]">NIVÅ {level}</span>
                       </button>
                   )}
 
                   {status === 'locked' && (
-                      <div className="w-28 h-28 rounded-full bg-slate-100 border-2 border-slate-200 flex flex-col items-center justify-center text-slate-300 shadow-sm z-10">
-                          <Lock className="w-8 h-8 mb-1" />
-                          <span className="font-bold text-sm text-slate-400">NIVÅ {level}</span>
+                      <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-slate-200 flex flex-col items-center justify-center text-slate-300 shadow-sm z-10">
+                          <Lock className="w-6 h-6 mb-1" />
+                          <span className="font-bold text-[10px] text-slate-400">NIVÅ {level}</span>
                       </div>
                   )}
 
@@ -182,30 +186,28 @@ const MyJourney = () => {
       );
   };
 
-  // PATH DATA
-  // Adjusted for 120px vertical step (112 height + 8 margin)
-  // Start Y=32 (Center of first node relative to top-6). Steps: +120
-  // Y: 32 -> 152 -> 272 -> 392
-  // X: Widened to 68 and 348 (container ~416 width)
+  // PATH DATA - Compact & Wide
+  // X: 40 -> 376 (Width 416 container)
+  // Y: Step 100.
+  // Height: 400px.
   const PATHS = [
-    { id: 1, d: "M 68 32 C 68 92, 348 92, 348 152" },
-    { id: 2, d: "M 348 152 C 348 212, 68 212, 68 272" },
-    { id: 3, d: "M 68 272 C 68 332, 348 332, 348 392" }
+    { id: 1, d: "M 40 50 C 40 100, 376 100, 376 150" },
+    { id: 2, d: "M 376 150 C 376 200, 40 200, 40 250" },
+    { id: 3, d: "M 40 250 C 40 300, 376 300, 376 350" }
   ];
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 relative overflow-hidden">
       
-      {/* 1. Background Texture (Topographic Map) */}
+      {/* 1. Background Texture */}
       <div 
         className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
+        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
       ></div>
 
-      {/* 2. Header: "Hierarkisk Vision" */}
+      {/* 2. Header */}
       <div className="bg-white/90 backdrop-blur-md border-b border-slate-200 pt-6 pb-12 px-6 text-center shadow-sm relative z-20">
           
-          {/* Destination Banner */}
           <div className="flex justify-center mb-8 animate-fade-in-down">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-50 border border-slate-200 rounded-full shadow-sm hover:bg-slate-100 transition-colors cursor-default">
                 <Flag className="w-3.5 h-3.5 text-indigo-600 fill-indigo-600" />
@@ -215,7 +217,6 @@ const MyJourney = () => {
               </div>
           </div>
 
-          {/* Level & Focus */}
           <div className="flex flex-col items-center animate-fade-in-up">
               <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-widest rounded-md mb-3 shadow-sm">
                   Nivå {currentLevel}
@@ -233,113 +234,115 @@ const MyJourney = () => {
 
       <div className="max-w-md mx-auto px-4 mt-8 relative z-10">
 
-          {/* 3. XP Progress Bar (Moved from below map to top) */}
-          <div className="mb-10 animate-fade-in relative z-20">
-             <LevelProgressBar 
-                level={currentLevel}
-                currentXP={currentXP}
-                maxXP={maxXP}
-                currentStage={currentStage}
-             />
-             <p className="text-center text-blue-600 font-bold text-sm mt-3">
-                 {motivationalText}
-             </p>
-          </div>
+          {/* 3. GROUPED PROGRESS & ACTION CARD */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-12 relative z-20">
+             
+             {/* Progress Bar */}
+             <div className="mb-8">
+                <LevelProgressBar 
+                    level={currentLevel}
+                    currentXP={currentXP}
+                    maxXP={maxXP}
+                    currentStage={currentStage}
+                />
+                <p className="text-center text-blue-600 font-bold text-sm mt-3">
+                    {motivationalText}
+                </p>
+             </div>
 
-          {/* 4. Gamification Stats (Moved up) */}
-          <div className="w-full grid grid-cols-2 gap-4 mb-8 relative z-20">
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-                  <span className="text-3xl font-black text-slate-900 mb-1">{lifetimeSessions}</span>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pass totalt</span>
-              </div>
-              
-              <button 
-                onClick={() => navigate('/knowledge')}
-                className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center hover:bg-blue-50 hover:border-blue-200 transition-colors group"
-              >
-                  <div className="flex items-center gap-1 mb-2 text-blue-600">
-                      <PlayCircle className="w-5 h-5" />
-                      <span className="text-xs font-bold uppercase tracking-wider">Nästa Belöning</span>
-                  </div>
-                  <p className="text-xs text-slate-600 font-bold leading-tight group-hover:text-blue-800">
-                      "Låses upp om 2 pass"
-                  </p>
-                  <ArrowRight className="w-4 h-4 text-blue-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-1" />
-              </button>
-          </div>
-          
-          {/* 5. Boss Fight Portal */}
-          <div className="w-full mb-12 relative z-20">
-              {isLevelMaxed ? (
-                  // UNLOCKED STATE
-                  <button 
-                    onClick={() => navigate('/dashboard', { state: { openBossFight: true } })}
-                    className="w-full relative overflow-hidden bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 rounded-2xl shadow-xl transform transition-all hover:scale-[1.02] active:scale-[0.98] group"
-                  >
-                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                      <div className="absolute -right-6 -bottom-6 text-yellow-600 opacity-20 rotate-12">
-                          <Trophy className="w-24 h-24" />
-                      </div>
-                      
-                      <div className="relative z-10 flex flex-col items-center">
-                          <div className="bg-white/20 p-3 rounded-full mb-3 animate-pulse">
-                              <Trophy className="w-8 h-8 text-white" />
+             {/* Gamification Stats */}
+             <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col items-center text-center">
+                    <span className="text-2xl font-black text-slate-900 mb-1">{lifetimeSessions}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pass totalt</span>
+                </div>
+                
+                <button 
+                    onClick={() => navigate('/knowledge')}
+                    className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col items-center text-center hover:bg-blue-50 hover:border-blue-200 transition-colors group"
+                >
+                    <div className="flex items-center gap-1 mb-1 text-blue-600">
+                        <PlayCircle className="w-4 h-4" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Nästa Belöning</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold group-hover:text-blue-800">
+                        "Låses upp om 2 pass"
+                    </p>
+                </button>
+             </div>
+
+             {/* Boss Fight Portal */}
+             <div className="w-full">
+                  {isLevelMaxed ? (
+                      // UNLOCKED STATE
+                      <button 
+                        onClick={() => navigate('/dashboard', { state: { openBossFight: true } })}
+                        className="w-full relative overflow-hidden bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 rounded-xl shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] group"
+                      >
+                          <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                          <div className="absolute -right-6 -bottom-6 text-yellow-600 opacity-20 rotate-12">
+                              <Trophy className="w-24 h-24" />
                           </div>
-                          <h3 className="text-xl font-black uppercase tracking-widest mb-1 drop-shadow-sm">
-                              Gör Nivåtestet
-                          </h3>
-                          <p className="text-yellow-50 font-bold text-sm">
-                              Du är redo för nästa nivå!
-                          </p>
-                      </div>
-                  </button>
-              ) : (
-                  // LOCKED STATE (Dark Mode "Gate")
-                  <div className="w-full bg-slate-900 rounded-2xl p-1 relative overflow-hidden shadow-lg border border-slate-700">
-                      <div className="bg-slate-800/50 rounded-xl p-6 flex items-center justify-between relative z-10">
-                          <div className="flex items-center gap-4">
-                              <div className="bg-slate-700 p-3 rounded-full text-slate-400 border border-slate-600">
-                                  <Lock className="w-6 h-6" />
+                          
+                          <div className="relative z-10 flex flex-col items-center">
+                              <div className="bg-white/20 p-3 rounded-full mb-3 animate-pulse">
+                                  <Trophy className="w-6 h-6 text-white" />
                               </div>
-                              <div className="text-left">
-                                  <h3 className="font-bold text-slate-200 text-sm uppercase tracking-wide">Nivåtest Låst</h3>
-                                  <div className="flex items-center gap-2 mt-1">
-                                      <Sparkles className="w-3 h-3 text-yellow-500" />
-                                      <span className="text-xs font-bold text-yellow-500">
-                                          Samlar kraft...
-                                      </span>
+                              <h3 className="text-lg font-black uppercase tracking-widest mb-1 drop-shadow-sm">
+                                  Gör Nivåtestet
+                              </h3>
+                              <p className="text-yellow-50 font-bold text-xs">
+                                  Du är redo för nästa nivå!
+                              </p>
+                          </div>
+                      </button>
+                  ) : (
+                      // LOCKED STATE
+                      <div className="w-full bg-slate-900 rounded-xl p-1 relative overflow-hidden shadow-md border border-slate-700">
+                          <div className="bg-slate-800/50 rounded-lg p-4 flex items-center justify-between relative z-10">
+                              <div className="flex items-center gap-3">
+                                  <div className="bg-slate-700 p-2 rounded-full text-slate-400 border border-slate-600">
+                                      <Lock className="w-5 h-5" />
                                   </div>
+                                  <div className="text-left">
+                                      <h3 className="font-bold text-slate-200 text-xs uppercase tracking-wide">Nivåtest Låst</h3>
+                                      <div className="flex items-center gap-1.5 mt-0.5">
+                                          <Sparkles className="w-3 h-3 text-yellow-500" />
+                                          <span className="text-[10px] font-bold text-yellow-500">
+                                              Samlar kraft...
+                                          </span>
+                                      </div>
+                                  </div>
+                              </div>
+                              
+                              <div className="flex flex-col items-end">
+                                  <span className="text-xl font-black text-slate-500 font-mono leading-none">
+                                      {Math.round(progressPct * 100)}%
+                                  </span>
                               </div>
                           </div>
                           
-                          <div className="flex flex-col items-end">
-                              <span className="text-2xl font-black text-slate-500 font-mono leading-none">
-                                  {Math.round(progressPct * 100)}%
-                              </span>
+                          {/* Progress Bar at bottom */}
+                          <div className="h-1 w-full bg-slate-800">
+                              <div 
+                                 className="h-full bg-gradient-to-r from-blue-600 to-purple-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
+                                 style={{ width: `${Math.min(100, progressPct * 100)}%` }}
+                              ></div>
                           </div>
                       </div>
-                      
-                      {/* Progress Bar at bottom */}
-                      <div className="h-1 w-full bg-slate-800">
-                          <div 
-                             className="h-full bg-gradient-to-r from-blue-600 to-purple-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
-                             style={{ width: `${Math.min(100, progressPct * 100)}%` }}
-                          ></div>
-                      </div>
-                  </div>
-              )}
+                  )}
+             </div>
           </div>
 
-          {/* 6. The Map (Moved to Bottom) */}
-          <div className="relative">
+          {/* 4. The Map (Compact & Wide) */}
+          <div className="relative pb-12">
               
-              {/* THE TRAIL SVG (Background) */}
+              {/* THE TRAIL SVG */}
               <svg 
-                className="absolute top-6 left-4 right-4 h-[500px] w-auto pointer-events-none z-0 overflow-visible" 
-                viewBox="0 0 416 500" 
+                className="absolute top-0 left-0 right-0 h-[400px] w-full pointer-events-none z-0 overflow-visible" 
+                viewBox="0 0 416 400" 
                 preserveAspectRatio="none"
               >
-                 {/* Render all background paths (dashed) */}
                  {PATHS.map(p => (
                      <path 
                         key={`bg-${p.id}`}
@@ -347,15 +350,13 @@ const MyJourney = () => {
                         fill="none" 
                         stroke="#CBD5E1" 
                         strokeWidth="4" 
-                        strokeDasharray="12,12" 
+                        strokeDasharray="10,10" 
                         strokeLinecap="round"
                         className="opacity-50"
                      />
                  ))}
 
-                 {/* Render completed/active paths (solid green) */}
                  {PATHS.map(p => {
-                     // Path 1 connects L1->L2. Active if L1 is done (Current >= 2)
                      if (currentLevel < (p.id + 1)) return null;
                      return (
                          <path 
@@ -372,7 +373,7 @@ const MyJourney = () => {
               </svg>
 
               {/* Render Nodes */}
-              <div className="flex flex-col w-full">
+              <div className="flex flex-col w-full relative">
                   {[1, 2, 3, 4].map(lvl => renderTimelineNode(lvl))}
               </div>
 
