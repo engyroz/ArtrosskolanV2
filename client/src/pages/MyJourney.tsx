@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,14 +27,17 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
   // Segment 3: 66% - 100%
   const seg3 = Math.min(1, Math.max(0, (totalProgress - 0.666) * 3));
 
-  // SVG Configuration
+  // The Reactor Core Configuration
   const size = 160;
   const center = size / 2;
-  const radius = 70;
-  const strokeWidth = 12;
+  const strokeWidth = 18; 
+  // Ring Radius (center of stroke). 
+  // Core is 112px (w-28). Radius 56px.
+  // We want inner edge of stroke to touch 56px. 
+  // Radius = 56 + (18/2) = 65.
+  const radius = 65;
   const circumference = 2 * Math.PI * radius;
-  // Gap size in degrees converted to dash offset roughly
-  const gap = 10; 
+  const gap = 8; 
   const segmentLength = (circumference / 3) - (gap * 2); 
 
   const Segment = ({ progress, rotation, colorClass }: any) => {
@@ -50,7 +52,7 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
           stroke="currentColor"
           strokeWidth={strokeWidth}
           strokeDasharray={`${segmentLength} ${circumference - segmentLength}`}
-          className="text-slate-200/50" // Subtler background track
+          className="text-slate-100" 
           strokeLinecap="round"
         />
         {/* Filled Track with Glow */}
@@ -62,7 +64,7 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
           stroke="currentColor"
           strokeWidth={strokeWidth}
           strokeDasharray={`${segmentLength * progress} ${circumference - (segmentLength * progress)}`}
-          className={`${colorClass} transition-all duration-1000 ease-out filter drop-shadow-md`}
+          className={`${colorClass} transition-all duration-1000 ease-out`}
           strokeLinecap="round"
         />
       </g>
@@ -70,23 +72,23 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
   };
 
   return (
-    <div className="relative flex items-center justify-center">
+    <div className="relative flex items-center justify-center w-[160px] h-[160px]">
        {/* Pulse effect if near level up */}
        {totalProgress >= 1 && (
          <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-20 scale-110"></div>
        )}
 
-      <svg width={size} height={size} className="transform -rotate-90 drop-shadow-sm">
+      <svg width={size} height={size} className="transform -rotate-90 drop-shadow-sm z-0 relative">
         <Segment progress={seg1} rotation={2} colorClass="text-blue-400" />
         <Segment progress={seg2} rotation={122} colorClass="text-blue-500" />
         <Segment progress={seg3} rotation={242} colorClass="text-blue-600" />
       </svg>
       
-      {/* Center Content - Badge Style */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="w-20 h-20 bg-white rounded-full flex flex-col items-center justify-center shadow-inner border border-slate-100">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Nivå</span>
-            <span className="text-4xl font-black text-slate-900 leading-none">{level}</span>
+      {/* Center Content - The Reactor Core */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+        <div className="w-28 h-28 bg-white rounded-full flex flex-col items-center justify-center shadow-2xl shadow-blue-900/10">
+            <span className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
+            <span className="text-5xl font-black text-slate-900 leading-none">{level}</span>
         </div>
       </div>
     </div>
@@ -236,7 +238,7 @@ const MyJourney = () => {
                     fill="none" 
                     stroke="#CBD5E1" 
                     strokeWidth="3" 
-                    strokeDasharray="8,8"
+                    strokeDasharray="8,8" 
                     strokeLinecap="round"
                  />
              ))}
