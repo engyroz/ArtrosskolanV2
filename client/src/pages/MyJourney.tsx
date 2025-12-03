@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Check, Lock, Trophy, Flag, PlayCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Check, Lock, Trophy, Flag, Info, ArrowRight, Sparkles } from 'lucide-react';
 import { getMaxXP } from '../utils/progressionEngine';
 import { LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
 import LevelProgressBar from '../components/LevelProgressBar';
@@ -30,13 +30,10 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
   const seg3 = Math.min(1, Math.max(0, (totalProgress - 0.666) * 3));
 
   // The Reactor Core Configuration - Compact Size
-  const size = 120;
+  const size = 100; // Reduced size
   const center = size / 2;
-  const strokeWidth = 12; 
-  // Ring Radius
-  // Core is 80px (w-20). Radius 40px.
-  // Gap 4px. Stroke center at 40 + 4 + 6 = 50.
-  const radius = 50;
+  const strokeWidth = 10; 
+  const radius = 42;
   const circumference = 2 * Math.PI * radius;
   const gap = 6; 
   const segmentLength = (circumference / 3) - (gap * 2); 
@@ -73,7 +70,7 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
   };
 
   return (
-    <div className="relative flex items-center justify-center w-[120px] h-[120px]">
+    <div className="relative flex items-center justify-center w-[100px] h-[100px]">
        {/* Pulse effect if near level up */}
        {totalProgress >= 1 && (
          <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-20 scale-110"></div>
@@ -87,9 +84,9 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
       
       {/* Center Content - The Reactor Core */}
       <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-        <div className="w-20 h-20 bg-white rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-900/10">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
-            <span className="text-3xl font-black text-slate-900 leading-none">{level}</span>
+        <div className="w-16 h-16 bg-white rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-900/10">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
+            <span className="text-2xl font-black text-slate-900 leading-none">{level}</span>
         </div>
       </div>
     </div>
@@ -119,56 +116,35 @@ const MyJourney = () => {
   const currentXP = userProfile?.progression?.experiencePoints || 0;
   const maxXP = getMaxXP(currentLevel);
   const isLevelMaxed = currentXP >= maxXP; 
-  const lifetimeSessions = userProfile?.progression?.lifetimeSessions || 0;
-
-  const progressPct = currentXP / maxXP;
-  let motivationalText = "Bra start! Fortsätt jobba.";
-  if (progressPct > 0.3) motivationalText = "Första etappen snart klar!";
-  if (progressPct > 0.34) motivationalText = "Bra jobbat! Etapp 2 påbörjad.";
-  if (progressPct > 0.6) motivationalText = "Bara 1 pass kvar till Etapp 3!";
-  if (progressPct > 0.67) motivationalText = "Sista rycket mot nästa nivå!";
-  if (progressPct >= 1) motivationalText = "Du är redo för Nivåtestet!";
-
+  
+  // Compact Vertical Map Logic
   const renderTimelineNode = (level: number) => {
       const status = level < currentLevel ? 'completed' : level === currentLevel ? 'active' : 'locked';
-      
       const isLeft = level % 2 !== 0;
-      const isActive = status === 'active';
       
-      // Alignment Logic for wider distribution
-      // Nodes are w-20 (80px). Center is 40px from edge.
-      // SVG Paths ends are at X=40 and X=376.
-      // Container is 416px wide (due to padding).
-      // items-start aligns left (X=0 to X=80, center 40). Matches SVG X=40.
-      // items-end aligns right (X=336 to X=416, center 376). Matches SVG X=376.
-      
-      // If active, node is 120px. Center is 60px.
-      // We need to shift it by 20px (60-40) to align center with SVG line.
-      
-      let alignClass = isLeft ? 'items-start' : 'items-end';
-      if (isActive) {
-           alignClass += isLeft ? ' -ml-[20px]' : ' -mr-[20px]';
-      }
+      // Node alignment - wider spread
+      // Container width max-w-md (approx 448px)
+      // Left align: start
+      // Right align: end
+      let alignClass = isLeft ? 'items-start pl-8' : 'items-end pr-8';
       
       return (
-          <div key={level} className={`relative flex flex-col w-full ${alignClass} mb-1 z-10 h-24 justify-center`}>
-              
+          <div key={level} className={`relative flex flex-col w-full ${alignClass} mb-0 z-10 h-20 justify-center`}>
               {/* Node Content */}
               <div className="relative"> 
                   {status === 'completed' && (
                       <button 
-                        className="w-20 h-20 rounded-full bg-green-500 flex flex-col items-center justify-center text-white shadow-xl transform transition-transform hover:scale-105 z-20"
-                        onClick={() => alert(`Historik för Nivå ${level} (Kommer snart)`)}
+                        className="w-16 h-16 rounded-full bg-green-500 flex flex-col items-center justify-center text-white shadow-xl transform transition-transform hover:scale-105 z-20"
                       >
-                          <Check className="w-8 h-8 mb-1 stroke-[3]" />
-                          <span className="font-bold text-[10px]">NIVÅ {level}</span>
+                          <Check className="w-6 h-6 mb-1 stroke-[3]" />
+                          <span className="font-bold text-[9px]">NIVÅ {level}</span>
                       </button>
                   )}
 
                   {status === 'locked' && (
-                      <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-slate-200 flex flex-col items-center justify-center text-slate-300 shadow-sm z-10">
-                          <Lock className="w-6 h-6 mb-1" />
-                          <span className="font-bold text-[10px] text-slate-400">NIVÅ {level}</span>
+                      <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-slate-200 flex flex-col items-center justify-center text-slate-300 shadow-sm z-10">
+                          <Lock className="w-5 h-5 mb-1" />
+                          <span className="font-bold text-[9px] text-slate-400">NIVÅ {level}</span>
                       </div>
                   )}
 
@@ -186,18 +162,18 @@ const MyJourney = () => {
       );
   };
 
-  // PATH DATA - Compact & Wide
-  // X: 40 -> 376 (Width 416 container)
-  // Y: Step 100.
-  // Height: 400px.
+  // SVG PATHS - Compact Vertical, Wide Horizontal
+  // Width 416. 
+  // Nodes at Y: 40, 120, 200, 280 (Step 80)
+  // X range: ~40 to ~376
   const PATHS = [
-    { id: 1, d: "M 40 50 C 40 100, 376 100, 376 150" },
-    { id: 2, d: "M 376 150 C 376 200, 40 200, 40 250" },
-    { id: 3, d: "M 40 250 C 40 300, 376 300, 376 350" }
+    { id: 1, d: "M 40 40 C 40 80, 376 80, 376 120" },
+    { id: 2, d: "M 376 120 C 376 160, 40 160, 40 200" },
+    { id: 3, d: "M 40 200 C 40 240, 376 240, 376 280" }
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 pb-32 relative overflow-hidden">
       
       {/* 1. Background Texture */}
       <div 
@@ -207,8 +183,7 @@ const MyJourney = () => {
 
       {/* 2. Header */}
       <div className="bg-white/90 backdrop-blur-md border-b border-slate-200 pt-6 pb-12 px-6 text-center shadow-sm relative z-20">
-          
-          <div className="flex justify-center mb-8 animate-fade-in-down">
+          <div className="flex justify-center mb-6 animate-fade-in-down">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-50 border border-slate-200 rounded-full shadow-sm hover:bg-slate-100 transition-colors cursor-default">
                 <Flag className="w-3.5 h-3.5 text-indigo-600 fill-indigo-600" />
                 <span className="text-xs font-bold text-slate-600 tracking-wide uppercase">
@@ -218,11 +193,11 @@ const MyJourney = () => {
           </div>
 
           <div className="flex flex-col items-center animate-fade-in-up">
-              <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-widest rounded-md mb-3 shadow-sm">
+              <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-widest rounded-md mb-2 shadow-sm">
                   Nivå {currentLevel}
               </span>
               
-              <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tight leading-none uppercase">
+              <h1 className="text-3xl font-black text-slate-900 mb-2 tracking-tight leading-none uppercase">
                   {getLevelFocus(currentLevel)}
               </h1>
               
@@ -234,113 +209,12 @@ const MyJourney = () => {
 
       <div className="max-w-md mx-auto px-4 mt-8 relative z-10">
 
-          {/* 3. GROUPED PROGRESS & ACTION CARD */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-12 relative z-20">
-             
-             {/* Progress Bar */}
-             <div className="mb-8">
-                <LevelProgressBar 
-                    level={currentLevel}
-                    currentXP={currentXP}
-                    maxXP={maxXP}
-                    currentStage={currentStage}
-                />
-                <p className="text-center text-blue-600 font-bold text-sm mt-3">
-                    {motivationalText}
-                </p>
-             </div>
-
-             {/* Gamification Stats */}
-             <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col items-center text-center">
-                    <span className="text-2xl font-black text-slate-900 mb-1">{lifetimeSessions}</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pass totalt</span>
-                </div>
-                
-                <button 
-                    onClick={() => navigate('/knowledge')}
-                    className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col items-center text-center hover:bg-blue-50 hover:border-blue-200 transition-colors group"
-                >
-                    <div className="flex items-center gap-1 mb-1 text-blue-600">
-                        <PlayCircle className="w-4 h-4" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Nästa Belöning</span>
-                    </div>
-                    <p className="text-[10px] text-slate-500 font-bold group-hover:text-blue-800">
-                        "Låses upp om 2 pass"
-                    </p>
-                </button>
-             </div>
-
-             {/* Boss Fight Portal */}
-             <div className="w-full">
-                  {isLevelMaxed ? (
-                      // UNLOCKED STATE
-                      <button 
-                        onClick={() => navigate('/dashboard', { state: { openBossFight: true } })}
-                        className="w-full relative overflow-hidden bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 rounded-xl shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] group"
-                      >
-                          <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                          <div className="absolute -right-6 -bottom-6 text-yellow-600 opacity-20 rotate-12">
-                              <Trophy className="w-24 h-24" />
-                          </div>
-                          
-                          <div className="relative z-10 flex flex-col items-center">
-                              <div className="bg-white/20 p-3 rounded-full mb-3 animate-pulse">
-                                  <Trophy className="w-6 h-6 text-white" />
-                              </div>
-                              <h3 className="text-lg font-black uppercase tracking-widest mb-1 drop-shadow-sm">
-                                  Gör Nivåtestet
-                              </h3>
-                              <p className="text-yellow-50 font-bold text-xs">
-                                  Du är redo för nästa nivå!
-                              </p>
-                          </div>
-                      </button>
-                  ) : (
-                      // LOCKED STATE
-                      <div className="w-full bg-slate-900 rounded-xl p-1 relative overflow-hidden shadow-md border border-slate-700">
-                          <div className="bg-slate-800/50 rounded-lg p-4 flex items-center justify-between relative z-10">
-                              <div className="flex items-center gap-3">
-                                  <div className="bg-slate-700 p-2 rounded-full text-slate-400 border border-slate-600">
-                                      <Lock className="w-5 h-5" />
-                                  </div>
-                                  <div className="text-left">
-                                      <h3 className="font-bold text-slate-200 text-xs uppercase tracking-wide">Nivåtest Låst</h3>
-                                      <div className="flex items-center gap-1.5 mt-0.5">
-                                          <Sparkles className="w-3 h-3 text-yellow-500" />
-                                          <span className="text-[10px] font-bold text-yellow-500">
-                                              Samlar kraft...
-                                          </span>
-                                      </div>
-                                  </div>
-                              </div>
-                              
-                              <div className="flex flex-col items-end">
-                                  <span className="text-xl font-black text-slate-500 font-mono leading-none">
-                                      {Math.round(progressPct * 100)}%
-                                  </span>
-                              </div>
-                          </div>
-                          
-                          {/* Progress Bar at bottom */}
-                          <div className="h-1 w-full bg-slate-800">
-                              <div 
-                                 className="h-full bg-gradient-to-r from-blue-600 to-purple-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
-                                 style={{ width: `${Math.min(100, progressPct * 100)}%` }}
-                              ></div>
-                          </div>
-                      </div>
-                  )}
-             </div>
-          </div>
-
-          {/* 4. The Map (Compact & Wide) */}
-          <div className="relative pb-12">
-              
+          {/* 3. The Map (Compact & Wide) */}
+          <div className="relative pb-8 mb-4">
               {/* THE TRAIL SVG */}
               <svg 
-                className="absolute top-0 left-0 right-0 h-[400px] w-full pointer-events-none z-0 overflow-visible" 
-                viewBox="0 0 416 400" 
+                className="absolute top-0 left-0 right-0 h-[320px] w-full pointer-events-none z-0 overflow-visible" 
+                viewBox="0 0 416 320" 
                 preserveAspectRatio="none"
               >
                  {PATHS.map(p => (
@@ -350,9 +224,9 @@ const MyJourney = () => {
                         fill="none" 
                         stroke="#CBD5E1" 
                         strokeWidth="4" 
-                        strokeDasharray="10,10" 
+                        strokeDasharray="8,8" 
                         strokeLinecap="round"
-                        className="opacity-50"
+                        className="opacity-60"
                      />
                  ))}
 
@@ -373,10 +247,52 @@ const MyJourney = () => {
               </svg>
 
               {/* Render Nodes */}
-              <div className="flex flex-col w-full relative">
+              <div className="flex flex-col w-full relative pt-0">
                   {[1, 2, 3, 4].map(lvl => renderTimelineNode(lvl))}
               </div>
+          </div>
 
+          {/* 4. Progress Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg relative z-20">
+             <h3 className="text-lg font-bold text-slate-900 mb-4">Dina träningspoäng</h3>
+             
+             <LevelProgressBar 
+                level={currentLevel}
+                currentXP={currentXP}
+                maxXP={maxXP}
+                currentStage={currentStage}
+             />
+             
+             {/* Info Box */}
+             <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4 mt-6 mb-6 flex gap-3">
+                <Info className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-yellow-900 leading-relaxed font-medium">
+                   Du samlar poäng genom att genomföra dina rehabpass och läsa artiklar. När mätaren är full är du redo för Nivåtestet.
+                </p>
+             </div>
+
+             {/* Boss Fight Button */}
+             <div className="w-full">
+                  {isLevelMaxed ? (
+                      // UNLOCKED STATE
+                      <button 
+                        onClick={() => navigate('/dashboard', { state: { openBossFight: true } })}
+                        className="w-full relative overflow-hidden bg-gradient-to-r from-yellow-400 to-orange-500 text-yellow-900 p-5 rounded-xl shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] animate-pulse group font-black text-lg uppercase tracking-wider flex items-center justify-center gap-3 border border-yellow-300"
+                      >
+                          <Trophy className="w-6 h-6" />
+                          GÖR NIVÅTESTET
+                      </button>
+                  ) : (
+                      // LOCKED STATE
+                      <button 
+                        disabled
+                        className="w-full bg-slate-100 text-slate-400 p-5 rounded-xl font-bold text-sm border border-slate-200 flex items-center justify-center gap-2 cursor-not-allowed"
+                      >
+                          <Lock className="w-4 h-4" />
+                          Nivåtestet är låst (Samla fler poäng)
+                      </button>
+                  )}
+             </div>
           </div>
 
       </div>
