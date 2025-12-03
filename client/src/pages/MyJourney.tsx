@@ -127,25 +127,15 @@ const MyJourney = () => {
 
   const renderTimelineNode = (level: number) => {
       const status = level < currentLevel ? 'completed' : level === currentLevel ? 'active' : 'locked';
-      const showLine = level < 4;
-
+      
+      // Determine alignment: Odd levels Left, Even levels Right
+      const alignment = level % 2 !== 0 ? 'items-start pl-8' : 'items-end pr-8';
+      
       return (
-          <div key={level} className="relative flex flex-col items-center">
-              {/* The Trail (Line) */}
-              {showLine && (
-                  <div className="absolute top-14 bottom-[-48px] w-0.5 z-0 flex flex-col items-center justify-start">
-                      {/* Future Path (Dashed) */}
-                      <div className="h-full w-full border-l-2 border-dashed border-slate-300 absolute inset-0 opacity-50"></div>
-                      
-                      {/* Past Path (Solid & Glowing) */}
-                      {level < currentLevel && (
-                          <div className="absolute top-0 left-[-1px] right-0 h-full w-0.5 bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)] z-10"></div>
-                      )}
-                  </div>
-              )}
-
+          <div key={level} className={`relative flex flex-col w-full ${alignment} mb-24 z-10`}>
+              
               {/* Node Content */}
-              <div className="z-10 py-2"> 
+              <div className="relative"> 
                   {status === 'completed' && (
                       <button 
                         className="w-12 h-12 rounded-full bg-white border-2 border-green-500 flex items-center justify-center text-green-600 shadow-md transition-transform hover:scale-110"
@@ -156,13 +146,13 @@ const MyJourney = () => {
                   )}
 
                   {status === 'locked' && (
-                      <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-300 shadow-sm">
-                          <Lock className="w-4 h-4" />
+                      <div className="w-12 h-12 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-300 shadow-sm">
+                          <Lock className="w-5 h-5" />
                       </div>
                   )}
 
                   {status === 'active' && (
-                      <div className="py-2 transform scale-100 transition-all">
+                      <div className="transform scale-100 transition-all -m-16">
                           <SegmentedProgressCircle 
                               level={level} 
                               currentXP={currentXP} 
@@ -170,14 +160,16 @@ const MyJourney = () => {
                           />
                       </div>
                   )}
+
+                  {/* Labels positioned based on alignment */}
+                  {status !== 'active' && (
+                      <div className={`absolute top-14 w-32 ${level % 2 !== 0 ? 'text-left' : 'text-right right-0'}`}>
+                          <span className={`text-xs font-bold block ${status === 'completed' ? 'text-green-700' : 'text-slate-400'}`}>
+                              Nivå {level}
+                          </span>
+                      </div>
+                  )}
               </div>
-              
-              {/* Labels */}
-              {status !== 'active' && (
-                  <span className={`text-xs font-bold mt-1 ${status === 'completed' ? 'text-green-700' : 'text-slate-400'}`}>
-                      Nivå {level}
-                  </span>
-              )}
           </div>
       );
   };
@@ -220,16 +212,79 @@ const MyJourney = () => {
           </div>
       </div>
 
-      {/* 3. Main Content: The Map */}
-      <div className="max-w-md mx-auto px-4 mt-8 flex flex-col items-center relative z-10">
+      {/* 3. Main Content: The Zig-Zag Map */}
+      <div className="max-w-sm mx-auto px-4 mt-12 relative z-10">
           
-          {/* Render Timeline Nodes */}
-          <div className="flex flex-col items-center w-full space-y-2">
+          {/* THE TRAIL SVG (Background) */}
+          <svg className="absolute top-6 left-0 w-full h-[600px] pointer-events-none z-0 overflow-visible" viewBox="0 0 320 500">
+             {/* 
+                Coordinates explanation (assuming viewBox 0 0 320 500):
+                Level 1 Node (Left): x=24 (padding pl-8 approx) y=24
+                Level 2 Node (Right): x=296 (padding pr-8 approx) y=168 (24 + 144 spacing)
+                Level 3 Node (Left): x=24 y=312
+                Level 4 Node (Right): x=296 y=456
+             */}
+             <defs>
+                <linearGradient id="trailGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#CBD5E1" />
+                    <stop offset="100%" stopColor="#94A3B8" />
+                </linearGradient>
+             </defs>
+
+             {/* Background Dashed Line (The Map) */}
+             <path 
+                d="M 40 24 C 40 100, 280 100, 280 168 C 280 240, 40 240, 40 312 C 40 380, 280 380, 280 456" 
+                fill="none" 
+                stroke="#CBD5E1" 
+                strokeWidth="3" 
+                strokeDasharray="8,8"
+                strokeLinecap="round"
+             />
+
+             {/* Progress Line (Solid Green for completed segments) */}
+             {/* Segment 1: Lvl 1 -> 2 */}
+             {currentLevel >= 2 && (
+                 <path 
+                    d="M 40 24 C 40 100, 280 100, 280 168" 
+                    fill="none" 
+                    stroke="#4ADE80" 
+                    strokeWidth="3" 
+                    strokeLinecap="round"
+                    className="drop-shadow-[0_0_6px_rgba(74,222,128,0.6)] animate-draw"
+                 />
+             )}
+             {/* Segment 2: Lvl 2 -> 3 */}
+             {currentLevel >= 3 && (
+                 <path 
+                    d="M 280 168 C 280 240, 40 240, 40 312" 
+                    fill="none" 
+                    stroke="#4ADE80" 
+                    strokeWidth="3" 
+                    strokeLinecap="round"
+                    className="drop-shadow-[0_0_6px_rgba(74,222,128,0.6)]"
+                 />
+             )}
+             {/* Segment 3: Lvl 3 -> 4 */}
+             {currentLevel >= 4 && (
+                 <path 
+                    d="M 40 312 C 40 380, 280 380, 280 456" 
+                    fill="none" 
+                    stroke="#4ADE80" 
+                    strokeWidth="3" 
+                    strokeLinecap="round"
+                    className="drop-shadow-[0_0_6px_rgba(74,222,128,0.6)]"
+                 />
+             )}
+          </svg>
+
+          {/* Render Nodes */}
+          {/* Note: mb-24 in the node creates the vertical spacing that matches the SVG coordinates */}
+          <div className="flex flex-col w-full">
               {[1, 2, 3, 4].map(lvl => renderTimelineNode(lvl))}
           </div>
 
           {/* XP Status Text */}
-          <div className="w-full text-center mt-4 mb-8 animate-fade-in">
+          <div className="w-full text-center mt-4 mb-8 animate-fade-in relative z-20">
              <p className="text-2xl font-black text-slate-900 font-mono tracking-tight">
                  {currentXP} <span className="text-slate-400 text-lg font-bold">/ {maxXP} XP</span>
              </p>
@@ -239,7 +294,7 @@ const MyJourney = () => {
           </div>
 
           {/* 4. Boss Fight Portal */}
-          <div className="w-full mb-12">
+          <div className="w-full mb-12 relative z-20">
               {isLevelMaxed ? (
                   // UNLOCKED STATE
                   <button 
@@ -301,7 +356,7 @@ const MyJourney = () => {
           </div>
 
           {/* 5. Gamification Stats */}
-          <div className="w-full grid grid-cols-2 gap-4 mb-8">
+          <div className="w-full grid grid-cols-2 gap-4 mb-8 relative z-20">
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
                   <span className="text-3xl font-black text-slate-900 mb-1">{lifetimeSessions}</span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pass totalt</span>

@@ -18,7 +18,7 @@ export const useTime = () => {
   return context;
 };
 
-export const TimeProvider = ({ children }: { children: ReactNode }) => {
+export const TimeProvider = ({ children }: { children?: ReactNode }) => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   const addDays = (days: number) => {

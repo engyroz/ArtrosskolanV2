@@ -20,7 +20,7 @@ import Settings from './pages/Settings'; // New Page
 import ProtectedRoute from './components/ProtectedRoute';
 import TimeTravelDebug from './components/TimeTravelDebug';
 
-const Layout = ({ children }: { children: React.ReactNode }) => {
+const Layout = ({ children }: { children?: React.ReactNode }) => {
   const location = useLocation();
   const { user } = useAuth();
   

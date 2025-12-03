@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
-  children: React.ReactElement;
+  children?: React.ReactNode;
   requireOnboarding?: boolean;
   requireSubscription?: boolean;
 }
@@ -55,7 +55,7 @@ const ProtectedRoute = ({ children, requireOnboarding = false, requireSubscripti
     return <Navigate to="/dashboard" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
