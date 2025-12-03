@@ -174,6 +174,13 @@ const MyJourney = () => {
       );
   };
 
+  // PATH DATA - Separate paths for each segment to control coloring and perfect alignment
+  const PATHS = [
+    { id: 1, d: "M 56 0 C 56 72, 296 72, 296 144" },
+    { id: 2, d: "M 296 144 C 296 216, 56 216, 56 288" },
+    { id: 3, d: "M 56 288 C 56 360, 296 360, 296 432" }
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 pb-24 relative overflow-hidden">
       
@@ -216,58 +223,40 @@ const MyJourney = () => {
       <div className="max-w-sm mx-auto px-4 mt-12 relative z-10">
           
           {/* THE TRAIL SVG (Background) */}
-          <svg className="absolute top-6 left-4 right-4 h-[600px] pointer-events-none z-0 overflow-visible" viewBox="0 0 352 440">
-             <defs>
-                <linearGradient id="trailGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#CBD5E1" />
-                    <stop offset="100%" stopColor="#94A3B8" />
-                </linearGradient>
-             </defs>
+          <svg 
+            className="absolute top-6 left-4 right-4 h-[576px] w-auto pointer-events-none z-0 overflow-visible" 
+            viewBox="0 0 352 576" 
+            preserveAspectRatio="none"
+          >
+             {/* Render all background paths (dashed) */}
+             {PATHS.map(p => (
+                 <path 
+                    key={`bg-${p.id}`}
+                    d={p.d} 
+                    fill="none" 
+                    stroke="#CBD5E1" 
+                    strokeWidth="3" 
+                    strokeDasharray="8,8"
+                    strokeLinecap="round"
+                 />
+             ))}
 
-             {/* Background Dashed Line (The Map) */}
-             <path 
-                d="M 56 0 C 56 72, 296 72, 296 144 C 296 216, 56 216, 56 288 C 56 360, 296 360, 296 432" 
-                fill="none" 
-                stroke="#CBD5E1" 
-                strokeWidth="3" 
-                strokeDasharray="8,8"
-                strokeLinecap="round"
-             />
-
-             {/* Progress Line (Solid Green for completed segments) */}
-             {/* Segment 1: Lvl 1 -> 2 */}
-             {currentLevel >= 2 && (
-                 <path 
-                    d="M 56 0 C 56 72, 296 72, 296 144" 
-                    fill="none" 
-                    stroke="#4ADE80" 
-                    strokeWidth="3" 
-                    strokeLinecap="round"
-                    className="drop-shadow-[0_0_6px_rgba(74,222,128,0.6)] animate-draw"
-                 />
-             )}
-             {/* Segment 2: Lvl 2 -> 3 */}
-             {currentLevel >= 3 && (
-                 <path 
-                    d="M 296 144 C 296 216, 56 216, 56 288" 
-                    fill="none" 
-                    stroke="#4ADE80" 
-                    strokeWidth="3" 
-                    strokeLinecap="round"
-                    className="drop-shadow-[0_0_6px_rgba(74,222,128,0.6)]"
-                 />
-             )}
-             {/* Segment 3: Lvl 3 -> 4 */}
-             {currentLevel >= 4 && (
-                 <path 
-                    d="M 56 288 C 56 360, 296 360, 296 432" 
-                    fill="none" 
-                    stroke="#4ADE80" 
-                    strokeWidth="3" 
-                    strokeLinecap="round"
-                    className="drop-shadow-[0_0_6px_rgba(74,222,128,0.6)]"
-                 />
-             )}
+             {/* Render completed/active paths (solid green) */}
+             {PATHS.map(p => {
+                 // Path 1 is active if we are at least on Level 2 (completed L1)
+                 if (currentLevel < (p.id + 1)) return null;
+                 return (
+                     <path 
+                        key={`active-${p.id}`}
+                        d={p.d} 
+                        fill="none" 
+                        stroke="#4ADE80" 
+                        strokeWidth="3" 
+                        strokeLinecap="round"
+                        className="drop-shadow-[0_0_6px_rgba(74,222,128,0.6)] animate-draw"
+                     />
+                 );
+             })}
           </svg>
 
           {/* Render Nodes */}
