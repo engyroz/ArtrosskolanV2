@@ -13,7 +13,7 @@ const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, c
   const seg3 = Math.min(1, Math.max(0, (totalProgress - 0.666) * 3));
 
   // The Reactor Core Configuration
-  const size = 90; // Slightly reduced from 100
+  const size = 90; 
   const center = size / 2;
   const strokeWidth = 8; 
   const radius = 38;
@@ -83,28 +83,37 @@ interface MapTimelineProps {
 }
 
 const MapTimeline = ({ currentLevel, currentXP, maxXP }: MapTimelineProps) => {
-    // Compact coordinates
-    // Width assumed approx 416px in viewbox (matches container max-w-md padding)
-    // Y Step: 65px
-    // Y Positions: 30, 95, 160, 225
-    // X Range: 10 to 406 (Wider spread)
+    // Coordinate System (416 x 260)
+    // Left X: 53 (12.74%)
+    // Right X: 363 (87.26%)
+    // Y Centers: 32.5, 97.5, 162.5, 227.5 (12.5%, 37.5%, 62.5%, 87.5%)
     
+    // Narrower X-coords ensure the path starts/ends "under" the nodes visually
     const PATHS = [
-      { id: 1, d: "M 10 30 C 10 65, 406 65, 406 95" },
-      { id: 2, d: "M 406 95 C 406 130, 10 130, 10 160" },
-      { id: 3, d: "M 10 160 C 10 195, 406 195, 406 225" }
+      { id: 1, d: "M 53 32.5 C 153 32.5, 263 97.5, 363 97.5" },
+      { id: 2, d: "M 363 97.5 C 263 97.5, 153 162.5, 53 162.5" },
+      { id: 3, d: "M 53 162.5 C 153 162.5, 263 227.5, 363 227.5" }
     ];
 
     const renderTimelineNode = (level: number) => {
         const status = level < currentLevel ? 'completed' : level === currentLevel ? 'active' : 'locked';
         const isLeft = level % 2 !== 0; 
         
-        // Alignment classes - reduced padding for wider spread
-        let alignClass = isLeft ? 'items-start pl-2' : 'items-end pr-2';
-        
+        // Positioning Percentages
+        const topPct = [12.5, 37.5, 62.5, 87.5][level - 1];
+        const leftPct = isLeft ? 12.74 : 87.26;
+
         return (
-            <div key={level} className={`relative flex flex-col w-full ${alignClass} mb-0 z-10 h-[65px] justify-center`}>
-                <div className="relative"> 
+            <div 
+                key={level} 
+                className="absolute flex items-center justify-center w-[90px] h-[90px]"
+                style={{ 
+                    top: `${topPct}%`, 
+                    left: `${leftPct}%`,
+                    transform: 'translate(-50%, -50%)' // Center the node on the coordinate
+                }}
+            >
+                <div className="relative flex items-center justify-center"> 
                     {status === 'completed' && (
                         <div 
                           className="w-14 h-14 rounded-full bg-green-500 flex flex-col items-center justify-center text-white shadow-xl transform transition-transform hover:scale-105 z-20"
@@ -136,9 +145,10 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP }: MapTimelineProps) => {
     };
 
     return (
-        <div className="relative pb-4 mb-4">
+        <div className="relative w-full aspect-[8/5] mb-4">
+            {/* SVG Layer */}
             <svg 
-              className="absolute top-0 left-0 right-0 h-[260px] w-full pointer-events-none z-0 overflow-visible" 
+              className="absolute inset-0 w-full h-full pointer-events-none z-0" 
               viewBox="0 0 416 260" 
               preserveAspectRatio="none"
             >
@@ -171,7 +181,8 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP }: MapTimelineProps) => {
                })}
             </svg>
 
-            <div className="flex flex-col w-full relative pt-0">
+            {/* Nodes Overlay Layer */}
+            <div className="absolute inset-0 z-10">
                 {[1, 2, 3, 4].map(lvl => renderTimelineNode(lvl))}
             </div>
         </div>
