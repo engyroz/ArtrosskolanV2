@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Check, Lock, Trophy, Flag, PlayCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { getMaxXP } from '../utils/progressionEngine';
 import { LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
+import LevelProgressBar from '../components/LevelProgressBar';
 
 // Helper for dynamic level titles (Uppdraget)
 const getLevelFocus = (level: number) => {
@@ -102,6 +103,7 @@ const MyJourney = () => {
   
   const currentLevel = userProfile?.currentLevel || 1;
   const userGoal = userProfile?.assessmentData?.mainGoal || "Bli smärtfri";
+  const currentStage = userProfile?.progression?.currentStage || 1;
   
   const getGoalText = (val: string) => {
       const map: Record<string, string> = {
@@ -131,17 +133,21 @@ const MyJourney = () => {
   const renderTimelineNode = (level: number) => {
       const status = level < currentLevel ? 'completed' : level === currentLevel ? 'active' : 'locked';
       
-      // Determine alignment
       const isLeft = level % 2 !== 0;
-      // Padding logic: Active node (w-40) needs less padding to center at same X as Passive node (w-28)
-      // Passive Center from edge: 32 (pl-8) + 56 (half w-28) = 88px
-      // Active Center from edge:  8 (pl-2) + 80 (half w-40) = 88px
-      const paddingClass = isLeft 
-          ? (status === 'active' ? 'items-start pl-2' : 'items-start pl-8')
-          : (status === 'active' ? 'items-end pr-2' : 'items-end pr-8');
+      
+      // Alignment Logic for wider distribution (X=68 centers)
+      // Passive node center (56px) -> needs 68px. Diff +12px (pl-3/pr-3).
+      // Active node center (80px) -> needs 68px. Diff -12px (-ml-3/-mr-3).
+      let paddingClass = '';
+      if (isLeft) {
+          paddingClass = status === 'active' ? 'items-start -ml-3' : 'items-start pl-3';
+      } else {
+          paddingClass = status === 'active' ? 'items-end -mr-3' : 'items-end pr-3';
+      }
       
       return (
-          <div key={level} className={`relative flex flex-col w-full ${paddingClass} mb-10 z-10 h-28 justify-center`}>
+          // Reduced vertical margin from mb-10 to mb-2
+          <div key={level} className={`relative flex flex-col w-full ${paddingClass} mb-2 z-10 h-28 justify-center`}>
               
               {/* Node Content */}
               <div className="relative"> 
@@ -177,13 +183,14 @@ const MyJourney = () => {
   };
 
   // PATH DATA
-  // Coordinates tuned for nodes centered at X=88 and X=328 (based on 416px content width)
-  // Vertical spacing based on 152px interval (Node height 112 + Margin 40)
-  // Start Y offset adjusted for SVG top position (top-6) relative to Node Center (56px) -> Y=32
+  // Adjusted for 120px vertical step (112 height + 8 margin)
+  // Start Y=32 (Center of first node relative to top-6). Steps: +120
+  // Y: 32 -> 152 -> 272 -> 392
+  // X: Widened to 68 and 348 (container ~416 width)
   const PATHS = [
-    { id: 1, d: "M 88 32 C 88 108, 328 108, 328 184" },
-    { id: 2, d: "M 328 184 C 328 260, 88 260, 88 336" },
-    { id: 3, d: "M 88 336 C 88 412, 328 412, 328 488" }
+    { id: 1, d: "M 68 32 C 68 92, 348 92, 348 152" },
+    { id: 2, d: "M 348 152 C 348 212, 68 212, 68 272" },
+    { id: 3, d: "M 68 272 C 68 332, 348 332, 348 392" }
   ];
 
   return (
@@ -224,63 +231,44 @@ const MyJourney = () => {
           </div>
       </div>
 
-      {/* 3. Main Content: The Zig-Zag Map */}
-      <div className="max-w-md mx-auto px-4 mt-12 relative z-10">
-          
-          {/* THE TRAIL SVG (Background) */}
-          <svg 
-            className="absolute top-6 left-4 right-4 h-[600px] w-auto pointer-events-none z-0 overflow-visible" 
-            viewBox="0 0 416 600" 
-            preserveAspectRatio="none"
-          >
-             {/* Render all background paths (dashed) */}
-             {PATHS.map(p => (
-                 <path 
-                    key={`bg-${p.id}`}
-                    d={p.d} 
-                    fill="none" 
-                    stroke="#CBD5E1" 
-                    strokeWidth="4" 
-                    strokeDasharray="12,12" 
-                    strokeLinecap="round"
-                    className="opacity-50"
-                 />
-             ))}
+      <div className="max-w-md mx-auto px-4 mt-8 relative z-10">
 
-             {/* Render completed/active paths (solid green) */}
-             {PATHS.map(p => {
-                 // Path 1 connects L1->L2. Active if L1 is done (Current >= 2)
-                 if (currentLevel < (p.id + 1)) return null;
-                 return (
-                     <path 
-                        key={`active-${p.id}`}
-                        d={p.d} 
-                        fill="none" 
-                        stroke="#22C55E" 
-                        strokeWidth="4" 
-                        strokeLinecap="round"
-                        className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)] animate-draw"
-                     />
-                 );
-             })}
-          </svg>
-
-          {/* Render Nodes */}
-          <div className="flex flex-col w-full">
-              {[1, 2, 3, 4].map(lvl => renderTimelineNode(lvl))}
-          </div>
-
-          {/* XP Status Text */}
-          <div className="w-full text-center mt-4 mb-8 animate-fade-in relative z-20">
-             <p className="text-2xl font-black text-slate-900 font-mono tracking-tight">
-                 {currentXP} <span className="text-slate-400 text-lg font-bold">/ {maxXP} XP</span>
-             </p>
-             <p className="text-blue-600 font-bold text-sm mt-1">
+          {/* 3. XP Progress Bar (Moved from below map to top) */}
+          <div className="mb-10 animate-fade-in relative z-20">
+             <LevelProgressBar 
+                level={currentLevel}
+                currentXP={currentXP}
+                maxXP={maxXP}
+                currentStage={currentStage}
+             />
+             <p className="text-center text-blue-600 font-bold text-sm mt-3">
                  {motivationalText}
              </p>
           </div>
 
-          {/* 4. Boss Fight Portal */}
+          {/* 4. Gamification Stats (Moved up) */}
+          <div className="w-full grid grid-cols-2 gap-4 mb-8 relative z-20">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <span className="text-3xl font-black text-slate-900 mb-1">{lifetimeSessions}</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pass totalt</span>
+              </div>
+              
+              <button 
+                onClick={() => navigate('/knowledge')}
+                className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center hover:bg-blue-50 hover:border-blue-200 transition-colors group"
+              >
+                  <div className="flex items-center gap-1 mb-2 text-blue-600">
+                      <PlayCircle className="w-5 h-5" />
+                      <span className="text-xs font-bold uppercase tracking-wider">Nästa Belöning</span>
+                  </div>
+                  <p className="text-xs text-slate-600 font-bold leading-tight group-hover:text-blue-800">
+                      "Låses upp om 2 pass"
+                  </p>
+                  <ArrowRight className="w-4 h-4 text-blue-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-1" />
+              </button>
+          </div>
+          
+          {/* 5. Boss Fight Portal */}
           <div className="w-full mb-12 relative z-20">
               {isLevelMaxed ? (
                   // UNLOCKED STATE
@@ -342,26 +330,52 @@ const MyJourney = () => {
               )}
           </div>
 
-          {/* 5. Gamification Stats */}
-          <div className="w-full grid grid-cols-2 gap-4 mb-8 relative z-20">
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-                  <span className="text-3xl font-black text-slate-900 mb-1">{lifetimeSessions}</span>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pass totalt</span>
-              </div>
+          {/* 6. The Map (Moved to Bottom) */}
+          <div className="relative">
               
-              <button 
-                onClick={() => navigate('/knowledge')}
-                className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center hover:bg-blue-50 hover:border-blue-200 transition-colors group"
+              {/* THE TRAIL SVG (Background) */}
+              <svg 
+                className="absolute top-6 left-4 right-4 h-[500px] w-auto pointer-events-none z-0 overflow-visible" 
+                viewBox="0 0 416 500" 
+                preserveAspectRatio="none"
               >
-                  <div className="flex items-center gap-1 mb-2 text-blue-600">
-                      <PlayCircle className="w-5 h-5" />
-                      <span className="text-xs font-bold uppercase tracking-wider">Nästa Belöning</span>
-                  </div>
-                  <p className="text-xs text-slate-600 font-bold leading-tight group-hover:text-blue-800">
-                      "Låses upp om 2 pass"
-                  </p>
-                  <ArrowRight className="w-4 h-4 text-blue-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-1" />
-              </button>
+                 {/* Render all background paths (dashed) */}
+                 {PATHS.map(p => (
+                     <path 
+                        key={`bg-${p.id}`}
+                        d={p.d} 
+                        fill="none" 
+                        stroke="#CBD5E1" 
+                        strokeWidth="4" 
+                        strokeDasharray="12,12" 
+                        strokeLinecap="round"
+                        className="opacity-50"
+                     />
+                 ))}
+
+                 {/* Render completed/active paths (solid green) */}
+                 {PATHS.map(p => {
+                     // Path 1 connects L1->L2. Active if L1 is done (Current >= 2)
+                     if (currentLevel < (p.id + 1)) return null;
+                     return (
+                         <path 
+                            key={`active-${p.id}`}
+                            d={p.d} 
+                            fill="none" 
+                            stroke="#22C55E" 
+                            strokeWidth="4" 
+                            strokeLinecap="round"
+                            className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)] animate-draw"
+                         />
+                     );
+                 })}
+              </svg>
+
+              {/* Render Nodes */}
+              <div className="flex flex-col w-full">
+                  {[1, 2, 3, 4].map(lvl => renderTimelineNode(lvl))}
+              </div>
+
           </div>
 
       </div>
