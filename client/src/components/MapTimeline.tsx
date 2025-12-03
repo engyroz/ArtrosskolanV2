@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Lock } from 'lucide-react';
+import { Check, Lock, ChevronsRight } from 'lucide-react';
 
 const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, currentXP: number, maxXP: number }) => {
   // Calculate progress for the 3 segments (0-1 range)
@@ -80,9 +80,10 @@ interface MapTimelineProps {
   currentLevel: number;
   currentXP: number;
   maxXP: number;
+  startLevel?: number;
 }
 
-const MapTimeline = ({ currentLevel, currentXP, maxXP }: MapTimelineProps) => {
+const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1 }: MapTimelineProps) => {
     // Coordinate System (416 x 260)
     // Left X: 53 (12.74%)
     // Right X: 363 (87.26%)
@@ -96,7 +97,16 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP }: MapTimelineProps) => {
     ];
 
     const renderTimelineNode = (level: number) => {
-        const status = level < currentLevel ? 'completed' : level === currentLevel ? 'active' : 'locked';
+        // Status determination
+        // 1. Skipped: If level is below the start level
+        const isSkipped = level < startLevel;
+        // 2. Completed: Not skipped, but below current level
+        const isCompleted = !isSkipped && level < currentLevel;
+        // 3. Active: Exactly current level
+        const isActive = level === currentLevel;
+        // 4. Locked: Above current level
+        const isLocked = level > currentLevel;
+
         const isLeft = level % 2 !== 0; 
         
         // Positioning Percentages
@@ -114,7 +124,15 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP }: MapTimelineProps) => {
                 }}
             >
                 <div className="relative flex items-center justify-center"> 
-                    {status === 'completed' && (
+                    
+                    {isSkipped && (
+                        <div className="w-14 h-14 rounded-full bg-blue-50/50 border-2 border-dashed border-blue-300 flex flex-col items-center justify-center text-blue-400 shadow-sm z-20">
+                             <ChevronsRight className="w-5 h-5 mb-0.5" />
+                             <span className="font-bold text-[8px] uppercase tracking-wide">Nivå {level}</span>
+                        </div>
+                    )}
+
+                    {isCompleted && (
                         <div 
                           className="w-14 h-14 rounded-full bg-green-500 flex flex-col items-center justify-center text-white shadow-xl transform transition-transform hover:scale-105 z-20"
                         >
@@ -123,14 +141,14 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP }: MapTimelineProps) => {
                         </div>
                     )}
 
-                    {status === 'locked' && (
+                    {isLocked && (
                         <div className="w-14 h-14 rounded-full bg-slate-100 border-2 border-slate-200 flex flex-col items-center justify-center text-slate-300 shadow-sm z-10">
                             <Lock className="w-4 h-4 mb-0.5" />
                             <span className="font-bold text-[8px] text-slate-400">NIVÅ {level}</span>
                         </div>
                     )}
 
-                    {status === 'active' && (
+                    {isActive && (
                         <div className="transform scale-100 transition-all z-30">
                             <SegmentedProgressCircle 
                                 level={level} 

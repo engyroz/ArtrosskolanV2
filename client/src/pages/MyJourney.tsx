@@ -23,6 +23,8 @@ const MyJourney = () => {
   const navigate = useNavigate();
   
   const currentLevel = userProfile?.currentLevel || 1;
+  // Determine start level from initial assessment program, defaulting to 1
+  const startLevel = userProfile?.program?.level || 1;
   const userGoal = userProfile?.assessmentData?.mainGoal || "Bli smärtfri";
   const currentStage = userProfile?.progression?.currentStage || 1;
   
@@ -84,6 +86,7 @@ const MyJourney = () => {
             currentLevel={currentLevel}
             currentXP={currentXP}
             maxXP={maxXP}
+            startLevel={startLevel}
           />
 
           {/* 4. Progress Card */}
