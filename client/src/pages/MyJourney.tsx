@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Check, Lock, Trophy, Flag, PlayCircle, ArrowRight, Sparkles, CheckCircle } from 'lucide-react';
+import { Check, Lock, Trophy, Flag, PlayCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { getMaxXP } from '../utils/progressionEngine';
 import { LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
 
@@ -141,7 +141,7 @@ const MyJourney = () => {
           : (status === 'active' ? 'items-end pr-2' : 'items-end pr-8');
       
       return (
-          <div key={level} className={`relative flex flex-col w-full ${paddingClass} mb-24 z-10 h-28 justify-center`}>
+          <div key={level} className={`relative flex flex-col w-full ${paddingClass} mb-10 z-10 h-28 justify-center`}>
               
               {/* Node Content */}
               <div className="relative"> 
@@ -177,13 +177,13 @@ const MyJourney = () => {
   };
 
   // PATH DATA
-  // Coordinates tuned for nodes centered at X=88 and X=264 (based on 352px container width)
-  // Vertical spacing based on 208px interval (Node height 112 + Margin 96)
+  // Coordinates tuned for nodes centered at X=88 and X=328 (based on 416px content width)
+  // Vertical spacing based on 152px interval (Node height 112 + Margin 40)
   // Start Y offset adjusted for SVG top position (top-6) relative to Node Center (56px) -> Y=32
   const PATHS = [
-    { id: 1, d: "M 88 32 C 88 130, 264 130, 264 240" },
-    { id: 2, d: "M 264 240 C 264 340, 88 340, 88 448" },
-    { id: 3, d: "M 88 448 C 88 540, 264 540, 264 656" }
+    { id: 1, d: "M 88 32 C 88 108, 328 108, 328 184" },
+    { id: 2, d: "M 328 184 C 328 260, 88 260, 88 336" },
+    { id: 3, d: "M 88 336 C 88 412, 328 412, 328 488" }
   ];
 
   return (
@@ -225,12 +225,12 @@ const MyJourney = () => {
       </div>
 
       {/* 3. Main Content: The Zig-Zag Map */}
-      <div className="max-w-sm mx-auto px-4 mt-12 relative z-10">
+      <div className="max-w-md mx-auto px-4 mt-12 relative z-10">
           
           {/* THE TRAIL SVG (Background) */}
           <svg 
-            className="absolute top-6 left-4 right-4 h-[700px] w-auto pointer-events-none z-0 overflow-visible" 
-            viewBox="0 0 352 700" 
+            className="absolute top-6 left-4 right-4 h-[600px] w-auto pointer-events-none z-0 overflow-visible" 
+            viewBox="0 0 416 600" 
             preserveAspectRatio="none"
           >
              {/* Render all background paths (dashed) */}
