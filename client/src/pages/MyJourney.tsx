@@ -45,14 +45,8 @@ const MyJourney = () => {
   const isLevelMaxed = currentXP >= maxXP; 
   
   return (
-    <div className="min-h-screen bg-slate-50 pb-32 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 pb-32">
       
-      {/* 1. Background Texture */}
-      <div 
-        className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
-      ></div>
-
       {/* 2. Header */}
       <div className="bg-white/90 backdrop-blur-md border-b border-slate-200 pt-6 pb-12 px-6 text-center shadow-sm relative z-20">
           <div className="flex justify-center mb-6 animate-fade-in-down">
@@ -81,13 +75,24 @@ const MyJourney = () => {
 
       <div className="max-w-md mx-auto px-4 mt-8 relative z-10">
 
-          {/* 3. The Map (Refactored Component) */}
-          <MapTimeline 
-            currentLevel={currentLevel}
-            currentXP={currentXP}
-            maxXP={maxXP}
-            startLevel={startLevel}
-          />
+          {/* 3. The Map (Wrapped in Bordered Card with Background) */}
+          <div className="relative bg-white rounded-3xl border-2 border-slate-200 shadow-sm overflow-hidden mb-6">
+              
+              {/* Map Background Pattern (Contained) */}
+              <div 
+                className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
+              ></div>
+
+              <div className="py-8 px-2">
+                <MapTimeline 
+                    currentLevel={currentLevel}
+                    currentXP={currentXP}
+                    maxXP={maxXP}
+                    startLevel={startLevel}
+                />
+              </div>
+          </div>
 
           {/* 4. Progress Card */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg relative z-20">
