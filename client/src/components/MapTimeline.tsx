@@ -106,12 +106,11 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                     </div>
                 )}
 
-                {/* ACTIVE NODE - Dampened Blue (Slate-ish Blue) */}
+                {/* ACTIVE NODE - Blue */}
                 {isActive && (
                     <div className="relative cursor-pointer group">
-                         {/* Main Body - using #475569 (Slate-600) for integrated look */}
-                         <div className="w-14 h-14 bg-[#475569] rounded-full flex flex-col items-center justify-center shadow-xl shadow-slate-300/50 border-4 border-slate-50 relative z-10 transform transition-transform group-hover:scale-105">
-                             <span className="text-[8px] text-slate-300 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
+                         <div className="w-14 h-14 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-200 border-4 border-slate-50 relative z-10 transform transition-transform group-hover:scale-105">
+                             <span className="text-[8px] text-blue-100 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
                              <span className="text-xl font-black text-white leading-none">{level}</span>
                          </div>
                     </div>
@@ -144,10 +143,9 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.05)" />
                    </filter>
                    
-                   {/* Dampened Gradient - Slate to Muted Blue */}
                    <linearGradient id="gradient-hero" x1="0%" y1="0%" x2="0%" y2="100%">
-                       <stop offset="0%" stopColor="#94A3B8" /> {/* Slate-400 */}
-                       <stop offset="100%" stopColor="#475569" /> {/* Slate-600 */}
+                       <stop offset="0%" stopColor="#60A5FA" /> {/* Blue-400 */}
+                       <stop offset="100%" stopColor="#2563EB" /> {/* Blue-600 */}
                    </linearGradient>
 
                    <linearGradient id="gradient-ghost" x1="0%" y1="0%" x2="0%" y2="100%">
