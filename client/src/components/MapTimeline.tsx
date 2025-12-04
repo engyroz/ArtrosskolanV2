@@ -27,7 +27,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
       { id: 3, d: "M 200 360 L 200 510" }
     ];
 
-    // Generate ruler ticks
+    // Generate ruler ticks - Dampened colors
     const renderTicks = () => {
         const ticks = [];
         for (let y = 60; y <= 510; y += 15) {
@@ -43,7 +43,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                 <line 
                     key={y} 
                     x1={xPos - width} y1={y} x2={xPos} y2={y} 
-                    stroke={isMajor ? "#94A3B8" : "#CBD5E1"} 
+                    stroke={isMajor ? "#CBD5E1" : "#E2E8F0"} 
                     strokeWidth={isMajor ? 2 : 1} 
                     strokeLinecap="round" 
                 />
@@ -75,66 +75,63 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
             >
                 {/* NODE LABELS with Connector Line */}
                 <div 
-                    className={`absolute left-16 top-1/2 -translate-y-1/2 w-48 text-left transition-all duration-500 flex items-center ${isActive ? 'opacity-100 translate-x-0' : 'opacity-60 translate-x-2'}`}
+                    className={`absolute left-16 top-1/2 -translate-y-1/2 w-48 text-left transition-all duration-500 flex items-center ${isActive ? 'opacity-100 translate-x-0' : 'opacity-50 translate-x-2'}`}
                 >
                     {/* Connector Dot & Line */}
-                    <div className="flex items-center mr-3">
-                        <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
-                        <div className={`w-6 h-0.5 ${isActive ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+                    <div className="flex items-center mr-4">
+                        <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-slate-800' : 'bg-slate-300'}`}></div>
+                        <div className={`w-8 h-px ${isActive ? 'bg-slate-800' : 'bg-slate-300'}`}></div>
                     </div>
 
                     <div>
-                        <span className={`block text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
+                        <span className={`block text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isActive ? 'text-slate-800' : 'text-slate-400'}`}>
                             {node.label}
                         </span>
-                        <span className={`block font-bold text-lg leading-tight ${isActive ? 'text-slate-900' : 'text-slate-500'}`}>
+                        <span className={`block font-bold text-lg leading-tight ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
                             {node.desc}
                         </span>
                     </div>
                 </div>
 
-                {/* SKIPPED NODE */}
+                {/* SKIPPED NODE - Minimalist Dot */}
                 {isSkipped && (
-                    <div className="w-10 h-10 rounded-full bg-blue-50 border-2 border-blue-200 flex items-center justify-center shadow-sm opacity-80">
-                         <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
+                    <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center">
+                         <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
                     </div>
                 )}
 
-                {/* COMPLETED NODE */}
+                {/* COMPLETED NODE - Clean Check */}
                 {isCompleted && (
                     <div className="group relative">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-50 to-emerald-100 border-2 border-emerald-500 flex items-center justify-center shadow-md relative z-10 cursor-pointer hover:scale-105 transition-transform">
-                            <Check className="w-6 h-6 text-emerald-600 stroke-[3]" />
+                        <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm relative z-10 cursor-pointer hover:border-slate-300 transition-colors">
+                            <Check className="w-5 h-5 text-slate-500 stroke-[2.5]" />
                         </div>
                     </div>
                 )}
 
-                {/* ACTIVE NODE */}
+                {/* ACTIVE NODE - The Integrated Focal Point */}
                 {isActive && (
                     <div className="relative cursor-pointer group">
-                         {/* Pulse Ring */}
-                         <div className="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-20 duration-1000"></div>
-                         {/* Static Glow */}
-                         <div className="absolute -inset-4 bg-blue-400/30 rounded-full blur-md"></div>
+                         {/* Subtle Pulse Ring */}
+                         <div className="absolute inset-0 bg-slate-200 rounded-full animate-ping opacity-75 duration-2000"></div>
+                         {/* Glow */}
+                         <div className="absolute -inset-6 bg-white/50 rounded-full blur-xl"></div>
                          
                          {/* Main Body */}
-                         <div className="w-20 h-20 bg-gradient-to-b from-blue-600 to-indigo-700 rounded-full flex flex-col items-center justify-center shadow-2xl shadow-blue-900/40 border-4 border-white relative z-10 transform scale-110 transition-transform group-hover:scale-115">
-                             {/* Gloss Shine */}
-                             <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-full"></div>
-                             
-                             <span className="text-[9px] text-blue-200 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
-                             <span className="text-3xl font-black text-white leading-none drop-shadow-md">{level}</span>
+                         <div className="w-16 h-16 bg-slate-900 rounded-full flex flex-col items-center justify-center shadow-2xl shadow-slate-200 border-4 border-white relative z-10 transform transition-transform group-hover:scale-105">
+                             <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
+                             <span className="text-2xl font-black text-white leading-none">{level}</span>
                          </div>
                     </div>
                 )}
 
-                {/* LOCKED / GOAL NODE */}
+                {/* LOCKED / GOAL NODE - Dampened */}
                 {isLocked && (
-                    <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center shadow-inner ${isGoal ? 'bg-yellow-50 border-yellow-200' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className={`w-10 h-10 rounded-full border flex items-center justify-center ${isGoal ? 'bg-slate-50 border-slate-300' : 'bg-white border-slate-100'}`}>
                         {isGoal ? (
-                            <Trophy className="w-5 h-5 text-yellow-400" />
+                            <Trophy className="w-4 h-4 text-slate-400" />
                         ) : (
-                            <Lock className="w-4 h-4 text-slate-300" />
+                            <Lock className="w-3.5 h-3.5 text-slate-300" />
                         )}
                     </div>
                 )}
@@ -149,11 +146,11 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
             <style>
             {`
               @keyframes flow {
-                0% { stroke-dashoffset: 20; }
+                0% { stroke-dashoffset: 24; }
                 100% { stroke-dashoffset: 0; }
               }
               .animate-flow {
-                animation: flow 1s linear infinite;
+                animation: flow 3s linear infinite;
               }
             `}
             </style>
@@ -165,31 +162,32 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
             >
                <defs>
                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                       <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.15)" />
+                       <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.05)" />
                    </filter>
                    
+                   {/* Dampened Gradients */}
                    <linearGradient id="gradient-hero" x1="0%" y1="0%" x2="0%" y2="100%">
-                       <stop offset="0%" stopColor="#34D399" /> {/* Emerald-400 */}
-                       <stop offset="100%" stopColor="#4F46E5" /> {/* Indigo-600 */}
+                       <stop offset="0%" stopColor="#94A3B8" /> {/* Slate-400 */}
+                       <stop offset="100%" stopColor="#1E293B" /> {/* Slate-800 */}
                    </linearGradient>
 
                    <linearGradient id="gradient-ghost" x1="0%" y1="0%" x2="0%" y2="100%">
-                       <stop offset="0%" stopColor="#CBD5E1" stopOpacity="0" />
-                       <stop offset="100%" stopColor="#94A3B8" stopOpacity="1" />
+                       <stop offset="0%" stopColor="#F1F5F9" stopOpacity="0" />
+                       <stop offset="100%" stopColor="#CBD5E1" stopOpacity="1" />
                    </linearGradient>
                </defs>
 
                {/* Ruler Ticks */}
                {renderTicks()}
 
-               {/* Main Track Background */}
+               {/* Main Track Background - Very subtle */}
                {PATHS.map(p => (
                    <path 
                       key={`bg-${p.id}`}
                       d={p.d} 
                       fill="none" 
-                      stroke="#F1F5F9" 
-                      strokeWidth="20" 
+                      stroke="#F8FAFC" 
+                      strokeWidth="16" 
                       strokeLinecap="round"
                    />
                ))}
@@ -208,13 +206,13 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                               d={p.d} 
                               fill="none" 
                               stroke="url(#gradient-ghost)" 
-                              strokeWidth="4" 
+                              strokeWidth="2" 
                               strokeLinecap="round"
                            />
                        );
                    }
 
-                   // 2. Skipped (Dotted)
+                   // 2. Skipped (Dotted) - Very light
                    if (isSkippedPath) {
                        return (
                            <path 
@@ -222,14 +220,14 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                               d={p.d} 
                               fill="none" 
                               stroke="#E2E8F0" 
-                              strokeWidth="3" 
+                              strokeWidth="2" 
                               strokeLinecap="round"
-                              strokeDasharray="0, 6"
+                              strokeDasharray="0, 8"
                            />
                        );
                    }
 
-                   // 3. Hero Path (Active)
+                   // 3. Hero Path (Active) - The bold dark line
                    if (isHeroPath) {
                        return (
                            <g key={`hero-${p.id}`}>
@@ -238,48 +236,38 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                                   d={p.d} 
                                   fill="none" 
                                   stroke="url(#gradient-hero)" 
-                                  strokeWidth="8" 
+                                  strokeWidth="3" 
                                   strokeLinecap="round"
                                   filter="url(#shadow)"
-                               />
-                               {/* Animated Flow Overlay */}
-                               <path 
-                                  d={p.d} 
-                                  fill="none" 
-                                  stroke="rgba(255,255,255,0.4)" 
-                                  strokeWidth="2" 
-                                  strokeLinecap="round"
-                                  strokeDasharray="0, 12"
-                                  className="animate-flow"
                                />
                            </g>
                        );
                    }
 
-                   // 4. Completed Path (Solid)
+                   // 4. Completed Path (Solid Slate)
                    if (isCompletedPath) {
                         return (
                            <path 
                               key={`comp-${p.id}`}
                               d={p.d} 
                               fill="none" 
-                              stroke="#10B981" 
-                              strokeWidth="4" 
+                              stroke="#94A3B8" 
+                              strokeWidth="2" 
                               strokeLinecap="round"
                            />
                         );
                    }
 
-                   // 5. Future Path (Technical Dashed)
+                   // 5. Future Path (Subtle Dashed)
                    return (
                        <path 
                           key={`future-${p.id}`}
                           d={p.d} 
                           fill="none" 
                           stroke="#E2E8F0" 
-                          strokeWidth="2" 
+                          strokeWidth="1.5" 
                           strokeLinecap="round"
-                          strokeDasharray="4,4"
+                          strokeDasharray="4,6"
                        />
                    );
                })}
