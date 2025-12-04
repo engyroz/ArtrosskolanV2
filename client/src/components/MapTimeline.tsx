@@ -32,7 +32,8 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
     // Generate ruler ticks - Dampened colors
     const renderTicks = () => {
         const ticks = [];
-        for (let y = 60; y <= 510; y += 15) {
+        // Extended loop to 585 to draw scale past the last node
+        for (let y = 60; y <= 585; y += 15) {
             // Avoid drawing ticks on top of nodes (roughly +/- 25px around node centers)
             const isNearNode = NODES.some(node => Math.abs(node.y - y) < 25);
             if (isNearNode) continue;
@@ -154,7 +155,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
 
             <svg 
               className="absolute inset-0 w-full h-full pointer-events-none" 
-              viewBox="0 0 400 580" 
+              viewBox="0 0 400 620" 
               preserveAspectRatio="xMidYMid meet"
             >
                <defs>
