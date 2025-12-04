@@ -29,9 +29,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
     // Generate ruler ticks - Extended to ensure visibility on mobile
     const renderTicks = () => {
         const ticks = [];
-        // Loop extended to 680 to go well past the last node (510)
         for (let y = 60; y <= 680; y += 15) {
-            // Avoid drawing ticks on top of nodes (roughly +/- 25px around node centers)
             const isNearNode = NODES.some(node => Math.abs(node.y - y) < 25);
             if (isNearNode) continue;
             
@@ -43,13 +41,40 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                 <line 
                     key={y} 
                     x1={xTick - width} y1={y} x2={xTick} y2={y} 
-                    stroke={isMajor ? "#94A3B8" : "#CBD5E1"} // Slightly darker slate for better visibility
+                    stroke={isMajor ? "#94A3B8" : "#E2E8F0"} 
                     strokeWidth={isMajor ? 2 : 1} 
                     strokeLinecap="round" 
                 />
             );
         }
         return <g>{ticks}</g>;
+    };
+
+    const renderFootsteps = () => {
+        const steps = [];
+        for (let y = 85; y < 500; y += 25) {
+             const isNearNode = NODES.some(node => Math.abs(node.y - y) < 30);
+             if (isNearNode) continue;
+
+             // Alternate left/right offset from the center path
+             // Using modulo to alternate based on position
+             const stepIndex = Math.floor((y - 85) / 25);
+             const isRight = stepIndex % 2 === 0;
+             
+             // Distance from center line
+             const xOffset = isRight ? 8 : -8;
+             
+             steps.push(
+                <g key={y} transform={`translate(${X_POS + xOffset}, ${y}) rotate(${isRight ? 15 : -15})`}>
+                    <path 
+                        d="M -2 -3 C -2 -5 2 -5 2 -3 L 2 1 C 2 4 -2 4 -2 1 Z" 
+                        fill="#CBD5E1" 
+                        opacity="0.5"
+                    />
+                </g>
+             );
+        }
+        return <g>{steps}</g>;
     };
 
     const renderTimelineNode = (level: number) => {
@@ -138,102 +163,23 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
               viewBox="0 0 400 720" 
               preserveAspectRatio="xMidYMin meet"
             >
-               <defs>
-                   <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                       <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.05)" />
-                   </filter>
-                   
-                   <linearGradient id="gradient-hero" x1="0%" y1="0%" x2="0%" y2="100%">
-                       <stop offset="0%" stopColor="#60A5FA" /> {/* Blue-400 */}
-                       <stop offset="100%" stopColor="#2563EB" /> {/* Blue-600 */}
-                   </linearGradient>
-
-                   <linearGradient id="gradient-ghost" x1="0%" y1="0%" x2="0%" y2="100%">
-                       <stop offset="0%" stopColor="#F1F5F9" stopOpacity="0" />
-                       <stop offset="100%" stopColor="#CBD5E1" stopOpacity="1" />
-                   </linearGradient>
-               </defs>
-
                {renderTicks()}
+               
+               {/* Faint dotted path for all segments */}
+               {PATHS.map(p => (
+                   <path 
+                      key={p.id}
+                      d={p.d} 
+                      fill="none" 
+                      stroke="#CBD5E1" 
+                      strokeWidth="2" 
+                      strokeLinecap="round"
+                      strokeDasharray="0, 7" 
+                   />
+               ))}
 
-               {PATHS.map(p => {
-                   const isSkippedPath = p.id < startLevel;
-                   const isCompletedPath = !isSkippedPath && p.id < currentLevel;
-                   const isHeroPath = !isSkippedPath && p.id === currentLevel;
-                   
-                   // Base track background
-                   const renderBase = (
-                       <path 
-                          d={p.d} 
-                          fill="none" 
-                          stroke="#F8FAFC" 
-                          strokeWidth="16" 
-                          strokeLinecap="round"
-                       />
-                   );
-
-                   if (isSkippedPath) {
-                       return (
-                           <g key={p.id}>
-                               {renderBase}
-                               <path 
-                                  d={p.d} 
-                                  fill="none" 
-                                  stroke="#E2E8F0" 
-                                  strokeWidth="2" 
-                                  strokeLinecap="round"
-                                  strokeDasharray="0, 8"
-                               />
-                           </g>
-                       );
-                   }
-
-                   if (isHeroPath) {
-                       return (
-                           <g key={p.id}>
-                               {renderBase}
-                               <path 
-                                  d={p.d} 
-                                  fill="none" 
-                                  stroke="url(#gradient-hero)" 
-                                  strokeWidth="3" 
-                                  strokeLinecap="round"
-                                  filter="url(#shadow)"
-                               />
-                           </g>
-                       );
-                   }
-
-                   if (isCompletedPath) {
-                        return (
-                           <g key={p.id}>
-                               {renderBase}
-                               <path 
-                                  d={p.d} 
-                                  fill="none" 
-                                  stroke="#94A3B8" 
-                                  strokeWidth="2" 
-                                  strokeLinecap="round"
-                               />
-                           </g>
-                        );
-                   }
-
-                   // Future Path
-                   return (
-                       <g key={p.id}>
-                           {renderBase}
-                           <path 
-                              d={p.d} 
-                              fill="none" 
-                              stroke="#E2E8F0" 
-                              strokeWidth="1.5" 
-                              strokeLinecap="round"
-                              strokeDasharray="4,6"
-                           />
-                       </g>
-                   );
-               })}
+               {/* Footsteps alongside path */}
+               {renderFootsteps()}
             </svg>
 
             <div className="absolute inset-0 pointer-events-none">
