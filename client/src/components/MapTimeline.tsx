@@ -11,7 +11,8 @@ interface MapTimelineProps {
 
 const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelClick }: MapTimelineProps) => {
     
-    const X_POS = 48; // Left alignment
+    // Fixed pixel alignment to match SVG without scaling issues
+    const X_POS = 48; 
 
     const NODES = [
         { id: 1, x: X_POS, y: 60, label: "Start", desc: "Smärtlindring", icon: Flag },
@@ -26,10 +27,10 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
       { id: 3, d: `M ${X_POS} 360 L ${X_POS} 510` }
     ];
 
-    // Generate ruler ticks - Extended to ensure visibility on mobile
+    // Generate ruler ticks
     const renderTicks = () => {
         const ticks = [];
-        for (let y = 60; y <= 680; y += 15) {
+        for (let y = 60; y <= 550; y += 15) {
             const isNearNode = NODES.some(node => Math.abs(node.y - y) < 25);
             if (isNearNode) continue;
             
@@ -51,25 +52,37 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
     };
 
     const renderFootsteps = () => {
+        const startNode = NODES[(startLevel - 1)] || NODES[0];
+        const currentNode = NODES[(currentLevel - 1)] || NODES[0];
+        
+        const startY = startNode.y;
+        const endY = currentNode.y;
+
         const steps = [];
-        for (let y = 85; y < 500; y += 25) {
-             const isNearNode = NODES.some(node => Math.abs(node.y - y) < 30);
+        // Tighter steps (12px instead of 25px)
+        const stepSize = 12; 
+
+        // Loop through the entire timeline range
+        for (let y = 60; y <= 510; y += stepSize) {
+             
+             // VISIBILITY FILTER: Only show steps between Start Level and Current Level
+             // Add padding so steps don't overlap the nodes
+             if (y < startY + 20 || y > endY - 20) continue;
+
+             const isNearNode = NODES.some(node => Math.abs(node.y - y) < 20);
              if (isNearNode) continue;
 
-             // Alternate left/right offset from the center path
-             // Using modulo to alternate based on position
-             const stepIndex = Math.floor((y - 85) / 25);
+             const stepIndex = Math.floor(y / stepSize);
              const isRight = stepIndex % 2 === 0;
              
-             // Distance from center line
              const xOffset = isRight ? 8 : -8;
              
              steps.push(
                 <g key={y} transform={`translate(${X_POS + xOffset}, ${y}) rotate(${isRight ? 15 : -15})`}>
                     <path 
                         d="M -2 -3 C -2 -5 2 -5 2 -3 L 2 1 C 2 4 -2 4 -2 1 Z" 
-                        fill="#CBD5E1" 
-                        opacity="0.5"
+                        fill="#64748B" 
+                        opacity="0.6"
                     />
                 </g>
              );
@@ -98,7 +111,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                 }}
                 onClick={() => onLevelClick && onLevelClick(level)}
             >
-                {/* NODE LABELS with Connector Line */}
+                {/* NODE LABELS */}
                 <div 
                     className={`absolute left-14 top-1/2 -translate-y-1/2 w-48 text-left transition-all duration-500 flex items-center ${isActive ? 'opacity-100 translate-x-0' : 'opacity-40 translate-x-2'}`}
                 >
@@ -117,21 +130,18 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                     </div>
                 </div>
 
-                {/* SKIPPED NODE */}
                 {isSkipped && (
                     <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center">
                          <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
                     </div>
                 )}
 
-                {/* COMPLETED NODE */}
                 {isCompleted && (
                     <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shadow-sm z-10">
                         <Check className="w-4 h-4 text-slate-400 stroke-[2.5]" />
                     </div>
                 )}
 
-                {/* ACTIVE NODE - Blue */}
                 {isActive && (
                     <div className="relative cursor-pointer group">
                          <div className="w-12 h-12 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-lg shadow-blue-500/20 relative z-10 transform transition-transform group-hover:scale-105">
@@ -141,7 +151,6 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                     </div>
                 )}
 
-                {/* LOCKED / GOAL NODE */}
                 {isLocked && (
                     <div className={`w-8 h-8 rounded-full border flex items-center justify-center ${isGoal ? 'bg-slate-50 border-slate-300' : 'bg-white border-slate-100'}`}>
                         {isGoal ? (
@@ -156,16 +165,13 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
     };
 
     return (
-        <div className="relative w-full min-h-[700px] select-none">
-            
+        <div className="relative w-full h-[600px] select-none">
+            {/* SVG Overlay: Removed viewBox to ensure 1:1 pixel mapping with HTML nodes */}
             <svg 
               className="absolute inset-0 w-full h-full pointer-events-none" 
-              viewBox="0 0 400 720" 
-              preserveAspectRatio="xMidYMin meet"
             >
                {renderTicks()}
                
-               {/* Faint dotted path for all segments */}
                {PATHS.map(p => (
                    <path 
                       key={p.id}
@@ -178,7 +184,6 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                    />
                ))}
 
-               {/* Footsteps alongside path */}
                {renderFootsteps()}
             </svg>
 
