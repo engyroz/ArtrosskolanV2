@@ -89,12 +89,14 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
              
              const xOffset = isRight ? 8 : -8;
              
+             // Rotate to point downwards: 
+             // Right side (x+8) points SSE (165deg)
+             // Left side (x-8) points SSW (195deg)
              steps.push(
-                <g key={y} transform={`translate(${X_POS + xOffset}, ${y}) rotate(${isRight ? 15 : -15})`}>
+                <g key={y} transform={`translate(${X_POS + xOffset}, ${y}) rotate(${isRight ? 165 : 195})`}>
                     <path 
                         d="M -2 -3 C -2 -5 2 -5 2 -3 L 2 1 C 2 4 -2 4 -2 1 Z" 
-                        fill="#64748B" 
-                        opacity="0.6"
+                        fill="#CBD5E1"
                     />
                 </g>
              );
