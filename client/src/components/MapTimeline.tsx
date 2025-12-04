@@ -10,11 +10,8 @@ interface MapTimelineProps {
 }
 
 const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelClick }: MapTimelineProps) => {
-    // Canvas dimensions
-    // Width 400, Height 600
-    // Timeline moved to left
     
-    const X_POS = 48; // Left alignment (approx 3rem)
+    const X_POS = 48; // Left alignment
 
     const NODES = [
         { id: 1, x: X_POS, y: 60, label: "Start", desc: "Smärtlindring", icon: Flag },
@@ -29,24 +26,24 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
       { id: 3, d: `M ${X_POS} 360 L ${X_POS} 510` }
     ];
 
-    // Generate ruler ticks - Dampened colors
+    // Generate ruler ticks - Extended to ensure visibility on mobile
     const renderTicks = () => {
         const ticks = [];
-        // Extended loop to 585 to draw scale past the last node
-        for (let y = 60; y <= 585; y += 15) {
+        // Loop extended to 680 to go well past the last node (510)
+        for (let y = 60; y <= 680; y += 15) {
             // Avoid drawing ticks on top of nodes (roughly +/- 25px around node centers)
             const isNearNode = NODES.some(node => Math.abs(node.y - y) < 25);
             if (isNearNode) continue;
             
             const isMajor = (y - 60) % 75 === 0;
             const width = isMajor ? 12 : 6;
-            const xTick = X_POS - 20; // Left side of the main line
+            const xTick = X_POS - 20; 
             
             ticks.push(
                 <line 
                     key={y} 
                     x1={xTick - width} y1={y} x2={xTick} y2={y} 
-                    stroke={isMajor ? "#CBD5E1" : "#E2E8F0"} 
+                    stroke={isMajor ? "#94A3B8" : "#CBD5E1"} // Slightly darker slate for better visibility
                     strokeWidth={isMajor ? 2 : 1} 
                     strokeLinecap="round" 
                 />
@@ -78,58 +75,55 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
             >
                 {/* NODE LABELS with Connector Line */}
                 <div 
-                    className={`absolute left-14 top-1/2 -translate-y-1/2 w-48 text-left transition-all duration-500 flex items-center ${isActive ? 'opacity-100 translate-x-0' : 'opacity-50 translate-x-2'}`}
+                    className={`absolute left-14 top-1/2 -translate-y-1/2 w-48 text-left transition-all duration-500 flex items-center ${isActive ? 'opacity-100 translate-x-0' : 'opacity-40 translate-x-2'}`}
                 >
-                    {/* Connector Dot & Line */}
                     <div className="flex items-center mr-4">
-                        <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-blue-600' : 'bg-slate-300'}`}></div>
-                        <div className={`w-6 h-px ${isActive ? 'bg-blue-600' : 'bg-slate-300'}`}></div>
+                        <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-slate-500' : 'bg-slate-300'}`}></div>
+                        <div className={`w-6 h-px ${isActive ? 'bg-slate-500' : 'bg-slate-300'}`}></div>
                     </div>
 
                     <div>
-                        <span className={`block text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
+                        <span className={`block text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isActive ? 'text-slate-600' : 'text-slate-400'}`}>
                             {node.label}
                         </span>
-                        <span className={`block font-bold text-lg leading-tight ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
+                        <span className={`block font-bold text-lg leading-tight ${isActive ? 'text-slate-800' : 'text-slate-400'}`}>
                             {node.desc}
                         </span>
                     </div>
                 </div>
 
-                {/* SKIPPED NODE - Minimalist Dot */}
+                {/* SKIPPED NODE */}
                 {isSkipped && (
                     <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center">
                          <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
                     </div>
                 )}
 
-                {/* COMPLETED NODE - Clean Check */}
+                {/* COMPLETED NODE */}
                 {isCompleted && (
-                    <div className="group relative">
-                        <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm relative z-10 cursor-pointer hover:border-slate-300 transition-colors">
-                            <Check className="w-4 h-4 text-slate-400 stroke-[2.5]" />
-                        </div>
+                    <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shadow-sm z-10">
+                        <Check className="w-4 h-4 text-slate-400 stroke-[2.5]" />
                     </div>
                 )}
 
-                {/* ACTIVE NODE - Blue, Dampened, Integrated */}
+                {/* ACTIVE NODE - Dampened Blue (Slate-ish Blue) */}
                 {isActive && (
                     <div className="relative cursor-pointer group">
-                         {/* Main Body */}
-                         <div className="w-14 h-14 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-lg shadow-blue-100/50 border-4 border-slate-50 relative z-10 transform transition-transform group-hover:scale-105">
-                             <span className="text-[8px] text-blue-100 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
+                         {/* Main Body - using #475569 (Slate-600) for integrated look */}
+                         <div className="w-14 h-14 bg-[#475569] rounded-full flex flex-col items-center justify-center shadow-xl shadow-slate-300/50 border-4 border-slate-50 relative z-10 transform transition-transform group-hover:scale-105">
+                             <span className="text-[8px] text-slate-300 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
                              <span className="text-xl font-black text-white leading-none">{level}</span>
                          </div>
                     </div>
                 )}
 
-                {/* LOCKED / GOAL NODE - Dampened */}
+                {/* LOCKED / GOAL NODE */}
                 {isLocked && (
                     <div className={`w-8 h-8 rounded-full border flex items-center justify-center ${isGoal ? 'bg-slate-50 border-slate-300' : 'bg-white border-slate-100'}`}>
                         {isGoal ? (
-                            <Trophy className="w-3.5 h-3.5 text-slate-400" />
+                            <Trophy className="w-3.5 h-3.5 text-slate-300" />
                         ) : (
-                            <Lock className="w-3 h-3 text-slate-300" />
+                            <Lock className="w-3 h-3 text-slate-200" />
                         )}
                     </div>
                 )}
@@ -138,35 +132,22 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
     };
 
     return (
-        <div className="relative w-full aspect-[2/3] sm:aspect-auto sm:h-[600px] select-none">
+        <div className="relative w-full min-h-[700px] select-none">
             
-            {/* Animation Styles */}
-            <style>
-            {`
-              @keyframes flow {
-                0% { stroke-dashoffset: 24; }
-                100% { stroke-dashoffset: 0; }
-              }
-              .animate-flow {
-                animation: flow 3s linear infinite;
-              }
-            `}
-            </style>
-
             <svg 
               className="absolute inset-0 w-full h-full pointer-events-none" 
-              viewBox="0 0 400 620" 
-              preserveAspectRatio="xMidYMid meet"
+              viewBox="0 0 400 720" 
+              preserveAspectRatio="xMidYMin meet"
             >
                <defs>
                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.05)" />
                    </filter>
                    
-                   {/* Dampened Gradients */}
+                   {/* Dampened Gradient - Slate to Muted Blue */}
                    <linearGradient id="gradient-hero" x1="0%" y1="0%" x2="0%" y2="100%">
                        <stop offset="0%" stopColor="#94A3B8" /> {/* Slate-400 */}
-                       <stop offset="100%" stopColor="#2563EB" /> {/* Blue-600 */}
+                       <stop offset="100%" stopColor="#475569" /> {/* Slate-600 */}
                    </linearGradient>
 
                    <linearGradient id="gradient-ghost" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -175,61 +156,44 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                    </linearGradient>
                </defs>
 
-               {/* Ruler Ticks */}
                {renderTicks()}
 
-               {/* Main Track Background - Very subtle */}
-               {PATHS.map(p => (
-                   <path 
-                      key={`bg-${p.id}`}
-                      d={p.d} 
-                      fill="none" 
-                      stroke="#F8FAFC" 
-                      strokeWidth="16" 
-                      strokeLinecap="round"
-                   />
-               ))}
-
                {PATHS.map(p => {
-                   const isTransitionPath = p.id === startLevel - 1;
-                   const isSkippedPath = p.id < startLevel - 1;
-                   const isHeroPath = (p.id === currentLevel - 1) && !isTransitionPath && !isSkippedPath;
-                   const isCompletedPath = p.id < currentLevel - 1 && !isSkippedPath && !isTransitionPath;
+                   const isSkippedPath = p.id < startLevel;
+                   const isCompletedPath = !isSkippedPath && p.id < currentLevel;
+                   const isHeroPath = !isSkippedPath && p.id === currentLevel;
+                   
+                   // Base track background
+                   const renderBase = (
+                       <path 
+                          d={p.d} 
+                          fill="none" 
+                          stroke="#F8FAFC" 
+                          strokeWidth="16" 
+                          strokeLinecap="round"
+                       />
+                   );
 
-                   // 1. Ghost Transition (Fade In)
-                   if (isTransitionPath) {
-                       return (
-                           <path 
-                              key={`trans-${p.id}`}
-                              d={p.d} 
-                              fill="none" 
-                              stroke="url(#gradient-ghost)" 
-                              strokeWidth="2" 
-                              strokeLinecap="round"
-                           />
-                       );
-                   }
-
-                   // 2. Skipped (Dotted) - Very light
                    if (isSkippedPath) {
                        return (
-                           <path 
-                              key={`skipped-${p.id}`}
-                              d={p.d} 
-                              fill="none" 
-                              stroke="#E2E8F0" 
-                              strokeWidth="2" 
-                              strokeLinecap="round"
-                              strokeDasharray="0, 8"
-                           />
+                           <g key={p.id}>
+                               {renderBase}
+                               <path 
+                                  d={p.d} 
+                                  fill="none" 
+                                  stroke="#E2E8F0" 
+                                  strokeWidth="2" 
+                                  strokeLinecap="round"
+                                  strokeDasharray="0, 8"
+                               />
+                           </g>
                        );
                    }
 
-                   // 3. Hero Path (Active) - The bold dark line
                    if (isHeroPath) {
                        return (
-                           <g key={`hero-${p.id}`}>
-                               {/* Base Gradient Line */}
+                           <g key={p.id}>
+                               {renderBase}
                                <path 
                                   d={p.d} 
                                   fill="none" 
@@ -242,37 +206,39 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                        );
                    }
 
-                   // 4. Completed Path (Solid Slate)
                    if (isCompletedPath) {
                         return (
-                           <path 
-                              key={`comp-${p.id}`}
-                              d={p.d} 
-                              fill="none" 
-                              stroke="#94A3B8" 
-                              strokeWidth="2" 
-                              strokeLinecap="round"
-                           />
+                           <g key={p.id}>
+                               {renderBase}
+                               <path 
+                                  d={p.d} 
+                                  fill="none" 
+                                  stroke="#94A3B8" 
+                                  strokeWidth="2" 
+                                  strokeLinecap="round"
+                               />
+                           </g>
                         );
                    }
 
-                   // 5. Future Path (Subtle Dashed)
+                   // Future Path
                    return (
-                       <path 
-                          key={`future-${p.id}`}
-                          d={p.d} 
-                          fill="none" 
-                          stroke="#E2E8F0" 
-                          strokeWidth="1.5" 
-                          strokeLinecap="round"
-                          strokeDasharray="4,6"
-                       />
+                       <g key={p.id}>
+                           {renderBase}
+                           <path 
+                              d={p.d} 
+                              fill="none" 
+                              stroke="#E2E8F0" 
+                              strokeWidth="1.5" 
+                              strokeLinecap="round"
+                              strokeDasharray="4,6"
+                           />
+                       </g>
                    );
                })}
             </svg>
 
             <div className="absolute inset-0 pointer-events-none">
-                {/* Nodes Layer */}
                 {NODES.map((_, i) => (
                     <div key={i} className="pointer-events-auto">
                         {renderTimelineNode(i + 1)}
