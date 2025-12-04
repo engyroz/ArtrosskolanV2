@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Lock, MapPin, Star, ChevronDown } from 'lucide-react';
+import { Check, Lock, ChevronDown } from 'lucide-react';
 
 interface MapTimelineProps {
   currentLevel: number;
@@ -11,23 +11,19 @@ interface MapTimelineProps {
 
 const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelClick }: MapTimelineProps) => {
     // Canvas: 400w x 300h
-    // Nodes at:
-    // L1: (60, 50)
-    // L2: (340, 116)
-    // L3: (60, 183)
-    // L4: (340, 250)
+    // Nodes aligned vertically at x=200
     
     const NODES = [
-        { id: 1, x: 60, y: 50 },
-        { id: 2, x: 340, y: 116 },
-        { id: 3, x: 60, y: 183 },
-        { id: 4, x: 340, y: 250 }
+        { id: 1, x: 200, y: 40 },
+        { id: 2, x: 200, y: 113 },
+        { id: 3, x: 200, y: 186 },
+        { id: 4, x: 200, y: 260 }
     ];
 
     const PATHS = [
-      { id: 1, d: "M 60 50 C 200 50, 200 116, 340 116" },
-      { id: 2, d: "M 340 116 C 200 116, 200 183, 60 183" },
-      { id: 3, d: "M 60 183 C 200 183, 200 250, 340 250" }
+      { id: 1, d: "M 200 40 L 200 113" },
+      { id: 2, d: "M 200 113 L 200 186" },
+      { id: 3, d: "M 200 186 L 200 260" }
     ];
 
     const renderTimelineNode = (level: number) => {
@@ -53,18 +49,18 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
             >
                 {/* START BADGE */}
                 {isStartNode && (
-                    <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce-slow z-50 pointer-events-none">
-                        <div className="bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider">
+                    <div className="absolute top-2 left-12 md:left-14 flex items-center animate-fade-in z-50 pointer-events-none whitespace-nowrap">
+                         <div className="bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded-l shadow-lg uppercase tracking-wider relative">
                             Start
+                            <div className="absolute top-1/2 -left-1 w-2 h-2 bg-slate-900 transform -translate-y-1/2 rotate-45 -z-10"></div>
                         </div>
-                        <ChevronDown className="w-4 h-4 text-slate-900 -mt-1" />
                     </div>
                 )}
 
                 {/* SKIPPED NODE */}
                 {isSkipped && (
-                    <div className="w-12 h-12 rounded-full bg-slate-50 border-2 border-slate-200 flex items-center justify-center shadow-sm opacity-60">
-                         <span className="font-bold text-xs text-slate-300">{level}</span>
+                    <div className="w-12 h-12 rounded-full bg-blue-50 border-2 border-blue-200 flex items-center justify-center shadow-sm opacity-100">
+                         <span className="font-bold text-xs text-blue-300">{level}</span>
                     </div>
                 )}
 
@@ -72,8 +68,8 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                 {isCompleted && (
                     <div className="group relative">
                         <div className="absolute inset-0 bg-emerald-400 rounded-full opacity-20 blur-md group-hover:opacity-40 transition-opacity"></div>
-                        <div className="w-14 h-14 rounded-full bg-white border-4 border-emerald-500 flex items-center justify-center shadow-md relative z-10 cursor-pointer hover:scale-105 transition-transform">
-                            <Check className="w-6 h-6 text-emerald-600 stroke-[3]" />
+                        <div className="w-14 h-14 rounded-full bg-emerald-100 border-4 border-emerald-500 flex items-center justify-center shadow-md relative z-10 cursor-pointer hover:scale-105 transition-transform">
+                            <Check className="w-6 h-6 text-emerald-700 stroke-[3]" />
                         </div>
                     </div>
                 )}
@@ -86,14 +82,12 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                          <div className="absolute -inset-3 bg-blue-100/50 rounded-full blur-sm"></div>
                          
                          {/* Main Circle */}
-                         <div className="w-20 h-20 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-500/30 border-4 border-white relative z-10 transform hover:scale-105 transition-transform">
+                         <div className="w-20 h-20 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-500/30 border-4 border-white relative z-10 transform scale-125 transition-transform">
                              <div className="absolute inset-0 rounded-full border border-blue-400 opacity-50"></div>
                              <div className="absolute top-1 left-1/2 -translate-x-1/2 w-8 h-3 bg-white/20 rounded-full blur-[2px]"></div>
                              
                              <span className="text-[9px] text-blue-100 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
                              <span className="text-3xl font-black text-white leading-none drop-shadow-sm">{level}</span>
-                             
-                             {/* Progress Ring indicator if needed, sticking to minimal clean look for now */}
                          </div>
                     </div>
                 )}
@@ -124,12 +118,12 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                        <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="rgba(0,0,0,0.1)" />
                    </filter>
                    
-                   <linearGradient id="gradient-hero" x1="0%" y1="0%" x2="100%" y2="0%">
+                   <linearGradient id="gradient-hero" x1="0%" y1="0%" x2="0%" y2="100%">
                        <stop offset="0%" stopColor="#34D399" /> {/* Emerald-400 */}
                        <stop offset="100%" stopColor="#3B82F6" /> {/* Blue-500 */}
                    </linearGradient>
 
-                   <linearGradient id="gradient-ghost" x1="0%" y1="0%" x2="100%" y2="0%">
+                   <linearGradient id="gradient-ghost" x1="0%" y1="0%" x2="0%" y2="100%">
                        <stop offset="0%" stopColor="#CBD5E1" stopOpacity="0" />
                        <stop offset="50%" stopColor="#CBD5E1" stopOpacity="0.5" />
                        <stop offset="100%" stopColor="#94A3B8" stopOpacity="1" />
@@ -163,7 +157,6 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                               stroke="url(#gradient-ghost)" 
                               strokeWidth="6" 
                               strokeLinecap="round"
-                              strokeDasharray="4,6"
                            />
                        );
                    }
@@ -189,7 +182,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                                   d={p.d} 
                                   fill="none" 
                                   stroke="url(#gradient-hero)" 
-                                  strokeWidth="8" 
+                                  strokeWidth="12" 
                                   strokeLinecap="round"
                                   filter="url(#shadow)"
                                   className="animate-draw-path"
