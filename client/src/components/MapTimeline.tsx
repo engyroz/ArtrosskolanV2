@@ -130,7 +130,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                 <div className="relative flex items-center justify-center"> 
                     
                     {isSkipped && (
-                        <div className="w-14 h-14 rounded-full bg-white/50 backdrop-blur-[2px] border-2 border-dashed border-blue-300 flex flex-col items-center justify-center text-blue-400 shadow-sm z-20">
+                        <div className="w-14 h-14 rounded-full bg-blue-50 border-2 border-blue-200 flex flex-col items-center justify-center text-blue-300 shadow-sm z-20">
                              <ChevronsRight className="w-5 h-5 mb-0.5" />
                              <span className="font-bold text-[8px] uppercase tracking-wide">Nivå {level}</span>
                         </div>
@@ -200,7 +200,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                           stroke={isSkippedPath ? "#93C5FD" : "#22C55E"} 
                           strokeWidth="4" 
                           strokeLinecap="round"
-                          strokeDasharray={isSkippedPath ? "8,6" : "none"}
+                          strokeDasharray="none"
                           className="drop-shadow-[0_0_8px_rgba(0,0,0,0.05)] animate-draw"
                        />
                    );
