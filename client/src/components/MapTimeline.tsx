@@ -30,23 +30,35 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
     // Generate ruler ticks
     const renderTicks = () => {
         const ticks = [];
-        for (let y = 60; y <= 550; y += 15) {
-            const isNearNode = NODES.some(node => Math.abs(node.y - y) < 25);
-            if (isNearNode) continue;
+        const step = 12.5; 
+        
+        // Iterate segments between nodes
+        for (let i = 0; i < NODES.length - 1; i++) {
+            const startY = NODES[i].y;
+            const endY = NODES[i+1].y;
             
-            const isMajor = (y - 60) % 75 === 0;
-            const width = isMajor ? 12 : 6;
-            const xTick = X_POS - 20; 
-            
-            ticks.push(
-                <line 
-                    key={y} 
-                    x1={xTick - width} y1={y} x2={xTick} y2={y} 
-                    stroke={isMajor ? "#94A3B8" : "#E2E8F0"} 
-                    strokeWidth={isMajor ? 2 : 1} 
-                    strokeLinecap="round" 
-                />
-            );
+            for (let y = startY + step; y < endY; y += step) {
+                const offset = y - startY;
+                
+                // Buffer around nodes
+                if (offset < 20 || offset > 130) continue;
+
+                // 33% (50px) and 66% (100px)
+                const isMajor = Math.abs(offset - 50) < 0.1 || Math.abs(offset - 100) < 0.1;
+                
+                const width = isMajor ? 12 : 6;
+                const xTick = X_POS - 20; 
+                
+                ticks.push(
+                    <line 
+                        key={y} 
+                        x1={xTick - width} y1={y} x2={xTick} y2={y} 
+                        stroke={isMajor ? "#CBD5E1" : "#E2E8F0"} 
+                        strokeWidth={isMajor ? 2 : 1} 
+                        strokeLinecap="round" 
+                    />
+                );
+            }
         }
         return <g>{ticks}</g>;
     };
