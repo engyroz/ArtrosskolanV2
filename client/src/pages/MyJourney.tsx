@@ -120,9 +120,8 @@ const MyJourney = () => {
 
           {/* 3. The Map - CLEAN, NO BACKGROUND */}
           <div className="py-4">
-            <div className="text-center mb-10 opacity-50">
-                <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Din Resa</h3>
-                <div className="h-1 w-8 bg-slate-300 mx-auto mt-2 rounded-full"></div>
+            <div className="mb-8 pl-4 opacity-70">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Din Resa</h3>
             </div>
             
             <MapTimeline 

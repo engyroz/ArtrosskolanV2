@@ -78,15 +78,15 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                     className={`absolute left-14 top-1/2 -translate-y-1/2 w-48 text-left transition-all duration-500 flex items-center ${isActive ? 'opacity-100 translate-x-0' : 'opacity-40 translate-x-2'}`}
                 >
                     <div className="flex items-center mr-4">
-                        <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-slate-500' : 'bg-slate-300'}`}></div>
-                        <div className={`w-6 h-px ${isActive ? 'bg-slate-500' : 'bg-slate-300'}`}></div>
+                        <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-blue-300' : 'bg-slate-300'}`}></div>
+                        <div className={`w-6 h-px ${isActive ? 'bg-blue-300' : 'bg-slate-300'}`}></div>
                     </div>
 
                     <div>
-                        <span className={`block text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isActive ? 'text-slate-600' : 'text-slate-400'}`}>
+                        <span className={`block text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isActive ? 'text-blue-500' : 'text-slate-400'}`}>
                             {node.label}
                         </span>
-                        <span className={`block font-bold text-lg leading-tight ${isActive ? 'text-slate-800' : 'text-slate-400'}`}>
+                        <span className={`block font-bold text-lg leading-tight ${isActive ? 'text-blue-900' : 'text-slate-400'}`}>
                             {node.desc}
                         </span>
                     </div>
@@ -109,9 +109,9 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                 {/* ACTIVE NODE - Blue */}
                 {isActive && (
                     <div className="relative cursor-pointer group">
-                         <div className="w-14 h-14 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-lg shadow-blue-900/10 relative z-10 transform transition-transform group-hover:scale-105">
-                             <span className="text-[8px] text-blue-200 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
-                             <span className="text-xl font-black text-white leading-none">{level}</span>
+                         <div className="w-12 h-12 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-lg shadow-blue-500/20 relative z-10 transform transition-transform group-hover:scale-105">
+                             <span className="text-[7px] text-blue-100 font-bold uppercase tracking-widest mb-px">Nivå</span>
+                             <span className="text-lg font-black text-white leading-none">{level}</span>
                          </div>
                     </div>
                 )}
