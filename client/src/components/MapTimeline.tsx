@@ -109,8 +109,8 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                 {/* ACTIVE NODE - Blue */}
                 {isActive && (
                     <div className="relative cursor-pointer group">
-                         <div className="w-14 h-14 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-200 border-4 border-slate-50 relative z-10 transform transition-transform group-hover:scale-105">
-                             <span className="text-[8px] text-blue-100 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
+                         <div className="w-14 h-14 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-lg shadow-blue-900/10 relative z-10 transform transition-transform group-hover:scale-105">
+                             <span className="text-[8px] text-blue-200 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
                              <span className="text-xl font-black text-white leading-none">{level}</span>
                          </div>
                     </div>
