@@ -12,19 +12,21 @@ interface MapTimelineProps {
 const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelClick }: MapTimelineProps) => {
     // Canvas dimensions
     // Width 400, Height 600
-    // Central line x = 200
+    // Timeline moved to left
     
+    const X_POS = 48; // Left alignment (approx 3rem)
+
     const NODES = [
-        { id: 1, x: 200, y: 60, label: "Start", desc: "Smärtlindring", icon: Flag },
-        { id: 2, x: 200, y: 210, label: "Fas 2", desc: "Grundstyrka", icon: Star },
-        { id: 3, x: 200, y: 360, label: "Fas 3", desc: "Uppbyggnad", icon: Star },
-        { id: 4, x: 200, y: 510, label: "Mål", desc: "Prestation", icon: Trophy }
+        { id: 1, x: X_POS, y: 60, label: "Start", desc: "Smärtlindring", icon: Flag },
+        { id: 2, x: X_POS, y: 210, label: "Fas 2", desc: "Grundstyrka", icon: Star },
+        { id: 3, x: X_POS, y: 360, label: "Fas 3", desc: "Uppbyggnad", icon: Star },
+        { id: 4, x: X_POS, y: 510, label: "Mål", desc: "Prestation", icon: Trophy }
     ];
 
     const PATHS = [
-      { id: 1, d: "M 200 60 L 200 210" },
-      { id: 2, d: "M 200 210 L 200 360" },
-      { id: 3, d: "M 200 360 L 200 510" }
+      { id: 1, d: `M ${X_POS} 60 L ${X_POS} 210` },
+      { id: 2, d: `M ${X_POS} 210 L ${X_POS} 360` },
+      { id: 3, d: `M ${X_POS} 360 L ${X_POS} 510` }
     ];
 
     // Generate ruler ticks - Dampened colors
@@ -37,12 +39,12 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
             
             const isMajor = (y - 60) % 75 === 0;
             const width = isMajor ? 12 : 6;
-            const xPos = 180; // Left side of the main line
+            const xTick = X_POS - 20; // Left side of the main line
             
             ticks.push(
                 <line 
                     key={y} 
-                    x1={xPos - width} y1={y} x2={xPos} y2={y} 
+                    x1={xTick - width} y1={y} x2={xTick} y2={y} 
                     stroke={isMajor ? "#CBD5E1" : "#E2E8F0"} 
                     strokeWidth={isMajor ? 2 : 1} 
                     strokeLinecap="round" 
@@ -75,16 +77,16 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
             >
                 {/* NODE LABELS with Connector Line */}
                 <div 
-                    className={`absolute left-16 top-1/2 -translate-y-1/2 w-48 text-left transition-all duration-500 flex items-center ${isActive ? 'opacity-100 translate-x-0' : 'opacity-50 translate-x-2'}`}
+                    className={`absolute left-14 top-1/2 -translate-y-1/2 w-48 text-left transition-all duration-500 flex items-center ${isActive ? 'opacity-100 translate-x-0' : 'opacity-50 translate-x-2'}`}
                 >
                     {/* Connector Dot & Line */}
                     <div className="flex items-center mr-4">
-                        <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-slate-800' : 'bg-slate-300'}`}></div>
-                        <div className={`w-8 h-px ${isActive ? 'bg-slate-800' : 'bg-slate-300'}`}></div>
+                        <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-blue-600' : 'bg-slate-300'}`}></div>
+                        <div className={`w-6 h-px ${isActive ? 'bg-blue-600' : 'bg-slate-300'}`}></div>
                     </div>
 
                     <div>
-                        <span className={`block text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isActive ? 'text-slate-800' : 'text-slate-400'}`}>
+                        <span className={`block text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
                             {node.label}
                         </span>
                         <span className={`block font-bold text-lg leading-tight ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
@@ -103,35 +105,30 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                 {/* COMPLETED NODE - Clean Check */}
                 {isCompleted && (
                     <div className="group relative">
-                        <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm relative z-10 cursor-pointer hover:border-slate-300 transition-colors">
-                            <Check className="w-5 h-5 text-slate-500 stroke-[2.5]" />
+                        <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm relative z-10 cursor-pointer hover:border-slate-300 transition-colors">
+                            <Check className="w-4 h-4 text-slate-400 stroke-[2.5]" />
                         </div>
                     </div>
                 )}
 
-                {/* ACTIVE NODE - The Integrated Focal Point */}
+                {/* ACTIVE NODE - Blue, Dampened, Integrated */}
                 {isActive && (
                     <div className="relative cursor-pointer group">
-                         {/* Subtle Pulse Ring */}
-                         <div className="absolute inset-0 bg-slate-200 rounded-full animate-ping opacity-75 duration-2000"></div>
-                         {/* Glow */}
-                         <div className="absolute -inset-6 bg-white/50 rounded-full blur-xl"></div>
-                         
                          {/* Main Body */}
-                         <div className="w-16 h-16 bg-slate-900 rounded-full flex flex-col items-center justify-center shadow-2xl shadow-slate-200 border-4 border-white relative z-10 transform transition-transform group-hover:scale-105">
-                             <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
-                             <span className="text-2xl font-black text-white leading-none">{level}</span>
+                         <div className="w-14 h-14 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-lg shadow-blue-100/50 border-4 border-slate-50 relative z-10 transform transition-transform group-hover:scale-105">
+                             <span className="text-[8px] text-blue-100 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
+                             <span className="text-xl font-black text-white leading-none">{level}</span>
                          </div>
                     </div>
                 )}
 
                 {/* LOCKED / GOAL NODE - Dampened */}
                 {isLocked && (
-                    <div className={`w-10 h-10 rounded-full border flex items-center justify-center ${isGoal ? 'bg-slate-50 border-slate-300' : 'bg-white border-slate-100'}`}>
+                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center ${isGoal ? 'bg-slate-50 border-slate-300' : 'bg-white border-slate-100'}`}>
                         {isGoal ? (
-                            <Trophy className="w-4 h-4 text-slate-400" />
+                            <Trophy className="w-3.5 h-3.5 text-slate-400" />
                         ) : (
-                            <Lock className="w-3.5 h-3.5 text-slate-300" />
+                            <Lock className="w-3 h-3 text-slate-300" />
                         )}
                     </div>
                 )}
@@ -168,7 +165,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                    {/* Dampened Gradients */}
                    <linearGradient id="gradient-hero" x1="0%" y1="0%" x2="0%" y2="100%">
                        <stop offset="0%" stopColor="#94A3B8" /> {/* Slate-400 */}
-                       <stop offset="100%" stopColor="#1E293B" /> {/* Slate-800 */}
+                       <stop offset="100%" stopColor="#2563EB" /> {/* Blue-600 */}
                    </linearGradient>
 
                    <linearGradient id="gradient-ghost" x1="0%" y1="0%" x2="0%" y2="100%">
