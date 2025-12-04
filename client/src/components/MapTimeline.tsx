@@ -1,81 +1,6 @@
 import React from 'react';
 import { Check, Lock, ChevronsRight } from 'lucide-react';
 
-const SegmentedProgressCircle = ({ level, currentXP, maxXP }: { level: number, currentXP: number, maxXP: number }) => {
-  // Calculate progress for the 3 segments (0-1 range)
-  const totalProgress = Math.min(1, Math.max(0, currentXP / maxXP));
-  
-  // Segment 1: 0% - 33%
-  const seg1 = Math.min(1, totalProgress * 3);
-  // Segment 2: 33% - 66%
-  const seg2 = Math.min(1, Math.max(0, (totalProgress - 0.333) * 3));
-  // Segment 3: 66% - 100%
-  const seg3 = Math.min(1, Math.max(0, (totalProgress - 0.666) * 3));
-
-  // The Reactor Core Configuration
-  const size = 90; 
-  const center = size / 2;
-  const strokeWidth = 8; 
-  const radius = 38;
-  const circumference = 2 * Math.PI * radius;
-  const gap = 5; 
-  const segmentLength = (circumference / 3) - (gap * 2); 
-
-  const Segment = ({ progress, rotation, colorClass }: any) => {
-    return (
-      <g transform={`rotate(${rotation}, ${center}, ${center})`}>
-        {/* Background Track */}
-        <circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${segmentLength} ${circumference - segmentLength}`}
-          className="text-slate-100" 
-          strokeLinecap="round"
-        />
-        {/* Filled Track with Glow */}
-        <circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${segmentLength * progress} ${circumference - (segmentLength * progress)}`}
-          className={`${colorClass} transition-all duration-1000 ease-out`}
-          strokeLinecap="round"
-        />
-      </g>
-    );
-  };
-
-  return (
-    <div className="relative flex items-center justify-center w-[90px] h-[90px]">
-       {/* Pulse effect if near level up */}
-       {totalProgress >= 1 && (
-         <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-20 scale-110"></div>
-       )}
-
-      <svg width={size} height={size} className="transform -rotate-90 drop-shadow-sm z-0 relative">
-        <Segment progress={seg1} rotation={2} colorClass="text-blue-400" />
-        <Segment progress={seg2} rotation={122} colorClass="text-blue-500" />
-        <Segment progress={seg3} rotation={242} colorClass="text-blue-600" />
-      </svg>
-      
-      {/* Center Content - The Reactor Core */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-        <div className="w-14 h-14 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-lg shadow-blue-900/20">
-            <span className="text-[8px] text-blue-100 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
-            <span className="text-xl font-black text-white leading-none">{level}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 interface MapTimelineProps {
   currentLevel: number;
   currentXP: number;
@@ -154,11 +79,15 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
 
                     {isActive && (
                         <div className="transform scale-100 transition-all z-30">
-                            <SegmentedProgressCircle 
-                                level={level} 
-                                currentXP={currentXP} 
-                                maxXP={maxXP} 
-                            />
+                             <div className="relative flex items-center justify-center w-[90px] h-[90px]">
+                                {(currentXP >= maxXP) && (
+                                    <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-20 scale-110"></div>
+                                )}
+                                <div className="w-14 h-14 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-lg shadow-blue-900/20 z-10">
+                                    <span className="text-[8px] text-blue-100 font-bold uppercase tracking-widest mb-0.5">Nivå</span>
+                                    <span className="text-xl font-black text-white leading-none">{level}</span>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
