@@ -76,7 +76,7 @@ const MyJourney = () => {
       <div className="max-w-md mx-auto px-4 mt-8 relative z-10">
 
           {/* 4. Progress Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg relative z-20 mb-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg relative z-20 mb-12">
              <h3 className="text-lg font-bold text-slate-900 mb-4">Dina träningspoäng</h3>
              
              <LevelProgressBar 
@@ -118,24 +118,19 @@ const MyJourney = () => {
              </div>
           </div>
 
-          {/* 3. The Map (Wrapped in Bordered Card with Background) */}
-          <div className="relative bg-white rounded-3xl border-2 border-slate-200 shadow-sm overflow-hidden mb-6">
-              
-              {/* Map Background Pattern (Contained) */}
-              <div 
-                className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
-              ></div>
-
-              <div className="py-8 px-2">
-                <h3 className="text-center text-lg font-bold text-slate-900 mb-6">Översikt: Hela Resan</h3>
-                <MapTimeline 
-                    currentLevel={currentLevel}
-                    currentXP={currentXP}
-                    maxXP={maxXP}
-                    startLevel={startLevel}
-                />
-              </div>
+          {/* 3. The Map - CLEAN, NO BACKGROUND */}
+          <div className="py-4">
+            <div className="text-center mb-10 opacity-50">
+                <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Din Resa</h3>
+                <div className="h-1 w-8 bg-slate-300 mx-auto mt-2 rounded-full"></div>
+            </div>
+            
+            <MapTimeline 
+                currentLevel={currentLevel}
+                currentXP={currentXP}
+                maxXP={maxXP}
+                startLevel={startLevel}
+            />
           </div>
 
       </div>

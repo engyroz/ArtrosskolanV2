@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Lock, ChevronDown } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 
 interface MapTimelineProps {
   currentLevel: number;
@@ -10,20 +10,21 @@ interface MapTimelineProps {
 }
 
 const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelClick }: MapTimelineProps) => {
-    // Canvas: 400w x 300h
+    // Canvas: 400w x 600h
     // Nodes aligned vertically at x=200
+    // Increased gap between nodes to 150px for longer lines
     
     const NODES = [
-        { id: 1, x: 200, y: 40 },
-        { id: 2, x: 200, y: 113 },
-        { id: 3, x: 200, y: 186 },
-        { id: 4, x: 200, y: 260 }
+        { id: 1, x: 200, y: 50, label: "Start", desc: "Smärtlindring" },
+        { id: 2, x: 200, y: 200, label: "Fas 2", desc: "Grundstyrka" },
+        { id: 3, x: 200, y: 350, label: "Fas 3", desc: "Uppbyggnad" },
+        { id: 4, x: 200, y: 500, label: "Mål", desc: "Prestation" }
     ];
 
     const PATHS = [
-      { id: 1, d: "M 200 40 L 200 113" },
-      { id: 2, d: "M 200 113 L 200 186" },
-      { id: 3, d: "M 200 186 L 200 260" }
+      { id: 1, d: "M 200 50 L 200 200" },
+      { id: 2, d: "M 200 200 L 200 350" },
+      { id: 3, d: "M 200 350 L 200 500" }
     ];
 
     const renderTimelineNode = (level: number) => {
@@ -36,6 +37,11 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
         const isLocked = level > currentLevel;
         const isStartNode = level === startLevel;
 
+        // Label Positioning: Alternate sides or consistent right side?
+        // Let's use alternating for a balanced look, or right side for cleaner list view.
+        // Given "Progress Line", right side labels are clearer.
+        const labelX = node.x + 50; 
+
         return (
             <div 
                 key={level} 
@@ -47,20 +53,32 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                 }}
                 onClick={() => onLevelClick && onLevelClick(level)}
             >
-                {/* START BADGE */}
-                {isStartNode && (
-                    <div className="absolute top-2 left-12 md:left-14 flex items-center animate-fade-in z-50 pointer-events-none whitespace-nowrap">
-                         <div className="bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded-l shadow-lg uppercase tracking-wider relative">
+                {/* NODE LABELS (Right Side) */}
+                <div 
+                    className={`absolute left-14 top-1/2 -translate-y-1/2 w-40 text-left transition-all duration-500 ${isActive ? 'opacity-100 translate-x-0' : 'opacity-60 translate-x-2'}`}
+                >
+                    <span className={`block text-xs font-bold uppercase tracking-wider mb-0.5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
+                        {node.label}
+                    </span>
+                    <span className={`block font-bold text-lg leading-none ${isActive ? 'text-slate-900' : 'text-slate-500'}`}>
+                        {node.desc}
+                    </span>
+                </div>
+
+                {/* START BADGE (Tooltip style) */}
+                {isStartNode && !isActive && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center animate-bounce z-50 pointer-events-none whitespace-nowrap">
+                         <div className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider relative">
                             Start
-                            <div className="absolute top-1/2 -left-1 w-2 h-2 bg-slate-900 transform -translate-y-1/2 rotate-45 -z-10"></div>
+                            <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 transform rotate-45"></div>
                         </div>
                     </div>
                 )}
 
                 {/* SKIPPED NODE */}
                 {isSkipped && (
-                    <div className="w-12 h-12 rounded-full bg-blue-50 border-2 border-blue-200 flex items-center justify-center shadow-sm opacity-100">
-                         <span className="font-bold text-xs text-blue-300">{level}</span>
+                    <div className="w-12 h-12 rounded-full bg-slate-50 border-2 border-slate-200 border-dashed flex items-center justify-center shadow-sm opacity-60">
+                         <span className="font-bold text-xs text-slate-300">{level}</span>
                     </div>
                 )}
 
@@ -68,8 +86,8 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                 {isCompleted && (
                     <div className="group relative">
                         <div className="absolute inset-0 bg-emerald-400 rounded-full opacity-20 blur-md group-hover:opacity-40 transition-opacity"></div>
-                        <div className="w-14 h-14 rounded-full bg-emerald-100 border-4 border-emerald-500 flex items-center justify-center shadow-md relative z-10 cursor-pointer hover:scale-105 transition-transform">
-                            <Check className="w-6 h-6 text-emerald-700 stroke-[3]" />
+                        <div className="w-14 h-14 rounded-full bg-emerald-50 border-4 border-emerald-500 flex items-center justify-center shadow-md relative z-10 cursor-pointer hover:scale-110 transition-transform">
+                            <Check className="w-6 h-6 text-emerald-600 stroke-[3]" />
                         </div>
                     </div>
                 )}
@@ -82,7 +100,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                          <div className="absolute -inset-3 bg-blue-100/50 rounded-full blur-sm"></div>
                          
                          {/* Main Circle */}
-                         <div className="w-20 h-20 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-500/30 border-4 border-white relative z-10 transform scale-125 transition-transform">
+                         <div className="w-20 h-20 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full flex flex-col items-center justify-center shadow-xl shadow-blue-500/40 border-4 border-white relative z-10 transform scale-125 transition-transform hover:scale-[1.3]">
                              <div className="absolute inset-0 rounded-full border border-blue-400 opacity-50"></div>
                              <div className="absolute top-1 left-1/2 -translate-x-1/2 w-8 h-3 bg-white/20 rounded-full blur-[2px]"></div>
                              
@@ -94,8 +112,8 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
 
                 {/* LOCKED NODE */}
                 {isLocked && (
-                    <div className="w-14 h-14 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center shadow-inner">
-                        <Lock className="w-5 h-5 text-slate-300" />
+                    <div className="w-12 h-12 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center shadow-inner">
+                        <Lock className="w-4 h-4 text-slate-300" />
                     </div>
                 )}
             </div>
@@ -103,10 +121,10 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
     };
 
     return (
-        <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] select-none">
+        <div className="relative w-full aspect-[2/3] sm:aspect-auto sm:h-[600px] select-none">
             <svg 
               className="absolute inset-0 w-full h-full pointer-events-none" 
-              viewBox="0 0 400 300" 
+              viewBox="0 0 400 550" 
               preserveAspectRatio="xMidYMid meet"
             >
                <defs>
@@ -125,7 +143,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
 
                    <linearGradient id="gradient-ghost" x1="0%" y1="0%" x2="0%" y2="100%">
                        <stop offset="0%" stopColor="#CBD5E1" stopOpacity="0" />
-                       <stop offset="50%" stopColor="#CBD5E1" stopOpacity="0.5" />
+                       <stop offset="30%" stopColor="#CBD5E1" stopOpacity="0.5" />
                        <stop offset="100%" stopColor="#94A3B8" stopOpacity="1" />
                    </linearGradient>
                </defs>
@@ -136,8 +154,8 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                       key={`bg-${p.id}`}
                       d={p.d} 
                       fill="none" 
-                      stroke="#F1F5F9" 
-                      strokeWidth="16" 
+                      stroke="#F8FAFC" 
+                      strokeWidth="24" 
                       strokeLinecap="round"
                    />
                ))}
@@ -194,7 +212,7 @@ const MapTimeline = ({ currentLevel, currentXP, maxXP, startLevel = 1, onLevelCl
                                   stroke="rgba(255,255,255,0.4)" 
                                   strokeWidth="2" 
                                   strokeLinecap="round"
-                                  strokeDasharray="0, 15"
+                                  strokeDasharray="0, 20"
                                />
                            </g>
                        );
