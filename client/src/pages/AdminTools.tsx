@@ -1,28 +1,23 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Database, Layout, ShieldAlert } from 'lucide-react';
+import DatabaseResetTool from '../components/admin/DatabaseResetTool';
 
 const AdminTools = () => {
   const navigate = useNavigate();
+  const [activeTool, setActiveTool] = useState<string | null>(null);
 
   const handleToolClick = (toolName: string) => {
+    if (toolName === 'Database Reset') {
+        setActiveTool('database-reset');
+        return;
+    }
     alert(`${toolName} feature coming soon.`);
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      <div className="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-10 flex items-center">
-        <button onClick={() => navigate('/dashboard')} className="mr-4 p-2 -ml-2 rounded-full hover:bg-slate-100">
-            <ArrowLeft className="h-6 w-6 text-slate-600" />
-        </button>
-        <div className="flex items-center gap-2">
-            <ShieldAlert className="h-5 w-5 text-red-600" />
-            <h1 className="text-xl font-bold text-slate-900">Admin Tools</h1>
-        </div>
-      </div>
-
-      <div className="max-w-2xl mx-auto p-6">
+  const renderToolSelection = () => (
+    <div className="max-w-2xl mx-auto p-6 animate-fade-in">
         <p className="text-slate-600 mb-8">
           Restricted access area. Use these tools with caution as they directly affect the application data and structure.
         </p>
@@ -73,6 +68,26 @@ const AdminTools = () => {
 
         </div>
       </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-20">
+      <div className="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-10 flex items-center">
+        <button onClick={() => navigate('/dashboard')} className="mr-4 p-2 -ml-2 rounded-full hover:bg-slate-100">
+            <ArrowLeft className="h-6 w-6 text-slate-600" />
+        </button>
+        <div className="flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5 text-red-600" />
+            <h1 className="text-xl font-bold text-slate-900">Admin Tools</h1>
+        </div>
+      </div>
+
+      {activeTool === 'database-reset' ? (
+          <DatabaseResetTool onBack={() => setActiveTool(null)} />
+      ) : (
+          renderToolSelection()
+      )}
+      
     </div>
   );
 };
