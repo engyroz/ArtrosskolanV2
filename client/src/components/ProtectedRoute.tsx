@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,9 +7,15 @@ interface ProtectedRouteProps {
   children?: React.ReactNode;
   requireOnboarding?: boolean;
   requireSubscription?: boolean;
+  requiredRole?: string;
 }
 
-const ProtectedRoute = ({ children, requireOnboarding = false, requireSubscription = false }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ 
+  children, 
+  requireOnboarding = false, 
+  requireSubscription = false,
+  requiredRole 
+}: ProtectedRouteProps) => {
   const { user, userProfile, loading } = useAuth();
   const location = useLocation();
 
@@ -34,12 +41,18 @@ const ProtectedRoute = ({ children, requireOnboarding = false, requireSubscripti
     );
   }
 
-  // 3. Subscription Check
+  // 3. Role Check (New)
+  if (requiredRole && userProfile.role !== requiredRole) {
+    // If user is not the required role, redirect to dashboard or home
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // 4. Subscription Check
   if (requireSubscription && userProfile.subscriptionStatus !== 'active') {
     return <Navigate to="/payment" replace />;
   }
 
-  // 4. Onboarding Check
+  // 5. Onboarding Check
   // If we require onboarding, and it's not done, go to assessment
   if (requireOnboarding && !userProfile.onboardingCompleted) {
     return <Navigate to="/assessment" replace />;

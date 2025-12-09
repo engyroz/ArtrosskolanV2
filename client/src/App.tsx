@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar'; // Legacy, keeping for reference if needed but unused in new layout
@@ -17,6 +18,7 @@ import CalendarDiary from './pages/CalendarDiary';
 import MyJourney from './pages/MyJourney'; 
 import KnowledgeBase from './pages/KnowledgeBase'; // New Page
 import Settings from './pages/Settings'; // New Page
+import AdminTools from './pages/AdminTools'; // New Admin Page
 import ProtectedRoute from './components/ProtectedRoute';
 import TimeTravelDebug from './components/TimeTravelDebug';
 
@@ -90,6 +92,13 @@ const App: React.FC = () => {
               <Route path="/settings" element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              } />
+
+              {/* Admin Route */}
+              <Route path="/admin" element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminTools />
                 </ProtectedRoute>
               } />
 

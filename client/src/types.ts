@@ -8,6 +8,7 @@ export interface UserProfile {
   onboardingCompleted: boolean;
   displayName?: string;
   program?: ProgramConfig; 
+  role?: string; // 'admin' or undefined
   
   assessmentData?: Record<string, any>;
 

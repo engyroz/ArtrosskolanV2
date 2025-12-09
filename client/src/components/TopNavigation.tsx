@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Activity, User, LogOut, Settings, HelpCircle, UserCircle } from 'lucide-react';
+import { Activity, User, LogOut, Settings, HelpCircle, UserCircle, ShieldAlert } from 'lucide-react';
 
 const TopNavigation = () => {
-  const { user, logout } = useAuth();
+  const { user, userProfile, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -42,7 +43,7 @@ const TopNavigation = () => {
   return (
     <>
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 h-16">
-        <div className="max-w-md mx-auto px-4 h-full flex justify-between items-center relative">
+        <div className="max-w-md mx-auto px-4 h-full flex justify-between items-start relative items-center">
           
           {/* LEFT: Sender / Logo */}
           <div 
@@ -81,6 +82,17 @@ const TopNavigation = () => {
                     >
                       <Settings className="w-4 h-4 mr-3 text-slate-400" /> Inställningar
                     </Link>
+                    
+                    {userProfile?.role === 'admin' && (
+                      <Link 
+                        to="/admin" 
+                        className="flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
+                        onClick={() => setShowProfileMenu(false)}
+                      >
+                        <ShieldAlert className="w-4 h-4 mr-3" /> Admin Tools
+                      </Link>
+                    )}
+
                     <Link 
                       to="/support" 
                       className="flex items-center px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
