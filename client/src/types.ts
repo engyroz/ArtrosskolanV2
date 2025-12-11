@@ -102,6 +102,7 @@ export interface Exercise {
   joint?: string; 
   category?: string; 
   imageUrl: string;
+  imageUrls?: string[]; // Support for multiple images/frames
   description: string;
   instructions?: string | string[]; 
   durationMinutes: number;

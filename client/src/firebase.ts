@@ -1,6 +1,8 @@
+
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
+import 'firebase/compat/storage';
 
 // usage of import.meta.env requires variables to start with VITE_
 // Access environment variables safely by casting import.meta to any
@@ -18,4 +20,5 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 export const auth = app.auth();
 export const db = app.firestore();
+export const storage = app.storage();
 export default app;

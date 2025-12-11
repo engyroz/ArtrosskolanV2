@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Database, Layout, ShieldAlert } from 'lucide-react';
 import DatabaseResetTool from '../components/admin/DatabaseResetTool';
+import ImageManagerTool from '../components/admin/ImageManagerTool';
 
 const AdminTools = () => {
   const navigate = useNavigate();
@@ -11,6 +12,10 @@ const AdminTools = () => {
   const handleToolClick = (toolName: string) => {
     if (toolName === 'Database Reset') {
         setActiveTool('database-reset');
+        return;
+    }
+    if (toolName === 'Bulk Image Uploader') {
+        setActiveTool('image-manager');
         return;
     }
     alert(`${toolName} feature coming soon.`);
@@ -84,6 +89,8 @@ const AdminTools = () => {
 
       {activeTool === 'database-reset' ? (
           <DatabaseResetTool onBack={() => setActiveTool(null)} />
+      ) : activeTool === 'image-manager' ? (
+          <ImageManagerTool onBack={() => setActiveTool(null)} />
       ) : (
           renderToolSelection()
       )}
