@@ -1,14 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import { WorkoutSession, ExertionLevel } from '../types';
-import { calculateProgressionUpdate } from '../utils/progressionEngine'; // Updated import
+import { calculateProgressionUpdate } from '../utils/progressionEngine';
 import { toLocalISOString } from '../utils/dateHelpers';
 import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
-import { X, CheckCircle, ChevronRight, AlertTriangle } from 'lucide-react';
+import { X, CheckCircle, ChevronRight, AlertTriangle, ChevronDown, ChevronUp, Info, Clock, Repeat } from 'lucide-react';
 
 const WorkoutPlayer = () => {
   const navigate = useNavigate();
@@ -25,6 +25,10 @@ const WorkoutPlayer = () => {
   const [exertion, setExertion] = useState<ExertionLevel>('perfect');
   const [saving, setSaving] = useState(false);
 
+  // Visual State
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [instructionsExpanded, setInstructionsExpanded] = useState(false);
+
   useEffect(() => {
     if (state && state.session) {
       setSession(state.session);
@@ -33,6 +37,26 @@ const WorkoutPlayer = () => {
       navigate('/dashboard'); 
     }
   }, [state, navigate]);
+
+  const currentExercise = session?.exercises[currentIndex];
+
+  // Image Slideshow Logic
+  useEffect(() => {
+    if (!currentExercise) return;
+    
+    // Reset state on exercise change
+    setActiveImageIndex(0);
+    setInstructionsExpanded(false);
+
+    const images = currentExercise.imageUrls || (currentExercise.imageUrl ? [currentExercise.imageUrl] : []);
+    
+    if (images.length > 1) {
+      const interval = setInterval(() => {
+        setActiveImageIndex(prev => (prev + 1) % images.length);
+      }, 3000); // 3 seconds per image
+      return () => clearInterval(interval);
+    }
+  }, [currentExercise]);
 
   if (!userProfile) return null;
 
@@ -59,18 +83,15 @@ const WorkoutPlayer = () => {
   }
 
   if (!session) return <div className="min-h-screen bg-slate-50"></div>; 
-
-  const currentExercise = session.exercises[currentIndex];
   if (!currentExercise) return null; 
 
   const isLastExercise = currentIndex === session.exercises.length - 1;
-  const progressPct = ((currentIndex) / session.exercises.length) * 100;
+  const progressPct = ((currentIndex + 1) / session.exercises.length) * 100;
 
   // --- Handlers ---
 
   const handleNextExercise = () => {
     if (isLastExercise) {
-      // If it's circulation, skip feedback and finish immediately
       if (session.type === 'circulation') {
           handleFinishSession(true); 
       } else {
@@ -87,7 +108,6 @@ const WorkoutPlayer = () => {
     const finalPain = skipFeedback ? 0 : painScore;
     const finalExertion = skipFeedback ? 'perfect' : exertion;
 
-    // Use New Progression Engine
     const activityType = session.type === 'rehab' ? 'REHAB_SESSION' : 'DAILY_MEDICINE';
     const result = calculateProgressionUpdate(userProfile, activityType);
 
@@ -111,7 +131,6 @@ const WorkoutPlayer = () => {
             "progression.levelMaxedOut": result.levelMaxedOut
         };
 
-        // Important: "Totalt Antal Pass" (Lifetime Sessions) increases only for Rehab
         if (session.type === 'rehab') {
             updatePayload["progression.lifetimeSessions"] = firebase.firestore.FieldValue.increment(1);
         }
@@ -128,8 +147,7 @@ const WorkoutPlayer = () => {
     }
   };
 
-  // --- Views ---
-
+  // --- Complete View ---
   if (isComplete) {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
@@ -187,63 +205,116 @@ const WorkoutPlayer = () => {
     );
   }
 
-  // Display 'sek' for Level 1 or Circulation, otherwise 'reps'
+  // --- Active Player View ---
+  
   const unit = (currentExercise.level === 1 || session.type === 'circulation') ? 'sek' : 'reps';
+  const displayImages = currentExercise.imageUrls || (currentExercise.imageUrl ? [currentExercise.imageUrl] : []);
+  const currentImage = displayImages[activeImageIndex];
+  const instructionsText = Array.isArray(currentExercise.instructions) 
+      ? currentExercise.instructions.join(' ') 
+      : currentExercise.instructions;
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col z-50">
+    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
+      
       {/* 1. Header & Progress */}
-      <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex justify-between items-center">
-        <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 text-slate-400 hover:text-slate-600">
-            <X className="w-6 h-6" />
-        </button>
-        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">
-            {session.type === 'circulation' ? 'Daglig Medicin' : `Övning ${currentIndex + 1} av ${session.exercises.length}`}
-        </span>
-        <div className="w-6"></div> 
-      </div>
-      <div className="w-full bg-slate-100 h-1">
-        <div className="bg-blue-600 h-1 transition-all duration-300" style={{ width: `${progressPct}%` }}></div>
+      <div className="flex-none bg-white z-20">
+        <div className="px-6 py-4 flex justify-between items-center border-b border-slate-100">
+            <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 text-slate-400 hover:text-slate-600">
+                <X className="w-6 h-6" />
+            </button>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                {session.type === 'circulation' ? 'Cirkulation' : 'Rehabstyrka'}
+            </span>
+            <div className="w-6 text-right text-xs font-bold text-slate-900">
+                {currentIndex + 1}/{session.exercises.length}
+            </div> 
+        </div>
+        <div className="w-full bg-slate-100 h-1">
+            <div className="bg-blue-600 h-1 transition-all duration-300 ease-out" style={{ width: `${progressPct}%` }}></div>
+        </div>
       </div>
 
-      {/* 2. Media Area */}
-      <div className="flex-grow bg-slate-50 relative flex items-center justify-center overflow-hidden">
-        {currentExercise.imageUrl && (
-            <img 
-                src={currentExercise.imageUrl} 
-                className="w-full h-full object-contain max-h-[40vh]" 
-                alt={currentExercise.title} 
-            />
+      {/* 2. Image Area (The Star) */}
+      <div className="flex-1 relative bg-slate-100 flex items-center justify-center overflow-hidden w-full max-h-[55vh]">
+        {currentImage && (
+            <div className="w-full h-full relative">
+                {displayImages.map((img, idx) => (
+                    <img 
+                        key={idx}
+                        src={img} 
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${idx === activeImageIndex ? 'opacity-100' : 'opacity-0'}`} 
+                        alt={currentExercise.title} 
+                    />
+                ))}
+                
+                {/* Image Dots Indicator */}
+                {displayImages.length > 1 && (
+                    <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
+                        {displayImages.map((_, idx) => (
+                            <div 
+                                key={idx} 
+                                className={`w-1.5 h-1.5 rounded-full transition-all ${idx === activeImageIndex ? 'bg-blue-600 w-3' : 'bg-slate-300'}`} 
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
         )}
       </div>
 
-      {/* 3. Instructions & Controls */}
-      <div className="p-6 pb-8 bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.05)] -mt-6 relative z-10">
-        <div className="mb-6">
-            <h2 className="text-2xl font-extrabold text-slate-900 mb-1">{currentExercise.title}</h2>
-            <div className="flex items-center gap-3 text-slate-500 font-medium mb-4">
-                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-xs font-bold uppercase">
-                    {currentExercise.config.sets} set
-                </span>
-                <span className="text-xl font-bold text-slate-900">
-                    x {currentExercise.config.reps} {unit}
-                </span>
+      {/* 3. Controls & Info (Bottom Sheet Style) */}
+      <div className="flex-none bg-white rounded-t-3xl -mt-6 relative z-10 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] flex flex-col">
+        
+        {/* Content Scroll Container */}
+        <div className="p-6 pb-2 overflow-y-auto max-h-[35vh]">
+            <div className="flex justify-between items-start mb-4">
+                <h2 className="text-2xl font-black text-slate-900 leading-tight max-w-[70%]">
+                    {currentExercise.title}
+                </h2>
+                <div className="flex flex-col items-end">
+                    <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-sm font-bold uppercase mb-1">
+                        {currentExercise.config.sets} x {currentExercise.config.reps}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        {unit === 'sek' ? 'Sekunder' : 'Repetitioner'}
+                    </span>
+                </div>
             </div>
-            
-            <div className="bg-slate-50 p-4 rounded-xl text-slate-600 text-sm leading-relaxed border border-slate-100">
-                {Array.isArray(currentExercise.instructions) 
-                    ? currentExercise.instructions.join(' ') 
-                    : currentExercise.instructions}
+
+            {/* Instructions */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 transition-all">
+                <div className="flex items-center gap-2 mb-2 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                    <Info className="w-3 h-3" /> Instruktioner
+                </div>
+                <p className={`text-slate-600 text-sm leading-relaxed ${instructionsExpanded ? '' : 'line-clamp-2'}`}>
+                    {instructionsText}
+                </p>
+                
+                <button 
+                    onClick={() => setInstructionsExpanded(!instructionsExpanded)}
+                    className="mt-2 text-blue-600 text-xs font-bold flex items-center hover:underline"
+                >
+                    {instructionsExpanded ? (
+                        <>Visa mindre <ChevronUp className="w-3 h-3 ml-1" /></>
+                    ) : (
+                        <>Läs hela <ChevronDown className="w-3 h-3 ml-1" /></>
+                    )}
+                </button>
             </div>
         </div>
 
-        {/* Action Button: Always 'Next' now, no Timer */}
-        <button 
-            onClick={handleNextExercise}
-            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-slate-800 flex items-center justify-center transition-all active:scale-[0.98]"
-        >
-            {isLastExercise ? (session.type === 'circulation' ? 'Avsluta Passet' : 'Gå till utvärdering') : 'Nästa Övning'} <ChevronRight className="w-6 h-6 ml-2" />
-        </button>
+        {/* Fixed Bottom Action */}
+        <div className="p-4 bg-white border-t border-slate-50">
+            <button 
+                onClick={handleNextExercise}
+                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-slate-800 flex items-center justify-center transition-all active:scale-[0.98]"
+            >
+                {isLastExercise ? (session.type === 'circulation' ? 'Avsluta' : 'Klar') : 'Nästa'} 
+                <ChevronRight className="w-6 h-6 ml-2" />
+            </button>
+        </div>
+
       </div>
     </div>
   );
