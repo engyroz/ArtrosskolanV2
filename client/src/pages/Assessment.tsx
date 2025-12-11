@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight, Activity, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
@@ -7,8 +8,8 @@ import {
   AssessmentState,
   saveAssessmentToStorage
 } from '../utils/assessmentEngine';
-import { generateLevelPlan } from '../utils/workoutEngine';
-import { JointType, Question, Exercise } from '../types';
+import { fetchUserPlan } from '../utils/workoutEngine';
+import { JointType, Question } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
 
@@ -56,12 +57,10 @@ const Assessment = () => {
     try {
         if (user) {
             console.log("User is authenticated. Saving to Firestore...");
-            const querySnapshot = await db.collection("exercises").get();
-            const allExercises: Exercise[] = [];
-            querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
             
+            // New: Fetch plan from levels collection (Level X, Stage 1)
             const mappedJoint = selectedJoint === 'Knä' ? 'knee' : (selectedJoint === 'Höft' ? 'hip' : 'shoulder');
-            const planIds = generateLevelPlan(allExercises, result.level, mappedJoint);
+            const planIds = await fetchUserPlan(mappedJoint, result.level, 1);
 
             const userRef = db.collection('users').doc(user.uid);
             

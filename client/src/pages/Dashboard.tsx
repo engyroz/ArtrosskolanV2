@@ -8,7 +8,7 @@ import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
 import { Play, Check, Activity } from 'lucide-react';
 import { toLocalISOString } from '../utils/dateHelpers';
-import { generateLevelPlan, getWorkoutSession } from '../utils/workoutEngine';
+import { fetchUserPlan, getWorkoutSession } from '../utils/workoutEngine';
 import { getMaxXP, calculateProgressionUpdate } from '../utils/progressionEngine';
 import { 
     ACTION_CARD_CONFIG, 
@@ -100,28 +100,43 @@ const Dashboard = () => {
     else setActivityCompletedToday(false);
   }, [activityLog, selectedDateStr]);
 
-  // Ensure Plan IDs exist
+  // Ensure Plan IDs exist and are synced with current stage
   useEffect(() => {
-    const initPlan = async () => {
+    const syncPlan = async () => {
       if (!userProfile) return;
-      if (!userProfile.activePlanIds || userProfile.activePlanIds.length === 0) {
-        try {
-            const querySnapshot = await db.collection("exercises").get();
-            const allExercises: Exercise[] = [];
-            querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
-            
-            const joint = userProfile.program?.joint || 'Knä'; 
-            const mappedJoint = joint === 'Knä' ? 'knee' : (joint === 'Höft' ? 'hip' : 'shoulder');
-            const newPlanIds = generateLevelPlan(allExercises, currentLevel, mappedJoint);
-            
-            await db.collection('users').doc(userProfile.uid).update({ activePlanIds: newPlanIds });
-            await refreshProfile();
-        } catch (e) { console.error(e); }
+      
+      const currentStage = userProfile.progression?.currentStage || 1;
+      const joint = userProfile.program?.joint || 'Knä';
+      
+      try {
+          // Fetch what the plan SHOULD be for this level/stage
+          const intendedIds = await fetchUserPlan(joint, userProfile.currentLevel, currentStage);
+          
+          const currentIds = userProfile.activePlanIds || [];
+          
+          // Check if update is needed (length mismatch or content mismatch)
+          // We sort to ensure order doesn't trigger false positives
+          const sortedIntended = [...intendedIds].sort();
+          const sortedCurrent = [...currentIds].sort();
+          
+          const isMismatch = 
+              sortedIntended.length !== sortedCurrent.length || 
+              !sortedIntended.every((val, index) => val === sortedCurrent[index]);
+
+          if (isMismatch) {
+              console.log("Syncing user plan with Level/Stage...", { level: userProfile.currentLevel, stage: currentStage });
+              await db.collection('users').doc(userProfile.uid).update({ activePlanIds: intendedIds });
+              await refreshProfile();
+          }
+      } catch (e) {
+          console.error("Error syncing plan:", e);
+      } finally {
+          setLoading(false);
       }
-      setLoading(false);
     };
-    initPlan();
-  }, [userProfile, currentLevel]);
+    
+    syncPlan();
+  }, [userProfile?.currentLevel, userProfile?.progression?.currentStage, userProfile?.program?.joint, userProfile?.uid]);
 
   const handleHeroClick = () => {
     if (heroMode === 'completed') return; 
@@ -200,6 +215,7 @@ const Dashboard = () => {
         const userRef = db.collection('users').doc(userProfile.uid);
         
         // Reset Progression for next level
+        // Clearing activePlanIds will trigger the useEffect to fetch the Level+1 Stage 1 plan.
         await userRef.update({
             currentLevel: nextLevel,
             "progression.experiencePoints": 0,

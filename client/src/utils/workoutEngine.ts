@@ -1,4 +1,6 @@
-import { Exercise, WorkoutSession, WorkoutExercise, ExerciseConfig, UserProfile, ExerciseProgressEntry } from '../types';
+
+import { Exercise, WorkoutSession, WorkoutExercise, ExerciseConfig, UserProfile } from '../types';
+import { db } from '../firebase';
 
 // Default configs per level (SOP)
 const DEFAULT_CONFIGS: Record<number, ExerciseConfig> = {
@@ -19,9 +21,41 @@ const mapJoint = (joint?: string): string => {
 };
 
 /**
- * GENERATE LEVEL PLAN
- * Runs once when a user enters a new level.
- * Selects specific exercises from the DB to "Lock" into their plan.
+ * FETCH USER PLAN (Async)
+ * Retrieves the specific exercises configured for the user's Joint, Level, and Stage.
+ * Accumulates exercises from current stage and all previous stages in this level.
+ */
+export const fetchUserPlan = async (joint: string, level: number, stage: number): Promise<string[]> => {
+    const normalizedJoint = mapJoint(joint);
+    const docId = `${normalizedJoint}_${level}`;
+
+    try {
+        const doc = await db.collection('levels').doc(docId).get();
+        
+        if (!doc.exists) {
+            console.warn(`Level config ${docId} not found in 'levels' collection.`);
+            return [];
+        }
+
+        const data = doc.data();
+        let ids: string[] = [];
+        
+        // Accumulate exercises: Current Stage + Previous Stages (on this level)
+        if (stage >= 1 && Array.isArray(data?.stage1_ids)) ids = [...ids, ...data.stage1_ids];
+        if (stage >= 2 && Array.isArray(data?.stage2_ids)) ids = [...ids, ...data.stage2_ids];
+        if (stage >= 3 && Array.isArray(data?.stage3_ids)) ids = [...ids, ...data.stage3_ids];
+
+        // Deduplicate IDs
+        return Array.from(new Set(ids));
+    } catch (error) {
+        console.error("Error fetching user plan:", error);
+        return [];
+    }
+};
+
+/**
+ * GENERATE LEVEL PLAN (Legacy / Fallback)
+ * Keeps mostly for reference or if used in purely client-side logic without DB access.
  */
 export const generateLevelPlan = (
   allExercises: Exercise[], 

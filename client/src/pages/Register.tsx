@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { getAssessmentFromStorage, clearAssessmentStorage } from '../utils/assessmentEngine';
-import { generateLevelPlan } from '../utils/workoutEngine';
-import { UserProfile, Exercise } from '../types';
+import { fetchUserPlan } from '../utils/workoutEngine';
+import { UserProfile } from '../types';
 import { Loader2 } from 'lucide-react';
 
 const Register = () => {
@@ -30,14 +31,9 @@ const Register = () => {
       };
 
       if (assessmentData && assessmentData.programConfig) {
-        // GENERATE PLAN IDS
-        // We need to fetch exercises once to generate the random IDs
-        const querySnapshot = await db.collection("exercises").get();
-        const allExercises: Exercise[] = [];
-        querySnapshot.forEach((doc) => allExercises.push({ id: doc.id, ...doc.data() } as Exercise));
-        
+        // GENERATE PLAN IDS from Levels Collection
         const joint = assessmentData.joint === 'Knä' ? 'knee' : (assessmentData.joint === 'Höft' ? 'hip' : 'shoulder');
-        const planIds = generateLevelPlan(allExercises, assessmentData.programConfig.level, joint);
+        const planIds = await fetchUserPlan(joint, assessmentData.programConfig.level, 1);
 
         profileData = {
             ...profileData,
