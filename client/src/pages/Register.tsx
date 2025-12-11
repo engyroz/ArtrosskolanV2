@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { getAssessmentFromStorage, clearAssessmentStorage } from '../utils/assessmentEngine';
-import { fetchUserPlan } from '../utils/workoutEngine';
+// Removed unused fetchUserPlan import
 import { UserProfile } from '../types';
 import { Loader2 } from 'lucide-react';
 
@@ -31,15 +31,12 @@ const Register = () => {
       };
 
       if (assessmentData && assessmentData.programConfig) {
-        // GENERATE PLAN IDS from Levels Collection
-        const joint = assessmentData.joint === 'Knä' ? 'knee' : (assessmentData.joint === 'Höft' ? 'hip' : 'shoulder');
-        const planIds = await fetchUserPlan(joint, assessmentData.programConfig.level, 1);
-
+        // Removed activePlanIds generation and assignment
         profileData = {
             ...profileData,
             currentLevel: assessmentData.level,
             program: assessmentData.programConfig,
-            activePlanIds: planIds,
+            // activePlanIds removed; exercises now fetched at runtime
             exerciseProgress: {} // Init empty progress
         };
       }

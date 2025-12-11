@@ -8,7 +8,7 @@ import {
   AssessmentState,
   saveAssessmentToStorage
 } from '../utils/assessmentEngine';
-import { fetchUserPlan } from '../utils/workoutEngine';
+// Removed unused fetchUserPlan import
 import { JointType, Question } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
@@ -58,10 +58,6 @@ const Assessment = () => {
         if (user) {
             console.log("User is authenticated. Saving to Firestore...");
             
-            // New: Fetch plan from levels collection (Level X, Stage 1)
-            const mappedJoint = selectedJoint === 'Knä' ? 'knee' : (selectedJoint === 'Höft' ? 'hip' : 'shoulder');
-            const planIds = await fetchUserPlan(mappedJoint, result.level, 1);
-
             const userRef = db.collection('users').doc(user.uid);
             
             const payload = {
@@ -69,7 +65,7 @@ const Assessment = () => {
                 assessmentData: finalAnswers,
                 currentLevel: result.level,
                 program: result,
-                activePlanIds: planIds,
+                // Removed activePlanIds; exercises now fetched at runtime
                 exerciseProgress: {} 
             };
 

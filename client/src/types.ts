@@ -1,5 +1,4 @@
 
-
 export interface UserProfile {
   uid: string;
   email: string;
@@ -14,7 +13,7 @@ export interface UserProfile {
 
   progression?: ProgressionState;
   
-  activePlanIds?: string[]; 
+  // activePlanIds removed - derived from Level/Stage at runtime
   exerciseProgress?: Record<string, ExerciseProgressEntry>; 
   
   trainingSchedule?: number[]; 

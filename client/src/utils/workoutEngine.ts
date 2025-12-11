@@ -114,14 +114,14 @@ export const generateLevelPlan = (
 export const getWorkoutSession = (
   userProfile: UserProfile,
   exercisesDB: Exercise[],
-  type: 'rehab' | 'circulation'
+  type: 'rehab' | 'circulation',
+  planIds: string[] // NEW: Explicitly pass plan IDs
 ): WorkoutSession => {
   
   let sessionExercises: WorkoutExercise[] = [];
 
   if (type === 'rehab') {
-    const planIds = userProfile.activePlanIds || [];
-    
+    // Use the passed planIds which were fetched from the levels collection
     sessionExercises = planIds.map(id => {
       const exercise = exercisesDB.find(e => e.id === id);
       if (!exercise) return null;
