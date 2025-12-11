@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Database, Layout, ShieldAlert } from 'lucide-react';
 import DatabaseResetTool from '../components/admin/DatabaseResetTool';
 import ImageManagerTool from '../components/admin/ImageManagerTool';
+import ProgramBuilderTool from '../components/admin/ProgramBuilderTool';
 
 const AdminTools = () => {
   const navigate = useNavigate();
@@ -16,6 +17,10 @@ const AdminTools = () => {
     }
     if (toolName === 'Bulk Image Uploader') {
         setActiveTool('image-manager');
+        return;
+    }
+    if (toolName === 'Program Builder') {
+        setActiveTool('program-builder');
         return;
     }
     alert(`${toolName} feature coming soon.`);
@@ -91,6 +96,8 @@ const AdminTools = () => {
           <DatabaseResetTool onBack={() => setActiveTool(null)} />
       ) : activeTool === 'image-manager' ? (
           <ImageManagerTool onBack={() => setActiveTool(null)} />
+      ) : activeTool === 'program-builder' ? (
+          <ProgramBuilderTool onBack={() => setActiveTool(null)} />
       ) : (
           renderToolSelection()
       )}
