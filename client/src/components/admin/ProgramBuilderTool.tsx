@@ -10,19 +10,6 @@ interface ProgramBuilderToolProps {
 
 type JointOption = 'knee' | 'hip' | 'shoulder';
 
-// Helper to map UI joint selection to DB values
-const mapJointToDB = (uiJoint: JointOption): string => {
-  return uiJoint;
-};
-
-const mapJointToLabel = (joint: JointOption): string => {
-  switch(joint) {
-    case 'knee': return 'Knä';
-    case 'hip': return 'Höft';
-    case 'shoulder': return 'Axel';
-  }
-};
-
 const ProgramBuilderTool = ({ onBack }: ProgramBuilderToolProps) => {
   // --- Selection State ---
   const [selectedJoint, setSelectedJoint] = useState<JointOption>('knee');
@@ -67,9 +54,9 @@ const ProgramBuilderTool = ({ onBack }: ProgramBuilderToolProps) => {
         const doc = await db.collection('levels').doc(docId).get();
         if (doc.exists) {
           const data = doc.data();
-          setStage1(data?.stage1_ids || []);
-          setStage2(data?.stage2_ids || []);
-          setStage3(data?.stage3_ids || []);
+          setStage1(data?.stage1_ids && Array.isArray(data.stage1_ids) ? data.stage1_ids : []);
+          setStage2(data?.stage2_ids && Array.isArray(data.stage2_ids) ? data.stage2_ids : []);
+          setStage3(data?.stage3_ids && Array.isArray(data.stage3_ids) ? data.stage3_ids : []);
         } else {
           // Reset if no config exists yet
           setStage1([]);
@@ -78,6 +65,10 @@ const ProgramBuilderTool = ({ onBack }: ProgramBuilderToolProps) => {
         }
       } catch (error) {
         console.error("Error loading program:", error);
+        // Ensure arrays are valid even on error
+        setStage1([]);
+        setStage2([]);
+        setStage3([]);
       } finally {
         setLoadingProgram(false);
       }
@@ -115,18 +106,20 @@ const ProgramBuilderTool = ({ onBack }: ProgramBuilderToolProps) => {
   // --- Filtering Logic ---
   
   const isJointMatch = (ex: Exercise, target: string) => {
+    if (!ex) return false;
+
     // Check 'affected_joints' array if it exists (future proofing)
     if (Array.isArray((ex as any).affected_joints)) {
         return (ex as any).affected_joints.includes(target);
     }
     // Fallback to legacy 'joint' string
-    const j = ex.joint?.toLowerCase();
+    const j = ex.joint ? ex.joint.toLowerCase() : '';
     if (!j) return false;
     
     // Normalize DB values to target
     let normalizedDB = j;
-    if (j === 'knä') normalizedDB = 'knee';
-    if (j === 'höft') normalizedDB = 'hip';
+    if (j === 'knä' || j === 'kna') normalizedDB = 'knee';
+    if (j === 'höft' || j === 'hoft') normalizedDB = 'hip';
     if (j === 'axel') normalizedDB = 'shoulder';
 
     return normalizedDB === target;
@@ -137,9 +130,16 @@ const ProgramBuilderTool = ({ onBack }: ProgramBuilderToolProps) => {
   // Pool of exercises that match the joint AND are not already in a stage
   const usedIds = new Set([...stage1, ...stage2, ...stage3]);
   const availableExercises = allExercises.filter(ex => {
+    if (!ex) return false;
     const matchesJoint = isJointMatch(ex, selectedJoint);
     const notUsed = !usedIds.has(ex.id);
-    const matchesSearch = ex.title.toLowerCase().includes(searchTerm.toLowerCase()) || ex.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Safety check for search
+    const title = ex.title || '';
+    const id = ex.id || '';
+    const s = searchTerm.toLowerCase();
+    
+    const matchesSearch = title.toLowerCase().includes(s) || id.toLowerCase().includes(s);
     return matchesJoint && notUsed && matchesSearch;
   });
 
