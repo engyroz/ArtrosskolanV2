@@ -88,7 +88,7 @@ const ExercisePreviewTool = ({ onBack }: ExercisePreviewToolProps) => {
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden relative">
       
       {/* --- ADMIN CONTROLS OVERLAY --- */}
-      <div className="bg-slate-900 text-white p-2 flex items-center justify-between z-30 shadow-md">
+      <div className="bg-slate-900 text-white p-2 flex items-center justify-between z-30 shadow-md flex-shrink-0">
           <div className="flex items-center gap-2">
               <button onClick={onBack} className="p-2 hover:bg-slate-700 rounded-full">
                   <ArrowLeft className="w-4 h-4" />
@@ -129,8 +129,8 @@ const ExercisePreviewTool = ({ onBack }: ExercisePreviewToolProps) => {
 
       {/* --- WORKOUT PLAYER UI --- */}
 
-      {/* 2. Image Area (The Star) */}
-      <div className="flex-1 relative bg-slate-100 flex items-center justify-center overflow-hidden w-full max-h-[60vh]">
+      {/* 2. Image Area (The Star) - Forced 1:1 Aspect Ratio, No Flex Grow/Shrink issues */}
+      <div className="w-full aspect-square bg-slate-100 relative flex-shrink-0 overflow-hidden">
         {currentImage ? (
             <div className="w-full h-full relative">
                 {displayImages.map((img, idx) => (
@@ -155,7 +155,7 @@ const ExercisePreviewTool = ({ onBack }: ExercisePreviewToolProps) => {
                 )}
             </div>
         ) : (
-            <div className="flex flex-col items-center justify-center text-slate-400">
+            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
                 <span className="text-4xl mb-2">📷</span>
                 <span className="text-sm font-bold">No Image Available</span>
                 <span className="text-xs">{currentExercise.id}</span>
@@ -163,11 +163,11 @@ const ExercisePreviewTool = ({ onBack }: ExercisePreviewToolProps) => {
         )}
       </div>
 
-      {/* 3. Controls & Info (Bottom Sheet Style) */}
-      <div className="flex-none bg-white rounded-t-3xl -mt-6 relative z-10 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] flex flex-col flex-grow">
+      {/* 3. Controls & Info (Bottom Sheet Style) - Fills remaining space */}
+      <div className="flex-1 bg-white rounded-t-3xl -mt-6 relative z-10 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] flex flex-col min-h-0 overflow-hidden">
         
         {/* Content Scroll Container */}
-        <div className="p-6 pb-2 overflow-y-auto">
+        <div className="p-6 pb-2 overflow-y-auto flex-1">
             <div className="flex justify-between items-start mb-4">
                 <h2 className="text-2xl font-black text-slate-900 leading-tight max-w-[70%]">
                     {currentExercise.title}
@@ -215,7 +215,7 @@ const ExercisePreviewTool = ({ onBack }: ExercisePreviewToolProps) => {
         </div>
 
         {/* Fixed Bottom Action (Mock) */}
-        <div className="p-4 bg-white border-t border-slate-50 mt-auto">
+        <div className="p-4 bg-white border-t border-slate-50 mt-auto flex-shrink-0">
             <button 
                 onClick={handleNext}
                 className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-slate-800 flex items-center justify-center transition-all active:scale-[0.98]"
