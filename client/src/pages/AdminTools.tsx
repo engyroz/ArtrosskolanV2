@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, Database, Layout, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Upload, Database, Layout, ShieldAlert, Eye } from 'lucide-react';
 import DatabaseResetTool from '../components/admin/DatabaseResetTool';
 import ImageManagerTool from '../components/admin/ImageManagerTool';
 import ProgramBuilderTool from '../components/admin/ProgramBuilderTool';
+import ExercisePreviewTool from '../components/admin/ExercisePreviewTool';
 
 const AdminTools = () => {
   const navigate = useNavigate();
@@ -21,6 +22,10 @@ const AdminTools = () => {
     }
     if (toolName === 'Program Builder') {
         setActiveTool('program-builder');
+        return;
+    }
+    if (toolName === 'Exercise Previewer') {
+        setActiveTool('exercise-previewer');
         return;
     }
     alert(`${toolName} feature coming soon.`);
@@ -62,6 +67,20 @@ const AdminTools = () => {
             </p>
           </button>
 
+          {/* Tool 4: Exercise Previewer */}
+          <button 
+            onClick={() => handleToolClick('Exercise Previewer')}
+            className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-green-300 transition-all text-left group"
+          >
+            <div className="h-12 w-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Eye className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Exercise Previewer</h3>
+            <p className="text-sm text-slate-500">
+               Audit visual quality of exercise images within the actual workout player interface.
+            </p>
+          </button>
+
           {/* Tool 3: Database Reset */}
           <button 
             onClick={() => handleToolClick('Database Reset')}
@@ -98,6 +117,8 @@ const AdminTools = () => {
           <ImageManagerTool onBack={() => setActiveTool(null)} />
       ) : activeTool === 'program-builder' ? (
           <ProgramBuilderTool onBack={() => setActiveTool(null)} />
+      ) : activeTool === 'exercise-previewer' ? (
+          <ExercisePreviewTool onBack={() => setActiveTool(null)} />
       ) : (
           renderToolSelection()
       )}

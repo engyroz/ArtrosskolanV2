@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { addDays as addDaysHelper } from '../utils/dateHelpers';
 
@@ -6,6 +7,8 @@ interface TimeContextType {
   addDays: (days: number) => void;
   subDays: (days: number) => void;
   reset: () => void;
+  isDebugVisible: boolean;
+  toggleDebug: () => void;
 }
 
 const TimeContext = createContext<TimeContextType | undefined>(undefined);
@@ -20,6 +23,9 @@ export const useTime = () => {
 
 export const TimeProvider = ({ children }: { children?: ReactNode }) => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [isDebugVisible, setIsDebugVisible] = useState(() => {
+    return localStorage.getItem('showTimeTravelDebug') === 'true';
+  });
 
   const addDays = (days: number) => {
     setCurrentDate((prev) => addDaysHelper(prev, days));
@@ -33,8 +39,16 @@ export const TimeProvider = ({ children }: { children?: ReactNode }) => {
     setCurrentDate(new Date());
   };
 
+  const toggleDebug = () => {
+    setIsDebugVisible(prev => {
+        const newState = !prev;
+        localStorage.setItem('showTimeTravelDebug', String(newState));
+        return newState;
+    });
+  };
+
   return (
-    <TimeContext.Provider value={{ currentDate, addDays, subDays, reset }}>
+    <TimeContext.Provider value={{ currentDate, addDays, subDays, reset, isDebugVisible, toggleDebug }}>
       {children}
     </TimeContext.Provider>
   );

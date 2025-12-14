@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useTime } from '../contexts/TimeContext';
 import { Clock, Rewind, FastForward, RotateCcw } from 'lucide-react';
@@ -7,7 +8,9 @@ const TimeTravelDebug = () => {
   // const isDev = import.meta.env.DEV;
   // if (!isDev) return null;
 
-  const { currentDate, addDays, subDays, reset } = useTime();
+  const { currentDate, addDays, subDays, reset, isDebugVisible } = useTime();
+
+  if (!isDebugVisible) return null;
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('sv-SE', { 
