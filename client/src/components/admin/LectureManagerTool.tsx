@@ -128,11 +128,8 @@ const LectureManagerTool = ({ onBack }: LectureManagerToolProps) => {
           const durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
           // Construct thumbnail URL (Standard Bunny pattern)
-          // https://vz-{libraryId}.b-cdn.net/{videoId}/{thumbnailFileName}
-          // Note: We might need the Pull Zone URL or similar, but often direct cdn links work if configured.
-          // For safety, we can store the filename or try to construct a standard preview.
-          // Fallback: User can edit manual URL.
-          const thumbUrl = `https://bmzcache.b-cdn.net/${vid.guid}/${vid.thumbnailFileName}`;
+          // Uses the default pull zone format for Bunny Stream: https://vz-{libraryId}.b-cdn.net/{videoId}/{thumbnailFileName}
+          const thumbUrl = `https://vz-${BUNNY_LIBRARY_ID}.b-cdn.net/${vid.guid}/${vid.thumbnailFileName}`;
 
           setFormData(prev => ({
               ...prev,
@@ -297,7 +294,7 @@ const LectureManagerTool = ({ onBack }: LectureManagerToolProps) => {
                                     </select>
                                 )}
                                 <p className="text-xs text-slate-400 mt-2">
-                                    Selecting a video will auto-fill Title, Duration, and Thumbnail.
+                                    Selecting a video will auto-fill Title, Duration, and the Thumbnail.
                                 </p>
                             </div>
 
@@ -368,15 +365,29 @@ const LectureManagerTool = ({ onBack }: LectureManagerToolProps) => {
                                 <div className="flex gap-2">
                                     <input 
                                         type="text" 
-                                        className="w-full p-2 border border-slate-300 rounded-lg text-xs"
+                                        className="w-full p-2 border border-slate-300 rounded-lg text-xs bg-slate-100 text-slate-500 cursor-not-allowed"
                                         value={formData.thumbnailUrl}
-                                        onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})}
+                                        readOnly
+                                        title="Auto-generated from Bunny.net"
                                     />
                                 </div>
-                                {formData.thumbnailUrl && (
-                                    <div className="mt-2 w-32 aspect-video bg-black rounded overflow-hidden">
-                                        <img src={formData.thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
+                                {formData.thumbnailUrl ? (
+                                    <div className="mt-2 w-32 aspect-video bg-black rounded overflow-hidden relative">
+                                        <img 
+                                          src={formData.thumbnailUrl} 
+                                          alt="Preview" 
+                                          className="w-full h-full object-cover" 
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).style.display = 'none';
+                                            (e.target as HTMLImageElement).parentElement!.classList.add('flex', 'items-center', 'justify-center', 'text-white', 'text-[10px]');
+                                            (e.target as HTMLImageElement).parentElement!.innerText = "Image not found";
+                                          }}
+                                        />
                                     </div>
+                                ) : (
+                                    <p className="text-[10px] text-slate-400 mt-1">
+                                        Select a video to automatically fetch the thumbnail.
+                                    </p>
                                 )}
                             </div>
 

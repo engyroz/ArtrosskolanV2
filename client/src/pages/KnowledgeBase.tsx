@@ -88,13 +88,13 @@ const KnowledgeBase = () => {
   };
 
   const handleSelectLecture = (lecture: Lecture) => {
+    // Show toast if locked, but STILL select it so the user sees the lock screen in the player
     if (isLocked(lecture)) {
       const needed = lecture.unlockThreshold - lifetimeSessions;
       setShowLockedMessage(`Du behöver genomföra ${needed} träningspass till för att låsa upp denna lektion.`);
       
       // Clear message after 4 seconds
       setTimeout(() => setShowLockedMessage(null), 4000);
-      return;
     }
     
     setActiveLecture(lecture);
@@ -108,6 +108,8 @@ const KnowledgeBase = () => {
     
     // Prevent duplicate XP if already completed
     if (userProfile.completedEducationIds?.includes(activeLecture.id)) return;
+    // Prevent marking locked videos as complete (safety check)
+    if (isLocked(activeLecture)) return;
 
     try {
       const result = calculateProgressionUpdate(userProfile, 'KNOWLEDGE_ARTICLE');
@@ -153,6 +155,8 @@ const KnowledgeBase = () => {
                    videoId={activeLecture.videoId} 
                    title={activeLecture.title}
                    onLoad={markAsCompleted}
+                   isLocked={isLocked(activeLecture)}
+                   posterUrl={activeLecture.thumbnailUrl} // Use Firestore override if available
                  />
                ) : (
                  <div className="text-slate-500 flex flex-col items-center">

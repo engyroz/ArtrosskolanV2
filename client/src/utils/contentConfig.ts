@@ -5,8 +5,9 @@ import { EducationModule } from '../types';
 const env = (import.meta as any).env;
 
 // --- VIKTIGT: KONFIGURATION FÖR VIDEO ---
-// Reads from .env file (VITE_BUNNY_LIBRARY_ID)
+// Reads from .env file
 export const BUNNY_LIBRARY_ID = env.VITE_BUNNY_LIBRARY_ID || ''; 
+export const BUNNY_PULL_ZONE = env.VITE_BUNNY_PULL_ZONE || ''; 
 
 export const contentConfig = {
   diagnosisTexts: {
