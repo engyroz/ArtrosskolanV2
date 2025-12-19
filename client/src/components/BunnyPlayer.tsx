@@ -15,11 +15,31 @@ const BunnyPlayer = ({ videoId, title, isLocked = false, onLoad, posterUrl }: Bu
   const [isPlaying, setIsPlaying] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  // Reset playing state if videoId changes
+  // --- 2. THUMBNAIL GENERATION ---
+  // Construct dynamic thumbnail URL if Pull Zone is configured, otherwise fallback
+  const dynamicThumbnail = BUNNY_PULL_ZONE 
+    ? `https://${BUNNY_PULL_ZONE}/${videoId}/thumbnail.jpg`
+    : null;
+  
+  // Start with posterUrl, fallback to dynamicThumbnail, or use dynamic as default
+  const [activePoster, setActivePoster] = useState(posterUrl || dynamicThumbnail);
+
+  // Reset state if props change
   useEffect(() => {
     setIsPlaying(false);
     setImgError(false);
-  }, [videoId]);
+    setActivePoster(posterUrl || dynamicThumbnail);
+  }, [videoId, posterUrl, dynamicThumbnail]);
+
+  // Handle image error to try fallback
+  const handleImageError = () => {
+      // If we are currently using posterUrl, and it's broken, try the dynamic one
+      if (activePoster === posterUrl && dynamicThumbnail && posterUrl !== dynamicThumbnail) {
+          setActivePoster(dynamicThumbnail);
+      } else {
+          setImgError(true);
+      }
+  };
 
   // --- 1. CONFIGURATION CHECKS ---
   if (!BUNNY_LIBRARY_ID) {
@@ -47,14 +67,6 @@ const BunnyPlayer = ({ videoId, title, isLocked = false, onLoad, posterUrl }: Bu
     );
   }
 
-  // --- 2. THUMBNAIL GENERATION ---
-  // Construct dynamic thumbnail URL if Pull Zone is configured, otherwise fallback
-  const dynamicThumbnail = BUNNY_PULL_ZONE 
-    ? `https://${BUNNY_PULL_ZONE}/${videoId}/thumbnail.jpg`
-    : null;
-  
-  const activePoster = posterUrl || dynamicThumbnail;
-
   // --- 3. RENDER: LOCKED STATE ---
   if (isLocked) {
     return (
@@ -65,7 +77,7 @@ const BunnyPlayer = ({ videoId, title, isLocked = false, onLoad, posterUrl }: Bu
             src={activePoster} 
             alt="Låst innehåll" 
             className="w-full h-full object-cover opacity-30 blur-sm grayscale"
-            onError={() => setImgError(true)}
+            onError={handleImageError}
           />
         ) : (
           <div className="absolute inset-0 bg-slate-800 pattern-grid-lg opacity-20" />
@@ -93,7 +105,7 @@ const BunnyPlayer = ({ videoId, title, isLocked = false, onLoad, posterUrl }: Bu
             src={activePoster} 
             alt={title} 
             className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-500 group-hover:scale-105"
-            onError={() => setImgError(true)}
+            onError={handleImageError}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-slate-600 bg-slate-900">

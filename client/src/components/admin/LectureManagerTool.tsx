@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, Edit2, PlayCircle, RefreshCw, AlertCircle, Database } from 'lucide-react';
 import { db } from '../../firebase';
 import { Lecture, BunnyVideo } from '../../types';
-import { BUNNY_LIBRARY_ID } from '../../utils/contentConfig';
+import { BUNNY_LIBRARY_ID, BUNNY_PULL_ZONE } from '../../utils/contentConfig';
 
 interface LectureManagerToolProps {
   onBack: () => void;
@@ -127,9 +127,10 @@ const LectureManagerTool = ({ onBack }: LectureManagerToolProps) => {
           const seconds = vid.length % 60;
           const durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
-          // Construct thumbnail URL (Standard Bunny pattern)
-          // Uses the default pull zone format for Bunny Stream: https://vz-{libraryId}.b-cdn.net/{videoId}/{thumbnailFileName}
-          const thumbUrl = `https://vz-${BUNNY_LIBRARY_ID}.b-cdn.net/${vid.guid}/${vid.thumbnailFileName}`;
+          // Construct thumbnail URL
+          // If a specific Pull Zone is configured, use it. Otherwise fall back to the default pattern.
+          const pullZoneHost = BUNNY_PULL_ZONE || `vz-${BUNNY_LIBRARY_ID}.b-cdn.net`;
+          const thumbUrl = `https://${pullZoneHost}/${vid.guid}/${vid.thumbnailFileName}`;
 
           setFormData(prev => ({
               ...prev,

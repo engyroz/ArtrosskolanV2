@@ -9,13 +9,38 @@ import { calculateProgressionUpdate } from '../utils/progressionEngine';
 import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
 import BunnyPlayer from '../components/BunnyPlayer';
+import { BUNNY_PULL_ZONE } from '../utils/contentConfig';
 
 // --- Sub-component for robust thumbnail handling ---
 const LectureThumbnail = ({ lecture, active, locked }: { lecture: Lecture, active: boolean, locked: boolean }) => {
   const [imgError, setImgError] = useState(false);
+  
+  // Construct a fallback URL based on env config if available
+  // This handles the case where the DB has a bad URL (from the old admin tool)
+  const fallbackUrl = BUNNY_PULL_ZONE && lecture.videoId 
+    ? `https://${BUNNY_PULL_ZONE}/${lecture.videoId}/thumbnail.jpg`
+    : null;
 
-  // If no URL, or if we previously detected an error, show fallback
-  if (!lecture.thumbnailUrl || imgError) {
+  const [currentSrc, setCurrentSrc] = useState(lecture.thumbnailUrl || fallbackUrl);
+
+  const handleError = () => {
+      // If we are currently using the DB url, and it failed, try the dynamic fallback
+      if (currentSrc === lecture.thumbnailUrl && fallbackUrl && lecture.thumbnailUrl !== fallbackUrl) {
+          setCurrentSrc(fallbackUrl);
+      } else {
+          // If fallback failed (or we didn't have one), give up
+          setImgError(true);
+      }
+  };
+  
+  // Reset when lecture changes
+  useEffect(() => {
+      setCurrentSrc(lecture.thumbnailUrl || fallbackUrl);
+      setImgError(false);
+  }, [lecture.id, lecture.thumbnailUrl, fallbackUrl]);
+
+  // If no URL works, show placeholder
+  if (!currentSrc || imgError) {
     return (
       <div className={`w-full h-full flex items-center justify-center transition-colors ${active ? 'bg-blue-50' : 'bg-slate-100'}`}>
         {locked ? (
@@ -30,10 +55,10 @@ const LectureThumbnail = ({ lecture, active, locked }: { lecture: Lecture, activ
   return (
     <>
       <img 
-        src={lecture.thumbnailUrl} 
+        src={currentSrc} 
         alt="" 
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-        onError={() => setImgError(true)} 
+        onError={handleError} 
       />
       {/* Overlay gradient for text readability if needed, or just style */}
       <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
