@@ -2,13 +2,44 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
-  Play, Lock, CheckCircle, Clock, Info, Loader2, PlayCircle, BookOpen
+  Play, Lock, CheckCircle, Clock, Info, Loader2, PlayCircle, BookOpen, AlertCircle
 } from 'lucide-react';
 import { Lecture } from '../types';
 import { calculateProgressionUpdate } from '../utils/progressionEngine';
 import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
 import BunnyPlayer from '../components/BunnyPlayer';
+
+// --- Sub-component for robust thumbnail handling ---
+const LectureThumbnail = ({ lecture, active, locked }: { lecture: Lecture, active: boolean, locked: boolean }) => {
+  const [imgError, setImgError] = useState(false);
+
+  // If no URL, or if we previously detected an error, show fallback
+  if (!lecture.thumbnailUrl || imgError) {
+    return (
+      <div className={`w-full h-full flex items-center justify-center transition-colors ${active ? 'bg-blue-50' : 'bg-slate-100'}`}>
+        {locked ? (
+           <Lock className="w-6 h-6 text-slate-300" />
+        ) : (
+           <PlayCircle className={`w-8 h-8 ${active ? 'text-blue-400' : 'text-slate-300'}`} />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <img 
+        src={lecture.thumbnailUrl} 
+        alt="" 
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        onError={() => setImgError(true)} 
+      />
+      {/* Overlay gradient for text readability if needed, or just style */}
+      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
+    </>
+  );
+};
 
 const KnowledgeBase = () => {
   const { user, userProfile, refreshProfile } = useAuth();
@@ -112,49 +143,51 @@ const KnowledgeBase = () => {
     <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] bg-slate-50 overflow-hidden">
       
       {/* --- PRIMARY AREA (Mobile: Top / Desktop: Left 70%) --- */}
-      <div className="flex-1 lg:flex-[0.7] flex flex-col overflow-y-auto bg-white scrollbar-hide">
+      <div className="flex-1 lg:flex-[0.7] flex flex-col overflow-y-auto bg-slate-50 scrollbar-hide">
         
-        {/* Sticky Video Player */}
-        <div className="sticky top-0 z-30 w-full bg-black shadow-lg">
-           {activeLecture ? (
-             <BunnyPlayer 
-               videoId={activeLecture.videoId} 
-               title={activeLecture.title}
-               onLoad={markAsCompleted}
-             />
-           ) : (
-             <div className="w-full aspect-video bg-slate-900 flex flex-col items-center justify-center text-slate-500">
-               <BookOpen className="w-12 h-12 mb-2 opacity-50" />
-               <p>Välj en lektion</p>
-             </div>
-           )}
+        {/* PLAYER CONTAINER - STYLED CARD */}
+        <div className="p-4 lg:p-8 pb-0">
+            <div className={`relative w-full rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl bg-black border-4 border-white ring-1 ring-slate-200 transition-all duration-500 ${!activeLecture ? 'aspect-video flex items-center justify-center' : ''}`}>
+               {activeLecture ? (
+                 <BunnyPlayer 
+                   videoId={activeLecture.videoId} 
+                   title={activeLecture.title}
+                   onLoad={markAsCompleted}
+                 />
+               ) : (
+                 <div className="text-slate-500 flex flex-col items-center">
+                   <BookOpen className="w-12 h-12 mb-2 opacity-50" />
+                   <p>Välj en lektion</p>
+                 </div>
+               )}
+            </div>
         </div>
 
         {/* Active Lecture Metadata */}
-        <div className="p-6 pb-12 lg:pb-6">
+        <div className="p-6 lg:px-10 pb-12 lg:pb-6">
            {activeLecture ? (
              <div className="animate-fade-in space-y-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-100 px-2.5 py-1 rounded-md">
                     {activeLecture.category || 'Utbildning'}
                   </span>
                   {userProfile?.completedEducationIds?.includes(activeLecture.id) && (
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-100">
-                      <CheckCircle className="w-3 h-3" /> KLAR
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-green-700 bg-green-100 px-2.5 py-1 rounded-md">
+                      <CheckCircle className="w-3.5 h-3.5" /> KLAR
                     </span>
                   )}
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                      <Clock className="w-3 h-3" /> {activeLecture.duration}
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 bg-slate-200 px-2.5 py-1 rounded-md">
+                      <Clock className="w-3.5 h-3.5" /> {activeLecture.duration}
                   </span>
                 </div>
                 
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight mb-2">
-                    {activeLecture.title}
-                  </h1>
-                  <p className="text-slate-600 leading-relaxed text-sm md:text-base">
-                    {activeLecture.description || "Ingen beskrivning tillgänglig för denna lektion."}
-                  </p>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight mb-4">
+                        {activeLecture.title}
+                    </h1>
+                    <div className="prose prose-slate prose-sm max-w-none text-slate-600 leading-relaxed">
+                        {activeLecture.description || "Ingen beskrivning tillgänglig för denna lektion."}
+                    </div>
                 </div>
              </div>
            ) : (
@@ -167,28 +200,28 @@ const KnowledgeBase = () => {
       </div>
 
       {/* --- SECONDARY AREA (Mobile: Bottom Scroll / Desktop: Right Sidebar 30%) --- */}
-      <div className="flex-1 lg:flex-[0.3] flex flex-col bg-slate-50 lg:border-l border-slate-200 lg:h-full overflow-hidden">
+      <div className="flex-1 lg:flex-[0.3] flex flex-col bg-white border-t lg:border-t-0 lg:border-l border-slate-200 lg:h-full overflow-hidden">
         
         {/* Playlist Header */}
-        <div className="px-5 py-4 bg-white border-b border-slate-200 flex justify-between items-center sticky top-0 z-20 shadow-sm">
+        <div className="px-6 py-5 bg-white border-b border-slate-100 flex justify-between items-center sticky top-0 z-20">
            <div>
-             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Kursinnehåll</h2>
-             <p className="text-xs text-slate-500">{lectures.length} Lektioner tillgängliga</p>
+             <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-blue-600" /> Kursinnehåll
+             </h2>
            </div>
-           <div className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200">
+           <div className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
              {lifetimeSessions} Pass utförda
            </div>
         </div>
 
         {/* Scrollable Playlist */}
-        <div className="overflow-y-auto p-3 space-y-2 flex-1 pb-24 lg:pb-6">
+        <div className="overflow-y-auto p-4 space-y-3 flex-1 pb-24 lg:pb-6 bg-slate-50/50">
           {lectures.length === 0 && (
              <div className="text-center py-10 px-4">
                <div className="bg-slate-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
                  <Info className="w-6 h-6 text-slate-400" />
                </div>
                <p className="text-slate-500 text-sm font-medium">Inga lektioner hittades.</p>
-               <p className="text-slate-400 text-xs mt-1">Kontakta admin om detta kvarstår.</p>
              </div>
           )}
 
@@ -201,48 +234,43 @@ const KnowledgeBase = () => {
               <button
                 key={lecture.id}
                 onClick={() => handleSelectLecture(lecture)}
-                className={`w-full flex items-center p-3 rounded-xl border text-left transition-all duration-200 group relative ${
+                className={`w-full flex items-center p-3 rounded-2xl border text-left transition-all duration-300 group relative overflow-hidden ${
                   active 
-                    ? 'bg-white border-blue-500 shadow-md ring-1 ring-blue-500 z-10' 
+                    ? 'bg-white border-blue-500 shadow-lg ring-1 ring-blue-500 z-10 transform scale-[1.02]' 
                     : locked
-                      ? 'bg-slate-100 border-transparent opacity-60 hover:opacity-100 grayscale'
-                      : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'
+                      ? 'bg-slate-100 border-transparent opacity-70 hover:opacity-100'
+                      : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-md'
                 }`}
               >
-                {/* Thumbnail Area */}
-                <div className="relative w-20 h-14 flex-shrink-0 bg-slate-800 rounded-lg overflow-hidden mr-3 flex items-center justify-center border border-slate-100 shadow-inner">
-                    {lecture.thumbnailUrl ? (
-                      <img src={lecture.thumbnailUrl} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                    ) : (
-                      // Fallback icons if no thumb
-                      locked ? <Lock className="w-5 h-5 text-slate-500" /> : <PlayCircle className="w-6 h-6 text-slate-400" />
-                    )}
+                {/* Thumbnail Area - Now uses subcomponent */}
+                <div className="relative w-24 h-16 flex-shrink-0 rounded-xl overflow-hidden mr-4 border border-slate-100 shadow-sm bg-slate-200">
+                    <LectureThumbnail lecture={lecture} active={active} locked={locked} />
                     
                     {/* Active Pulse Overlay */}
                     {active && (
-                       <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center backdrop-blur-[1px]">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+                       <div className="absolute inset-0 bg-blue-600/10 flex items-center justify-center backdrop-blur-[1px]">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
                        </div>
                     )}
                     
-                    {/* Duration Badge on Thumb */}
-                    <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] px-1 rounded font-medium">
+                    {/* Duration Badge */}
+                    <div className="absolute bottom-1 right-1 bg-black/80 backdrop-blur-sm text-white text-[9px] px-1.5 py-0.5 rounded-md font-bold tracking-wide">
                       {lecture.duration}
                     </div>
                 </div>
 
                 {/* Info Area */}
-                <div className="flex-1 min-w-0 py-1">
-                  <div className="flex justify-between items-start">
-                     <span className={`text-xs font-bold mb-1 line-clamp-2 leading-tight ${active ? 'text-blue-700' : 'text-slate-700'}`}>
+                <div className="flex-1 min-w-0 py-0.5">
+                  <div className="flex justify-between items-start mb-1">
+                     <span className={`text-xs font-bold line-clamp-2 leading-snug ${active ? 'text-blue-700' : 'text-slate-700'}`}>
                        {index + 1}. {lecture.title}
                      </span>
-                     {completed && <CheckCircle className="w-4 h-4 text-green-500 ml-2 flex-shrink-0" />}
+                     {completed && <CheckCircle className="w-3.5 h-3.5 text-green-500 ml-2 flex-shrink-0" />}
                   </div>
                   
-                  <div className="flex items-center mt-1">
+                  <div className="flex items-center">
                     {locked ? (
-                       <span className="text-[9px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded flex items-center">
+                       <span className="text-[9px] font-bold text-slate-500 bg-slate-200/80 px-1.5 py-0.5 rounded flex items-center">
                          <Lock className="w-2.5 h-2.5 mr-1" />
                          Kräver {lecture.unlockThreshold} pass
                        </span>
@@ -262,12 +290,12 @@ const KnowledgeBase = () => {
       {/* Locked Message Toast (Floating) */}
       {showLockedMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm animate-fade-in-down">
-          <div className="bg-slate-800/95 backdrop-blur shadow-2xl p-4 rounded-xl flex items-start gap-3 border border-slate-700 text-white">
-            <div className="bg-yellow-500/20 p-2 rounded-lg">
+          <div className="bg-slate-900/95 backdrop-blur-md shadow-2xl p-4 rounded-2xl flex items-start gap-3 border border-slate-700 text-white">
+            <div className="bg-yellow-500/20 p-2 rounded-xl">
                 <Lock className="w-5 h-5 text-yellow-400 flex-shrink-0" />
             </div>
             <div>
-              <p className="font-bold text-sm mb-1">Lektionen är låst</p>
+              <p className="font-bold text-sm mb-1 text-yellow-100">Lektionen är låst</p>
               <p className="text-xs text-slate-300 leading-relaxed">{showLockedMessage}</p>
             </div>
           </div>
