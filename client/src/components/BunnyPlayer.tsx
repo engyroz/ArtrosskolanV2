@@ -9,13 +9,13 @@ interface BunnyPlayerProps {
 }
 
 const BunnyPlayer = ({ videoId, title, onLoad }: BunnyPlayerProps) => {
-  // Fallback if ID is missing configuration
-  if (!BUNNY_LIBRARY_ID || BUNNY_LIBRARY_ID === '567438') {
+  // Check if ID is configured (empty string or undefined means missing)
+  if (!BUNNY_LIBRARY_ID) {
     return (
       <div className="w-full aspect-video bg-slate-900 flex items-center justify-center text-white p-4 text-center">
         <p className="text-sm">
           Videospelaren är inte konfigurerad.<br/>
-          <span className="text-xs text-slate-400 font-mono mt-1 block">BUNNY_LIBRARY_ID saknas i contentConfig.ts</span>
+          <span className="text-xs text-slate-400 font-mono mt-1 block">VITE_BUNNY_LIBRARY_ID saknas i .env</span>
         </p>
       </div>
     );

@@ -1,9 +1,12 @@
 
 import { EducationModule } from '../types';
 
+// Access environment variables safely
+const env = (import.meta as any).env;
+
 // --- VIKTIGT: KONFIGURATION FÖR VIDEO ---
-// Byt ut denna sträng mot ditt "Video Library ID" från Bunny.net dashboard.
-export const BUNNY_LIBRARY_ID = '567438'; 
+// Reads from .env file (VITE_BUNNY_LIBRARY_ID)
+export const BUNNY_LIBRARY_ID = env.VITE_BUNNY_LIBRARY_ID || ''; 
 
 export const contentConfig = {
   diagnosisTexts: {
