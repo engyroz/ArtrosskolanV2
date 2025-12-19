@@ -94,11 +94,16 @@ app.get('/api/admin/bunny/videos', async (req, res) => {
   const libraryId = process.env.BUNNY_LIBRARY_ID || process.env.VITE_BUNNY_LIBRARY_ID;
 
   if (!apiKey || !libraryId) {
+    console.error("Bunny Config Error: Missing API_KEY or LIBRARY_ID in env.");
     return res.status(500).json({ error: 'Server misconfiguration: Missing Bunny API credentials.' });
   }
 
   try {
-    const response = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos?page=1&itemsPerPage=100&orderBy=date`, {
+    // API URL: https://video.bunnycdn.com/library/{id}/videos
+    const url = `https://video.bunnycdn.com/library/${libraryId}/videos?page=1&itemsPerPage=100&orderBy=date`;
+    console.log(`Fetching videos from Bunny... LibraryID: ${libraryId}`);
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'AccessKey': apiKey,
@@ -107,13 +112,16 @@ app.get('/api/admin/bunny/videos', async (req, res) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Bunny API Error: ${response.statusText}`);
+      const errText = await response.text();
+      console.error(`Bunny API Failed: ${response.status} ${response.statusText} - ${errText}`);
+      throw new Error(`Bunny API Error: ${response.statusText} (Check API Key)`);
     }
 
     const data = await response.json();
+    // Return standard structure
     res.json(data);
   } catch (error) {
-    console.error("Bunny Proxy Error:", error);
+    console.error("Bunny Proxy Exception:", error);
     res.status(500).json({ error: error.message });
   }
 });

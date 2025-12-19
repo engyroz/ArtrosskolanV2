@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, Edit2, PlayCircle, RefreshCw, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, Edit2, PlayCircle, RefreshCw, AlertCircle, Database } from 'lucide-react';
 import { db } from '../../firebase';
 import { Lecture, BunnyVideo } from '../../types';
 import { BUNNY_LIBRARY_ID } from '../../utils/contentConfig';
@@ -207,14 +207,19 @@ const LectureManagerTool = ({ onBack }: LectureManagerToolProps) => {
             
             {/* LEFT: List */}
             <div className="w-full md:w-1/3 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden h-[calc(100vh-140px)]">
-                <div className="p-4 border-b border-slate-100 bg-slate-50">
-                    <h3 className="font-bold text-slate-700">Existing Lectures ({lectures.length})</h3>
+                <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                    <h3 className="font-bold text-slate-700">Database Lectures</h3>
+                    <span className="text-xs font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">{lectures.length}</span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2 space-y-2">
                     {loadingLectures ? (
                         <div className="flex justify-center p-4"><Loader2 className="animate-spin text-slate-400" /></div>
                     ) : lectures.length === 0 ? (
-                        <p className="text-center text-slate-400 text-sm p-4">No lectures found.</p>
+                        <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
+                            <Database className="w-8 h-8 mb-2 opacity-50" />
+                            <p className="text-sm font-bold">No lectures in Database.</p>
+                            <p className="text-xs">Create one here or run the seed script to populate defaults.</p>
+                        </div>
                     ) : (
                         lectures.map(l => (
                             <div 
@@ -265,16 +270,23 @@ const LectureManagerTool = ({ onBack }: LectureManagerToolProps) => {
                                     </button>
                                 </label>
                                 
-                                {bunnyError ? (
+                                {loadingBunny ? (
+                                     <div className="text-xs text-slate-500 flex items-center gap-2 py-2">
+                                        <Loader2 className="w-3 h-3 animate-spin" /> Connecting to Bunny API...
+                                     </div>
+                                ) : bunnyError ? (
                                     <div className="text-red-600 text-xs flex items-center gap-2 bg-red-50 p-2 rounded border border-red-100">
                                         <AlertCircle className="w-4 h-4" /> {bunnyError}
+                                    </div>
+                                ) : bunnyVideos.length === 0 ? (
+                                    <div className="text-orange-600 text-xs flex items-center gap-2 bg-orange-50 p-2 rounded border border-orange-100">
+                                        <AlertCircle className="w-4 h-4" /> Connected, but no videos found in library.
                                     </div>
                                 ) : (
                                     <select 
                                         className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                                         value={formData.videoId || ''}
                                         onChange={handleBunnySelection}
-                                        disabled={loadingBunny}
                                     >
                                         <option value="">-- Choose a Video --</option>
                                         {bunnyVideos.map(v => (
