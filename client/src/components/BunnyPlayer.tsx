@@ -10,7 +10,7 @@ interface BunnyPlayerProps {
 
 const BunnyPlayer = ({ videoId, title, onLoad }: BunnyPlayerProps) => {
   // Fallback if ID is missing configuration
-  if (!BUNNY_LIBRARY_ID || BUNNY_LIBRARY_ID === 'ditt-library-id-här') {
+  if (!BUNNY_LIBRARY_ID || BUNNY_LIBRARY_ID === '567438') {
     return (
       <div className="w-full aspect-video bg-slate-900 flex items-center justify-center text-white p-4 text-center">
         <p className="text-sm">
