@@ -43,11 +43,22 @@ export interface Lecture {
   title: string;
   description?: string;
   videoId: string; // Bunny.net Video ID
+  bunnyLibraryId?: string; // Optional: specific library ID if different from global default
   duration: string; // e.g., "04:20"
   thumbnailUrl?: string;
   category?: string;
   order: number;
   unlockThreshold: number; // Number of lifetime sessions required to unlock
+}
+
+// Type for Bunny.net API Response
+export interface BunnyVideo {
+  guid: string;
+  title: string;
+  length: number; // in seconds
+  thumbnailFileName: string;
+  views: number;
+  dateUploaded: string;
 }
 
 export interface ExerciseProgressEntry {

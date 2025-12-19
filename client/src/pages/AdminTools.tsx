@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, Database, Layout, ShieldAlert, Eye } from 'lucide-react';
+import { ArrowLeft, Upload, Database, Layout, ShieldAlert, Eye, Video } from 'lucide-react';
 import DatabaseResetTool from '../components/admin/DatabaseResetTool';
 import ImageManagerTool from '../components/admin/ImageManagerTool';
 import ProgramBuilderTool from '../components/admin/ProgramBuilderTool';
 import ExercisePreviewTool from '../components/admin/ExercisePreviewTool';
+import LectureManagerTool from '../components/admin/LectureManagerTool';
 
 const AdminTools = () => {
   const navigate = useNavigate();
@@ -26,6 +27,10 @@ const AdminTools = () => {
     }
     if (toolName === 'Exercise Previewer') {
         setActiveTool('exercise-previewer');
+        return;
+    }
+    if (toolName === 'Lecture Manager') {
+        setActiveTool('lecture-manager');
         return;
     }
     alert(`${toolName} feature coming soon.`);
@@ -81,6 +86,20 @@ const AdminTools = () => {
             </p>
           </button>
 
+          {/* Tool 5: Lecture Manager */}
+          <button 
+            onClick={() => handleToolClick('Lecture Manager')}
+            className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all text-left group"
+          >
+            <div className="h-12 w-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Video className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Lecture Manager</h3>
+            <p className="text-sm text-slate-500">
+               CMS for video education. Syncs with Bunny.net Stream.
+            </p>
+          </button>
+
           {/* Tool 3: Database Reset */}
           <button 
             onClick={() => handleToolClick('Database Reset')}
@@ -119,6 +138,8 @@ const AdminTools = () => {
           <ProgramBuilderTool onBack={() => setActiveTool(null)} />
       ) : activeTool === 'exercise-previewer' ? (
           <ExercisePreviewTool onBack={() => setActiveTool(null)} />
+      ) : activeTool === 'lecture-manager' ? (
+          <LectureManagerTool onBack={() => setActiveTool(null)} />
       ) : (
           renderToolSelection()
       )}

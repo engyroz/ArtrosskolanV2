@@ -87,6 +87,37 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 // --- JSON API ---
 app.use(express.json());
 
+// Bunny.net Video Proxy
+app.get('/api/admin/bunny/videos', async (req, res) => {
+  const apiKey = process.env.BUNNY_API_KEY;
+  // Fallback to a default or check VITE_ var if shared, but preferred is separate server env
+  const libraryId = process.env.BUNNY_LIBRARY_ID || process.env.VITE_BUNNY_LIBRARY_ID;
+
+  if (!apiKey || !libraryId) {
+    return res.status(500).json({ error: 'Server misconfiguration: Missing Bunny API credentials.' });
+  }
+
+  try {
+    const response = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos?page=1&itemsPerPage=100&orderBy=date`, {
+      method: 'GET',
+      headers: {
+        'AccessKey': apiKey,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Bunny API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error("Bunny Proxy Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Create Session
 app.post('/api/create-checkout-session', async (req, res) => {
   const { priceId, userId } = req.body;
