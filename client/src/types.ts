@@ -37,6 +37,19 @@ export interface EducationModule {
   requiredSessions?: number;
 }
 
+// New Interface for Firestore Lectures
+export interface Lecture {
+  id: string;
+  title: string;
+  description?: string;
+  videoId: string; // Bunny.net Video ID
+  duration: string; // e.g., "04:20"
+  thumbnailUrl?: string;
+  category?: string;
+  order: number;
+  unlockThreshold: number; // Number of lifetime sessions required to unlock
+}
+
 export interface ExerciseProgressEntry {
   exerciseId: string;
   history: ExertionLevel[]; 

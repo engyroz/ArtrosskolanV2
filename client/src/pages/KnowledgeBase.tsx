@@ -1,467 +1,280 @@
 
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
-  BookOpen, Lock, CheckCircle, Play, PlayCircle, Video, Book, 
-  ChevronRight, ArrowRight, X, Sparkles, HelpCircle, Dumbbell, Apple 
+  Play, Lock, CheckCircle, Clock, Info, Loader2, PlayCircle, BookOpen
 } from 'lucide-react';
-import { EDUCATION_MODULES } from '../utils/contentConfig';
-import { EducationModule } from '../types';
-import { isContentUnlocked, calculateProgressionUpdate } from '../utils/progressionEngine';
+import { Lecture } from '../types';
+import { calculateProgressionUpdate } from '../utils/progressionEngine';
 import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
-
-// --- TYPES & HELPERS ---
-
-type ModuleStatus = 'locked' | 'unlocked' | 'completed';
-
-const getModuleStatus = (
-  module: EducationModule, 
-  userProfile: any
-): ModuleStatus => {
-  if (userProfile?.completedEducationIds?.includes(module.id)) return 'completed';
-  
-  const unlocked = isContentUnlocked(userProfile, {
-    unlockType: module.unlockType,
-    requiredLevel: module.requiredLevel,
-    requiredStage: module.requiredStage,
-    requiredSessions: module.requiredSessions
-  });
-
-  return unlocked ? 'unlocked' : 'locked';
-};
-
-// --- COMPONENTS ---
-
-const ReaderOverlay = ({ 
-  module, 
-  onClose, 
-  onComplete 
-}: { 
-  module: EducationModule, 
-  onClose: () => void, 
-  onComplete: () => void 
-}) => {
-  const [completed, setCompleted] = useState(false);
-
-  const handleComplete = () => {
-    setCompleted(true);
-    // Trigger confetti sound or effect here if desired
-    setTimeout(() => {
-        onComplete();
-    }, 1500); // Wait for animation
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col animate-fade-in">
-      {/* 1. Sticky Media Header */}
-      <div className="relative w-full aspect-video bg-slate-900 sticky top-0 flex-shrink-0">
-        <img 
-            src={module.imageUrl || 'https://images.unsplash.com/photo-1550505295-69024f2b1c6d'} 
-            className="w-full h-full object-cover opacity-80"
-            alt={module.title}
-        />
-        <button 
-            onClick={onClose}
-            className="absolute top-4 right-4 bg-black/40 p-2 rounded-full text-white backdrop-blur-sm hover:bg-black/60 transition-all z-20"
-        >
-            <X className="w-6 h-6" />
-        </button>
-        
-        {module.type === 'video' && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border-2 border-white/50">
-                    <Play className="w-6 h-6 text-white fill-current ml-1" />
-                </div>
-            </div>
-        )}
-        
-        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent">
-             <div className="inline-flex items-center bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded mb-2">
-                 {module.category.toUpperCase()}
-             </div>
-             <h1 className="text-2xl font-bold text-white leading-tight">{module.title}</h1>
-        </div>
-      </div>
-
-      {/* 2. Content Body */}
-      <div className="flex-1 overflow-y-auto p-6 pb-32 bg-white">
-         <div className="prose prose-slate max-w-none">
-             <p className="text-lg text-slate-600 leading-relaxed font-medium">
-                 Här skulle själva innehållet för artikeln eller beskrivningen av videon ligga. 
-                 Eftersom detta är en prototyp visar vi platshållartext.
-             </p>
-             <p className="text-slate-600">
-                 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                 Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-             </p>
-             <h3>Varför är detta viktigt?</h3>
-             <p className="text-slate-600">
-                 Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
-                 Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-             </p>
-         </div>
-      </div>
-
-      {/* 3. Reward / Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 pb-8 shadow-lg">
-          <div className="max-w-md mx-auto">
-              {!completed ? (
-                  <button 
-                    onClick={handleComplete}
-                    className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-lg shadow-lg hover:bg-slate-800 transform transition-all active:scale-95 flex items-center justify-center gap-2"
-                  >
-                      Markera som klar <span className="text-yellow-400 font-black">+50 XP</span>
-                  </button>
-              ) : (
-                  <div className="w-full py-4 bg-green-500 text-white rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 animate-bounce">
-                      <CheckCircle className="w-6 h-6" /> Bra jobbat!
-                  </div>
-              )}
-          </div>
-      </div>
-
-      {/* Confetti Animation Layer */}
-      {completed && (
-          <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-50">
-              <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] animate-fade-in"></div>
-              <div className="relative text-center animate-scale-up">
-                  <Sparkles className="w-24 h-24 text-yellow-500 mx-auto animate-spin-slow" />
-                  <h2 className="text-4xl font-black text-slate-900 mt-4 mb-2 drop-shadow-md">XP UPPLÅST!</h2>
-              </div>
-          </div>
-      )}
-    </div>
-  );
-};
+import BunnyPlayer from '../components/BunnyPlayer';
 
 const KnowledgeBase = () => {
   const { user, userProfile, refreshProfile } = useAuth();
-  const navigate = useNavigate();
-  const [readingModule, setReadingModule] = useState<EducationModule | null>(null);
-
-  // --- DATA PREP ---
-  const allModules = EDUCATION_MODULES.map(m => ({
-    ...m,
-    status: getModuleStatus(m, userProfile)
-  }));
-
-  // 1. HERO LOGIC
-  // Find first UNLOCKED but NOT COMPLETED
-  let heroModule = allModules.find(m => m.status === 'unlocked');
-  let heroScenario: 'new' | 'grinding' = 'new';
   
-  if (!heroModule) {
-      // If all unlocked are done, show next LOCKED
-      heroModule = allModules.find(m => m.status === 'locked');
-      heroScenario = 'grinding';
+  const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [activeLecture, setActiveLecture] = useState<Lecture | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showLockedMessage, setShowLockedMessage] = useState<string | null>(null);
+
+  // 1. Fetch Lectures from Firestore
+  useEffect(() => {
+    const fetchLectures = async () => {
+      try {
+        const snapshot = await db.collection('lectures').orderBy('order', 'asc').get();
+        
+        if (snapshot.empty) {
+          console.log("No lectures found in Firestore.");
+          setLectures([]);
+        } else {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Lecture));
+          setLectures(data);
+          
+          // Auto-select first unlocked lecture if available
+          if (userProfile) {
+             const lifetimeSessions = userProfile.progression?.lifetimeSessions || 0;
+             // Find the first unlocked lecture (or the first one if all are locked/unlocked logic fails)
+             const firstUnlocked = data.find(l => lifetimeSessions >= l.unlockThreshold) || data[0];
+             setActiveLecture(firstUnlocked);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching lectures:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLectures();
+  }, [userProfile?.uid]); // Dependency on UID ensures refresh on login
+
+  // 2. Progression Helpers
+  const lifetimeSessions = userProfile?.progression?.lifetimeSessions || 0;
+
+  const isLocked = (lecture: Lecture) => {
+    return lifetimeSessions < lecture.unlockThreshold;
+  };
+
+  const handleSelectLecture = (lecture: Lecture) => {
+    if (isLocked(lecture)) {
+      const needed = lecture.unlockThreshold - lifetimeSessions;
+      setShowLockedMessage(`Du behöver genomföra ${needed} träningspass till för att låsa upp denna lektion.`);
+      
+      // Clear message after 4 seconds
+      setTimeout(() => setShowLockedMessage(null), 4000);
+      return;
+    }
+    
+    setActiveLecture(lecture);
+    
+    // Smooth scroll to top on mobile to show player
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const markAsCompleted = async () => {
+    if (!user || !userProfile || !activeLecture) return;
+    
+    // Prevent duplicate XP if already completed
+    if (userProfile.completedEducationIds?.includes(activeLecture.id)) return;
+
+    try {
+      const result = calculateProgressionUpdate(userProfile, 'KNOWLEDGE_ARTICLE');
+      
+      await db.collection('users').doc(user.uid).update({
+        completedEducationIds: firebase.firestore.FieldValue.arrayUnion(activeLecture.id),
+        "progression.experiencePoints": result.newTotalXP,
+        "progression.currentStage": result.newStage,
+        "progression.levelMaxedOut": result.levelMaxedOut
+      });
+      
+      await refreshProfile();
+      console.log("Lecture marked as complete + XP awarded");
+    } catch (e) {
+      console.error("Failed to update progress:", e);
+    }
+  };
+
+  // --- RENDER ---
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-2" />
+          <p className="text-slate-500 text-sm">Laddar kursinnehåll...</p>
+        </div>
+      </div>
+    );
   }
 
-  // 2. SERIES TRACK (Horizontal)
-  const seriesModules = allModules
-      .filter(m => m.unlockType === 'lifetime')
-      .sort((a, b) => (a.requiredSessions || 0) - (b.requiredSessions || 0));
-
-  // 3. GUIDE TRACK (Vertical)
-  // Only current level
-  const currentLevel = userProfile?.currentLevel || 1;
-  const guideModules = allModules
-      .filter(m => m.unlockType === 'level' && m.requiredLevel === currentLevel)
-      .sort((a, b) => (a.requiredStage || 0) - (b.requiredStage || 0));
-  
-  // Group by stage
-  const guideByStage: Record<number, typeof guideModules> = {};
-  guideModules.forEach(m => {
-      const s = m.requiredStage || 1;
-      if (!guideByStage[s]) guideByStage[s] = [];
-      guideByStage[s].push(m);
-  });
-
-  // --- ACTIONS ---
-
-  const handleModuleClick = (module: typeof allModules[0]) => {
-      if (module.status === 'locked') {
-          // Toast or Shake?
-          let reqText = "";
-          if (module.unlockType === 'lifetime') {
-             const left = (module.requiredSessions || 0) - (userProfile?.progression?.lifetimeSessions || 0);
-             reqText = `Kräver ${Math.max(0, left)} pass till.`;
-          } else {
-             reqText = `Låses upp vid Etapp ${module.requiredStage} i din resa.`;
-          }
-          alert(`🔒 Låst! ${reqText}`); // Native alert for simplicity in prototype
-          return;
-      }
-      setReadingModule(module);
-  };
-
-  const handleFinishReading = async () => {
-      if (!user || !userProfile || !readingModule) return;
+  return (
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] bg-slate-50 overflow-hidden">
       
-      try {
-          const result = calculateProgressionUpdate(userProfile, 'KNOWLEDGE_ARTICLE');
-          
-          const userRef = db.collection('users').doc(user.uid);
-          await userRef.update({
-              completedEducationIds: firebase.firestore.FieldValue.arrayUnion(readingModule.id),
-              "progression.experiencePoints": result.newTotalXP,
-              "progression.currentStage": result.newStage,
-              "progression.levelMaxedOut": result.levelMaxedOut
-          });
-          await refreshProfile();
-          setReadingModule(null); // Close modal
-      } catch (e) {
-          console.error("Failed to mark read", e);
-      }
-  };
+      {/* --- PRIMARY AREA (Mobile: Top / Desktop: Left 70%) --- */}
+      <div className="flex-1 lg:flex-[0.7] flex flex-col overflow-y-auto bg-white scrollbar-hide">
+        
+        {/* Sticky Video Player */}
+        <div className="sticky top-0 z-30 w-full bg-black shadow-lg">
+           {activeLecture ? (
+             <BunnyPlayer 
+               videoId={activeLecture.videoId} 
+               title={activeLecture.title}
+               onLoad={markAsCompleted}
+             />
+           ) : (
+             <div className="w-full aspect-video bg-slate-900 flex flex-col items-center justify-center text-slate-500">
+               <BookOpen className="w-12 h-12 mb-2 opacity-50" />
+               <p>Välj en lektion</p>
+             </div>
+           )}
+        </div>
 
-  // --- RENDERERS ---
-
-  const renderHero = () => {
-      if (!heroModule) return null;
-
-      if (heroScenario === 'new') {
-          return (
-              <div className="mb-8 animate-fade-in">
-                  <div 
-                    onClick={() => handleModuleClick(heroModule!)}
-                    className="w-full aspect-[4/3] sm:aspect-[2/1] rounded-3xl relative overflow-hidden shadow-xl group cursor-pointer"
-                  >
-                      <img 
-                        src={heroModule.imageUrl} 
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
-                      
-                      <div className="absolute top-4 left-4">
-                          <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm animate-pulse">
-                              NYTT!
-                          </span>
-                      </div>
-
-                      <div className="absolute bottom-0 left-0 p-6 w-full">
-                          <span className="text-blue-300 font-bold text-xs uppercase tracking-wider mb-2 block">
-                              {heroModule.category}
-                          </span>
-                          <h2 className="text-3xl font-bold text-white mb-4 leading-tight">
-                              {heroModule.title}
-                          </h2>
-                          <button className="bg-white text-slate-900 px-6 py-3 rounded-xl font-bold text-sm flex items-center shadow-lg group-hover:bg-blue-50 transition-colors">
-                              {heroModule.type === 'video' ? <Play className="w-4 h-4 mr-2 fill-current" /> : <BookOpen className="w-4 h-4 mr-2" />}
-                              {heroModule.type === 'video' ? 'Spela upp' : 'Läs nu'}
-                          </button>
-                      </div>
-                  </div>
-              </div>
-          );
-      } else {
-          // Scenario B: Grinding
-          const sessionsLeft = (heroModule.requiredSessions || 0) - (userProfile?.progression?.lifetimeSessions || 0);
-          
-          return (
-              <div className="mb-8 animate-fade-in">
-                  <div className="w-full bg-slate-100 rounded-3xl p-6 border border-slate-200 relative overflow-hidden">
-                      <div className="relative z-10 flex flex-col items-center text-center">
-                          <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mb-4 text-slate-400">
-                              <Lock className="w-8 h-8" />
-                          </div>
-                          <h2 className="text-xl font-bold text-slate-700 mb-2">
-                              Nästa belöning väntar
-                          </h2>
-                          <p className="text-slate-500 text-sm font-medium mb-6">
-                              "{heroModule.title}" låses upp om <span className="text-slate-900 font-bold">{Math.max(1, sessionsLeft)} pass</span>.
-                          </p>
-                          <button 
-                            onClick={() => navigate('/dashboard')}
-                            className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-blue-700 transition-colors"
-                          >
-                              Gå till Idag & Träna
-                          </button>
-                      </div>
-                      
-                      {/* Background blurred image */}
-                      <img 
-                        src={heroModule.imageUrl} 
-                        className="absolute inset-0 w-full h-full object-cover opacity-10 filter blur-sm grayscale"
-                      />
-                  </div>
-              </div>
-          );
-      }
-  };
-
-  const renderSeriesCard = (m: typeof allModules[0]) => {
-      const isCompleted = m.status === 'completed';
-      const isLocked = m.status === 'locked';
-
-      return (
-          <div 
-            key={m.id}
-            onClick={() => handleModuleClick(m)}
-            className={`min-w-[280px] aspect-video rounded-xl relative overflow-hidden shadow-sm flex-shrink-0 cursor-pointer transition-all hover:scale-[1.02]
-                ${isLocked ? 'grayscale' : ''}
-            `}
-          >
-              <img src={m.imageUrl} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              
-              {/* Status Layer */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                  {isLocked && <Lock className="w-10 h-10 text-white/50" />}
-                  {m.status === 'unlocked' && <PlayCircle className="w-12 h-12 text-white opacity-90" />}
-                  {isCompleted && <CheckCircle className="w-10 h-10 text-green-500" />}
-              </div>
-
-              {/* Title Layer */}
-              <div className="absolute bottom-0 left-0 p-4 w-full">
-                  <div className="flex justify-between items-end">
-                    <span className={`text-xs font-bold line-clamp-2 leading-tight ${isLocked ? 'text-slate-400' : 'text-white'}`}>
-                        {m.title}
+        {/* Active Lecture Metadata */}
+        <div className="p-6 pb-12 lg:pb-6">
+           {activeLecture ? (
+             <div className="animate-fade-in space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                    {activeLecture.category || 'Utbildning'}
+                  </span>
+                  {userProfile?.completedEducationIds?.includes(activeLecture.id) && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-100">
+                      <CheckCircle className="w-3 h-3" /> KLAR
                     </span>
-                    {isLocked && (
-                        <span className="text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded backdrop-blur-sm">
-                            Kräver {m.requiredSessions} pass
-                        </span>
+                  )}
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">
+                      <Clock className="w-3 h-3" /> {activeLecture.duration}
+                  </span>
+                </div>
+                
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight mb-2">
+                    {activeLecture.title}
+                  </h1>
+                  <p className="text-slate-600 leading-relaxed text-sm md:text-base">
+                    {activeLecture.description || "Ingen beskrivning tillgänglig för denna lektion."}
+                  </p>
+                </div>
+             </div>
+           ) : (
+             <div className="text-center py-10 text-slate-400">
+               <Info className="w-8 h-8 mx-auto mb-2 opacity-50" />
+               <p>Välj en lektion från listan för att börja titta.</p>
+             </div>
+           )}
+        </div>
+      </div>
+
+      {/* --- SECONDARY AREA (Mobile: Bottom Scroll / Desktop: Right Sidebar 30%) --- */}
+      <div className="flex-1 lg:flex-[0.3] flex flex-col bg-slate-50 lg:border-l border-slate-200 lg:h-full overflow-hidden">
+        
+        {/* Playlist Header */}
+        <div className="px-5 py-4 bg-white border-b border-slate-200 flex justify-between items-center sticky top-0 z-20 shadow-sm">
+           <div>
+             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Kursinnehåll</h2>
+             <p className="text-xs text-slate-500">{lectures.length} Lektioner tillgängliga</p>
+           </div>
+           <div className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200">
+             {lifetimeSessions} Pass utförda
+           </div>
+        </div>
+
+        {/* Scrollable Playlist */}
+        <div className="overflow-y-auto p-3 space-y-2 flex-1 pb-24 lg:pb-6">
+          {lectures.length === 0 && (
+             <div className="text-center py-10 px-4">
+               <div className="bg-slate-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                 <Info className="w-6 h-6 text-slate-400" />
+               </div>
+               <p className="text-slate-500 text-sm font-medium">Inga lektioner hittades.</p>
+               <p className="text-slate-400 text-xs mt-1">Kontakta admin om detta kvarstår.</p>
+             </div>
+          )}
+
+          {lectures.map((lecture, index) => {
+            const locked = isLocked(lecture);
+            const active = activeLecture?.id === lecture.id;
+            const completed = userProfile?.completedEducationIds?.includes(lecture.id);
+
+            return (
+              <button
+                key={lecture.id}
+                onClick={() => handleSelectLecture(lecture)}
+                className={`w-full flex items-center p-3 rounded-xl border text-left transition-all duration-200 group relative ${
+                  active 
+                    ? 'bg-white border-blue-500 shadow-md ring-1 ring-blue-500 z-10' 
+                    : locked
+                      ? 'bg-slate-100 border-transparent opacity-60 hover:opacity-100 grayscale'
+                      : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'
+                }`}
+              >
+                {/* Thumbnail Area */}
+                <div className="relative w-20 h-14 flex-shrink-0 bg-slate-800 rounded-lg overflow-hidden mr-3 flex items-center justify-center border border-slate-100 shadow-inner">
+                    {lecture.thumbnailUrl ? (
+                      <img src={lecture.thumbnailUrl} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    ) : (
+                      // Fallback icons if no thumb
+                      locked ? <Lock className="w-5 h-5 text-slate-500" /> : <PlayCircle className="w-6 h-6 text-slate-400" />
+                    )}
+                    
+                    {/* Active Pulse Overlay */}
+                    {active && (
+                       <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center backdrop-blur-[1px]">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+                       </div>
+                    )}
+                    
+                    {/* Duration Badge on Thumb */}
+                    <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] px-1 rounded font-medium">
+                      {lecture.duration}
+                    </div>
+                </div>
+
+                {/* Info Area */}
+                <div className="flex-1 min-w-0 py-1">
+                  <div className="flex justify-between items-start">
+                     <span className={`text-xs font-bold mb-1 line-clamp-2 leading-tight ${active ? 'text-blue-700' : 'text-slate-700'}`}>
+                       {index + 1}. {lecture.title}
+                     </span>
+                     {completed && <CheckCircle className="w-4 h-4 text-green-500 ml-2 flex-shrink-0" />}
+                  </div>
+                  
+                  <div className="flex items-center mt-1">
+                    {locked ? (
+                       <span className="text-[9px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded flex items-center">
+                         <Lock className="w-2.5 h-2.5 mr-1" />
+                         Kräver {lecture.unlockThreshold} pass
+                       </span>
+                    ) : (
+                       <span className="text-[10px] text-slate-400 font-medium truncate">
+                         {lecture.category || 'Allmänt'}
+                       </span>
                     )}
                   </div>
-              </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-              {/* Progress Bar for Completed */}
-              {isCompleted && (
-                  <div className="absolute bottom-0 left-0 w-full h-1 bg-green-500"></div>
-              )}
+      {/* Locked Message Toast (Floating) */}
+      {showLockedMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm animate-fade-in-down">
+          <div className="bg-slate-800/95 backdrop-blur shadow-2xl p-4 rounded-xl flex items-start gap-3 border border-slate-700 text-white">
+            <div className="bg-yellow-500/20 p-2 rounded-lg">
+                <Lock className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+            </div>
+            <div>
+              <p className="font-bold text-sm mb-1">Lektionen är låst</p>
+              <p className="text-xs text-slate-300 leading-relaxed">{showLockedMessage}</p>
+            </div>
           </div>
-      );
-  };
-
-  const renderGuideRow = (m: typeof allModules[0]) => {
-      const isLocked = m.status === 'locked';
-      const isCompleted = m.status === 'completed';
-
-      return (
-          <button
-            key={m.id}
-            onClick={() => handleModuleClick(m)}
-            className={`w-full flex items-center p-4 rounded-xl border transition-all text-left group
-                ${isLocked ? 'bg-slate-50 border-slate-100' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
-            `}
-          >
-              <div className={`h-10 w-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0
-                  ${isCompleted ? 'bg-green-100 text-green-600' : 
-                    isLocked ? 'bg-slate-200 text-slate-400' : 'bg-blue-50 text-blue-600'}
-              `}>
-                  {m.type === 'video' ? <Video className="w-5 h-5" /> : <Book className="w-5 h-5" />}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                  <h4 className={`text-sm font-bold truncate ${isLocked ? 'text-slate-500' : 'text-slate-900'}`}>
-                      {m.title}
-                  </h4>
-                  <span className="text-xs text-slate-400">
-                      {m.readTime} • {m.category}
-                  </span>
-              </div>
-
-              {isLocked ? (
-                  <Lock className="w-4 h-4 text-slate-300" />
-              ) : isCompleted ? (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-              ) : (
-                  <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500" />
-              )}
-          </button>
-      );
-  };
-
-  return (
-    <>
-      {readingModule && (
-        <ReaderOverlay 
-            module={readingModule} 
-            onClose={() => setReadingModule(null)} 
-            onComplete={handleFinishReading}
-        />
+        </div>
       )}
 
-      <div className="min-h-screen bg-white pb-24">
-        
-        {/* HEADER */}
-        <div className="pt-6 px-6 pb-2">
-            <h1 className="text-2xl font-black text-slate-900">Kunskap</h1>
-        </div>
-
-        {/* HERO SECTION */}
-        <div className="px-6">
-            {renderHero()}
-        </div>
-
-        {/* TRACK A: SERIES (Horizontal Scroll) */}
-        <div className="mb-10">
-            <div className="px-6 flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-slate-900">Artrosskolan: Serien</h3>
-                <span className="text-xs font-bold text-slate-400">{userProfile?.progression?.lifetimeSessions || 0} Pass</span>
-            </div>
-            
-            {/* Carousel Container */}
-            <div className="flex overflow-x-auto gap-4 px-6 pb-4 -mx-0 snap-x hide-scrollbar">
-                {seriesModules.map(renderSeriesCard)}
-                {/* Spacer */}
-                <div className="w-2 flex-shrink-0"></div>
-            </div>
-        </div>
-
-        {/* TRACK B: GUIDE (Vertical List) */}
-        <div className="px-6 mb-12">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Din Guide till Nivå {currentLevel}</h3>
-            
-            <div className="space-y-6">
-                {Object.entries(guideByStage).map(([stageStr, modules]) => {
-                    const stage = parseInt(stageStr);
-                    const userStage = userProfile?.progression?.currentStage || 1;
-                    const isGroupLocked = stage > userStage && currentLevel === (userProfile?.currentLevel || 1); // Simple logic
-                    
-                    return (
-                        <div key={stage} className="animate-fade-in-up">
-                            <div className="flex items-center gap-2 mb-3 mt-4">
-                                <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded
-                                    ${isGroupLocked ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-700'}
-                                `}>
-                                    Etapp {stage}
-                                </span>
-                                {isGroupLocked && <Lock className="w-3 h-3 text-slate-400" />}
-                            </div>
-                            
-                            <div className="space-y-3">
-                                {modules.map(renderGuideRow)}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-
-        {/* REFERENCE LIBRARY (Static for now) */}
-        <div className="px-6 pb-12">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Uppslagsverk & Kategorier</h3>
-            <div className="grid grid-cols-2 gap-3">
-                {[
-                    { label: 'Övningsbanken', icon: Dumbbell, color: 'text-purple-600', bg: 'bg-purple-50' },
-                    { label: 'Kost & Hälsa', icon: Apple, color: 'text-green-600', bg: 'bg-green-50' },
-                    { label: 'Vanliga Frågor', icon: HelpCircle, color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Utrustning', icon: Sparkles, color: 'text-orange-600', bg: 'bg-orange-50' },
-                ].map((cat) => (
-                    <button key={cat.label} className={`${cat.bg} p-4 rounded-xl flex flex-col items-center justify-center text-center hover:opacity-80 transition-opacity`}>
-                        <cat.icon className={`w-8 h-8 ${cat.color} mb-2`} />
-                        <span className={`text-xs font-bold ${cat.color}`}>{cat.label}</span>
-                    </button>
-                ))}
-            </div>
-        </div>
-
-      </div>
-    </>
+    </div>
   );
 };
 

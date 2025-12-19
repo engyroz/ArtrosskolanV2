@@ -1,6 +1,9 @@
 
-
 import { EducationModule } from '../types';
+
+// --- VIKTIGT: KONFIGURATION FÖR VIDEO ---
+// Byt ut denna sträng mot ditt "Video Library ID" från Bunny.net dashboard.
+export const BUNNY_LIBRARY_ID = '567438'; 
 
 export const contentConfig = {
   diagnosisTexts: {
@@ -42,15 +45,15 @@ export const LEVEL_DESCRIPTIONS = {
   4: "Maximal funktion och återgång till full aktivitet eller idrott."
 };
 
-// Defined based on PDF "Upplåsning-logiken"
 export const EDUCATION_MODULES: EducationModule[] = [
   // --- SERIES A: THE GENERAL SERIES (Lifetime Sessions) ---
   {
     id: 'series-a-intro',
     title: 'Välkommen till Artrosskolan',
-    category: 'Start',
-    readTime: '2 min',
-    contentUrl: 'intro-video',
+    category: 'Introduktion',
+    readTime: '02:15 min',
+    // Klistra in Video ID från Bunny.net här (inte hela URLen, bara IDt)
+    contentUrl: '9a3e8e32-7849-4e27-8b59-4f3f237e606e', 
     imageUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800',
     type: 'video',
     unlockType: 'lifetime',
@@ -58,152 +61,24 @@ export const EDUCATION_MODULES: EducationModule[] = [
   },
   {
     id: 'series-a-mechanism',
-    title: 'Varför gör det ont?',
+    title: 'Vad händer egentligen i leden?',
     category: 'Mekanik',
-    readTime: '5 min',
-    contentUrl: 'mechanism-video',
+    readTime: '05:30 min',
+    contentUrl: 'fbcacd1c-2271-4d80-a489-1b470387531c',
     imageUrl: 'https://images.unsplash.com/photo-1576091160550-2187d61b36f9?auto=format&fit=crop&q=80&w=800',
     type: 'video',
     unlockType: 'lifetime',
-    requiredSessions: 5
-  },
-  {
-    id: 'series-a-longterm',
-    title: 'Långsiktig Hälsa',
-    category: 'Framtid',
-    readTime: '4 min',
-    contentUrl: 'longterm-video',
-    imageUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=800',
-    type: 'video',
-    unlockType: 'lifetime',
-    requiredSessions: 10
-  },
-  {
-    id: 'series-a-lifestyle',
-    title: 'Kost och Artros',
-    category: 'Livsstil',
-    readTime: '6 min',
-    contentUrl: 'lifestyle-video',
-    imageUrl: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=800',
-    type: 'video',
-    unlockType: 'lifetime',
-    requiredSessions: 15
-  },
-  {
-    id: 'series-a-stress',
-    title: 'Stress & Smärta',
-    category: 'Hälsa',
-    readTime: '5 min',
-    contentUrl: 'stress-video',
-    imageUrl: 'https://images.unsplash.com/photo-1447452001602-7090c774637d?auto=format&fit=crop&q=80&w=800',
-    type: 'video',
-    unlockType: 'lifetime',
-    requiredSessions: 20
-  },
-
-  // --- SERIES B: LEVEL SPECIFIC GUIDE (Level + Stage) ---
-  
-  // LEVEL 1
-  {
-    id: 'l1-s1-fakta',
-    title: 'Vad är artros egentligen?',
-    category: 'Guide',
-    readTime: '3 min',
-    contentUrl: 'artros-fakta',
-    imageUrl: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=800',
-    type: 'article',
-    unlockType: 'level',
-    requiredLevel: 1,
-    requiredStage: 1
+    requiredSessions: 3
   },
   {
     id: 'l1-s2-trafikljus',
-    title: 'Så tolkar du smärta',
-    category: 'Guide',
-    readTime: '4 min',
-    contentUrl: 'smart-modell',
+    title: 'Trafikljusmodellen: Tolka din smärta',
+    category: 'Metodik',
+    readTime: '04:20 min',
+    contentUrl: '6ad69cc1-01c1-4178-94f8-e6c498fbcc34',
     imageUrl: 'https://images.unsplash.com/photo-1550505295-69024f2b1c6d?auto=format&fit=crop&q=80&w=800',
-    type: 'article',
-    unlockType: 'level',
-    requiredLevel: 1,
-    requiredStage: 2
+    type: 'video',
+    unlockType: 'lifetime',
+    requiredSessions: 6
   },
-  {
-    id: 'l1-s3-vilovark',
-    title: 'Varför gör det ont när jag vilar?',
-    category: 'Guide',
-    readTime: '2 min',
-    contentUrl: 'vilovark',
-    imageUrl: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=800',
-    type: 'article',
-    unlockType: 'level',
-    requiredLevel: 1,
-    requiredStage: 3
-  },
-
-  // LEVEL 2
-  {
-    id: 'l2-s1-kontakt',
-    title: 'Hitta kontakten med muskeln',
-    category: 'Guide',
-    readTime: '3 min',
-    contentUrl: 'muskelkontakt',
-    imageUrl: 'https://images.unsplash.com/photo-1581009137042-c552e485697a?auto=format&fit=crop&q=80&w=800',
-    type: 'article',
-    unlockType: 'level',
-    requiredLevel: 2,
-    requiredStage: 1
-  },
-  {
-    id: 'l2-s2-korsett',
-    title: 'Muskelkorsetten – Ledens stötdämpare',
-    category: 'Guide',
-    readTime: '3 min',
-    contentUrl: 'muskelkorsett',
-    imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800',
-    type: 'article',
-    unlockType: 'level',
-    requiredLevel: 2,
-    requiredStage: 2
-  },
-  
-  // LEVEL 3
-  {
-    id: 'l3-s1-fear',
-    title: 'Rädsla för rörelse (Kinesiofobi)',
-    category: 'Guide',
-    readTime: '5 min',
-    contentUrl: 'radsla-rorelse',
-    imageUrl: 'https://images.unsplash.com/photo-1533227297464-909798031e5f?auto=format&fit=crop&q=80&w=800',
-    type: 'article',
-    unlockType: 'level',
-    requiredLevel: 3,
-    requiredStage: 1
-  },
-  {
-    id: 'l3-s2-setbacks',
-    title: 'Hjälp, jag fick ont igen!',
-    category: 'Guide',
-    readTime: '3 min',
-    contentUrl: 'bakslag',
-    imageUrl: 'https://images.unsplash.com/photo-1596541223131-0da5f0d6194b?auto=format&fit=crop&q=80&w=800',
-    type: 'article',
-    unlockType: 'level',
-    requiredLevel: 3,
-    requiredStage: 2
-  },
-
-  // LEVEL 4
-  {
-    id: 'l4-s1-sport',
-    title: 'Återgång till idrott & Padel',
-    category: 'Guide',
-    readTime: '5 min',
-    contentUrl: 'atergang-sport',
-    imageUrl: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800',
-    type: 'article',
-    unlockType: 'level',
-    requiredLevel: 4,
-    requiredStage: 1
-  }
 ];
