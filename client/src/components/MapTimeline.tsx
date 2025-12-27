@@ -28,7 +28,6 @@ const MapTimeline = ({
     // X Coordinates for the columns
     const THERMOMETER_X = 24;
     const PATH_X = 80;
-    // const TEXT_X = 140; // Used in styling, not logic
 
     // Progress calculations
     const progressRatio = Math.min(Math.max(currentXP / maxXP, 0), 1);
@@ -50,58 +49,104 @@ const MapTimeline = ({
         const railHeight = (NODES.length - 1) * LEVEL_GAP;
         const elements = [];
 
-        // A. Horizontal Scale Lines (Major)
-        // Connects Nodes to the Thermometer, extending slightly left
+        // Definition for Gradient
+        elements.push(
+            <defs key="defs">
+                <linearGradient id="thermometerGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#60A5FA" /> {/* Blue-400 */}
+                    <stop offset="100%" stopColor="#2563EB" /> {/* Blue-600 */}
+                </linearGradient>
+            </defs>
+        );
+
+        // A. Horizontal Scale Lines (Major - Levels) "10s"
         NODES.forEach((_, index) => {
             const y = TOP_PADDING + (index * LEVEL_GAP);
             elements.push(
                 <line 
                     key={`major-line-${index}`}
-                    x1={THERMOMETER_X - 12} // Extend left of thermometer
+                    x1={THERMOMETER_X - 16} // Extend further left for "10s" look
                     y1={y}
-                    x2={PATH_X} // Connect to Node center
+                    x2={PATH_X} 
                     y2={y}
-                    stroke="#E2E8F0" // Slate-200 (Faint)
+                    stroke="#E2E8F0" // Slate-200
                     strokeWidth="2"
                 />
             );
         });
 
-        // B. Thermometer Tube Background
-        elements.push(
-            <line 
-                key="therm-bg"
-                x1={THERMOMETER_X} y1={TOP_PADDING - 10} 
-                x2={THERMOMETER_X} y2={TOP_PADDING + railHeight + 10} 
-                stroke="#F1F5F9" // Slate-100
-                strokeWidth="12" // Thicker tube
-                strokeLinecap="round" 
-            />
-        );
-
-        // C. Minor Scale Ticks (Visual Detail on the tube)
-        for (let y = 40; y < railHeight; y += 40) {
-             if (y % LEVEL_GAP === 0) continue; // Skip where nodes are
-             const tickY = TOP_PADDING + y;
-             elements.push(
+        // B. Horizontal Scale Lines (Intermediate - Stages) "5s"
+        for (let i = 0; i < NODES.length - 1; i++) {
+            const startY = TOP_PADDING + (i * LEVEL_GAP);
+            
+            // Stage 2 Tick (33%)
+            const y1 = startY + (LEVEL_GAP * 0.33);
+            elements.push(
                 <line 
-                    key={`minor-tick-${y}`}
-                    x1={THERMOMETER_X - 4} 
-                    y1={tickY} 
-                    x2={THERMOMETER_X + 4} 
-                    y2={tickY} 
-                    stroke="#E2E8F0"
+                    key={`stage-line-${i}-1`}
+                    x1={THERMOMETER_X - 10} // Slightly shorter left extension for "5s"
+                    y1={y1}
+                    x2={PATH_X} 
+                    y2={y1}
+                    stroke="#F1F5F9" // Fainter Slate-100
+                    strokeWidth="1.5"
+                />
+            );
+
+            // Stage 3 Tick (66%)
+            const y2 = startY + (LEVEL_GAP * 0.66);
+            elements.push(
+                <line 
+                    key={`stage-line-${i}-2`}
+                    x1={THERMOMETER_X - 10}
+                    y1={y2}
+                    x2={PATH_X}
+                    y2={y2}
+                    stroke="#F1F5F9" 
                     strokeWidth="1.5"
                 />
             );
         }
 
-        // D. Active Fill
+        // C. Thermometer Tube Background
+        elements.push(
+            <line 
+                key="therm-bg"
+                x1={THERMOMETER_X} y1={TOP_PADDING - 10} 
+                x2={THERMOMETER_X} y2={TOP_PADDING + railHeight + 10} 
+                stroke="#F8FAFC" // Slate-50
+                strokeWidth="12" 
+                strokeLinecap="round" 
+            />
+        );
+
+        // D. Minor Decorative Ticks (Small faint lines on the tube itself)
+        for (let y = 20; y < railHeight; y += 20) {
+             const tickY = TOP_PADDING + y;
+             // Skip if we are overlapping with major/intermediate lines
+             const isMajor = y % LEVEL_GAP === 0;
+             const isStage1 = Math.abs((y % LEVEL_GAP) - (LEVEL_GAP * 0.33)) < 10;
+             const isStage2 = Math.abs((y % LEVEL_GAP) - (LEVEL_GAP * 0.66)) < 10;
+
+             if (!isMajor && !isStage1 && !isStage2) {
+                 elements.push(
+                    <line 
+                        key={`minor-tick-${y}`}
+                        x1={THERMOMETER_X - 3} 
+                        y1={tickY} 
+                        x2={THERMOMETER_X + 3} 
+                        y2={tickY} 
+                        stroke="#E2E8F0"
+                        strokeWidth="1"
+                    />
+                );
+             }
+        }
+
+        // E. Active Fill (With Gradient)
         // Calculate total pixels filled based on currentLevel + currentXP
         const completedLevelsHeight = (currentLevel - 1) * LEVEL_GAP;
         const currentLevelProgressHeight = progressRatio * LEVEL_GAP;
-        
-        // Cap at total height
         const totalFill = Math.min(completedLevelsHeight + currentLevelProgressHeight, railHeight);
 
         elements.push(
@@ -109,8 +154,8 @@ const MapTimeline = ({
                 key="therm-fill"
                 x1={THERMOMETER_X} y1={TOP_PADDING} 
                 x2={THERMOMETER_X} y2={TOP_PADDING + totalFill} 
-                stroke="#3B82F6" // Blue-500
-                strokeWidth="12" // Match tube thickness
+                stroke="url(#thermometerGradient)" 
+                strokeWidth="12" 
                 strokeLinecap="round"
                 className="transition-all duration-1000 ease-out"
             />
