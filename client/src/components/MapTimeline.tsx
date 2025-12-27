@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { Check, Lock, Swords, Flag, Star, Gift, PackageOpen } from 'lucide-react';
+import { Check, Lock, Swords, Flag, Star, Gift, PackageOpen, ChevronRight } from 'lucide-react';
 
 interface MapTimelineProps {
   currentLevel: number;
   currentXP: number;
   maxXP: number;
   startLevel?: number;
-  onLevelClick?: (level: number) => void; // Used for Boss Fight trigger
+  onLevelClick?: (level: number) => void;
   onChestClick?: (stage: number, status: 'locked' | 'unlocked') => void;
 }
 
@@ -21,153 +21,126 @@ const MapTimeline = ({
 }: MapTimelineProps) => {
     
     // --- LAYOUT CONFIGURATION ---
-    const LEVEL_GAP = 360; // Huge vertical gap for scrolling feel
-    const START_Y = 80;
-    const CENTER_X = '50%';
+    const LEVEL_GAP = 280; // Slightly reduced vertical gap for tighter feel
+    const TOP_PADDING = 60;
+    const BOTTOM_PADDING = 100;
+    const LINE_X = 48; // Fixed pixel position from left (The "Spine")
     
     // Calculate precise progress
-    // If level is maxed (ready for boss), fill is 100%
     const progressRatio = Math.min(Math.max(currentXP / maxXP, 0), 1);
     const activeFillHeight = progressRatio * LEVEL_GAP;
 
     const NODES = [
-        { id: 1, label: "Start", desc: "Smärtlindring", icon: Flag },
-        { id: 2, label: "Fas 2", desc: "Grundstyrka", icon: Star },
-        { id: 3, label: "Fas 3", desc: "Uppbyggnad", icon: Star },
-        { id: 4, label: "Mål", desc: "Prestation", icon: Star } // Icon handles Trophy logic internally
+        { id: 1, label: "Fas 1", title: "Smärtlindring", sub: "Minska irritation & hitta ro" },
+        { id: 2, label: "Fas 2", title: "Grundstyrka", sub: "Bygg upp tålighet" },
+        { id: 3, label: "Fas 3", title: "Uppbyggnad", sub: "Öka belastning & balans" },
+        { id: 4, label: "Mål", title: "Prestation", sub: "Återgång till full aktivitet" }
     ];
 
-    // Determine total height based on nodes
-    const TOTAL_HEIGHT = START_Y + ((NODES.length - 1) * LEVEL_GAP) + 150;
+    const TOTAL_HEIGHT = TOP_PADDING + ((NODES.length - 1) * LEVEL_GAP) + BOTTOM_PADDING;
 
     // --- RENDER HELPERS ---
 
     const renderPath = () => {
-        // We render segments between nodes
         const segments = [];
 
         for (let i = 0; i < NODES.length - 1; i++) {
-            const startNodeY = START_Y + (i * LEVEL_GAP);
-            const endNodeY = START_Y + ((i + 1) * LEVEL_GAP);
-            const levelIndex = i + 1; // 1-based level for logic
+            const startY = TOP_PADDING + (i * LEVEL_GAP);
+            const endY = TOP_PADDING + ((i + 1) * LEVEL_GAP);
+            const levelIndex = i + 1;
 
-            // Logic for this segment
             const isCompletedSegment = levelIndex < currentLevel;
             const isActiveSegment = levelIndex === currentLevel;
             
-            // 1. Background Line (Grey Dashed)
+            // 1. Background Rail (Subtle, thin grey)
             segments.push(
                 <line 
                     key={`bg-${i}`}
-                    x1={CENTER_X} y1={startNodeY} 
-                    x2={CENTER_X} y2={endNodeY} 
-                    stroke="#E2E8F0" 
-                    strokeWidth="4" 
-                    strokeDasharray="8 8" 
+                    x1={LINE_X} y1={startY} 
+                    x2={LINE_X} y2={endY} 
+                    stroke="#E2E8F0" // Slate-200
+                    strokeWidth="2" 
                     strokeLinecap="round" 
                 />
             );
 
-            // 2. Completed Line (Solid Blue) - for past levels
+            // 2. Completed Path (Solid Blue)
             if (isCompletedSegment) {
                 segments.push(
                     <line 
                         key={`comp-${i}`}
-                        x1={CENTER_X} y1={startNodeY} 
-                        x2={CENTER_X} y2={endNodeY} 
-                        stroke="#2563EB" 
-                        strokeWidth="4" 
-                        strokeLinecap="round" 
+                        x1={LINE_X} y1={startY} 
+                        x2={LINE_X} y2={endY} 
+                        stroke="#3B82F6" // Blue-500
+                        strokeWidth="2" 
                     />
                 );
             }
 
-            // 3. Active Progress Fill (Solid Blue) - current level only
+            // 3. Active Progress Fill (Animated Blue)
             if (isActiveSegment) {
-                const fillEndY = startNodeY + activeFillHeight;
+                const fillEndY = startY + activeFillHeight;
                 segments.push(
                     <line 
                         key={`active-${i}`}
-                        x1={CENTER_X} y1={startNodeY} 
-                        x2={CENTER_X} y2={fillEndY} 
-                        stroke="#2563EB" 
-                        strokeWidth="4" 
-                        strokeLinecap="round" 
+                        x1={LINE_X} y1={startY} 
+                        x2={LINE_X} y2={fillEndY} 
+                        stroke="#3B82F6" 
+                        strokeWidth="2" 
+                        strokeLinecap="round"
                         className="transition-all duration-1000 ease-out"
                     />
                 );
-
-                // Render Footsteps only on the filled path
-                // We create steps every 40px
-                const steps = [];
-                for (let y = startNodeY + 20; y < fillEndY - 20; y += 40) {
-                     // Check if close to chest areas (avoid overlap)
-                     const distToChest1 = Math.abs(y - (startNodeY + LEVEL_GAP * 0.33));
-                     const distToChest2 = Math.abs(y - (startNodeY + LEVEL_GAP * 0.66));
-                     if (distToChest1 < 30 || distToChest2 < 30) continue;
-
-                     const isRight = Math.floor(y / 40) % 2 === 0;
-                     steps.push(
-                        <g key={`step-${y}`} transform={`translate(${isRight ? 10 : -10}, 0)`} style={{ transformBox: 'fill-box', transformOrigin: 'center' }}>
-                           <path
-                             transform={`translate(0, ${y}) rotate(${isRight ? 165 : 195}) scale(0.8)`}
-                             d="M -2 -3 C -2 -5 2 -5 2 -3 L 2 1 C 2 4 -2 4 -2 1 Z" 
-                             fill="#93C5FD" // Light blue steps
-                             style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-                           />
-                        </g>
-                     );
-                }
-                segments.push(<g key={`steps-${i}`} style={{ transform: 'translateX(50%)' }}>{steps}</g>);
+                
+                // Optional: A small "head" dot at the tip of the progress
+                segments.push(
+                    <circle 
+                        key={`head-${i}`}
+                        cx={LINE_X} 
+                        cy={fillEndY} 
+                        r="3" 
+                        fill="#3B82F6"
+                        className="transition-all duration-1000 ease-out"
+                    />
+                );
             }
         }
-
         return <g>{segments}</g>;
     };
 
     const renderChests = () => {
-        // Chests appear on the Active Level path
-        // Only if we are not at the final level (no path after 4)
         if (currentLevel >= 4) return null;
 
-        const startY = START_Y + ((currentLevel - 1) * LEVEL_GAP);
-        
-        // Thresholds
-        const t1 = 0.33;
-        const t2 = 0.66;
-        
+        const startY = TOP_PADDING + ((currentLevel - 1) * LEVEL_GAP);
         const chests = [
-            { id: 2, pos: t1, unlocked: progressRatio >= t1 },
-            { id: 3, pos: t2, unlocked: progressRatio >= t2 }
+            { id: 2, pos: 0.33 },
+            { id: 3, pos: 0.66 }
         ];
 
         return chests.map((chest) => {
             const yPos = startY + (LEVEL_GAP * chest.pos);
-            const isUnlocked = chest.unlocked;
+            const isUnlocked = progressRatio >= chest.pos;
             
             return (
                 <div 
                     key={`chest-${chest.id}`}
                     onClick={() => onChestClick && onChestClick(chest.id, isUnlocked ? 'unlocked' : 'locked')}
-                    className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 cursor-pointer transition-all duration-300 hover:scale-110
-                        ${isUnlocked ? 'animate-bounce-subtle' : 'opacity-80'}
-                    `}
-                    style={{ top: yPos }}
+                    className="absolute z-20 cursor-pointer group"
+                    style={{ left: LINE_X, top: yPos, transform: 'translate(-50%, -50%)' }}
                 >
-                    <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center shadow-lg transition-colors
+                    <div className={`
+                        w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300
                         ${isUnlocked 
-                            ? 'bg-yellow-100 border-yellow-400 text-yellow-600' 
-                            : 'bg-slate-100 border-slate-300 text-slate-400 grayscale'
+                            ? 'bg-white border-yellow-400 text-yellow-500 shadow-md scale-110' 
+                            : 'bg-slate-50 border-slate-200 text-slate-300'
                         }
                     `}>
-                        {isUnlocked ? <PackageOpen className="w-6 h-6" /> : <Gift className="w-5 h-5" />}
+                        {isUnlocked ? <PackageOpen size={14} /> : <Gift size={14} />}
                     </div>
                     
-                    {/* Floating Label for Unlocked */}
+                    {/* Tiny Indicator Dot if ready to open */}
                     {isUnlocked && (
-                         <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm whitespace-nowrap animate-fade-in">
-                            Etapp {chest.id} Klar!
-                         </div>
+                         <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></div>
                     )}
                 </div>
             );
@@ -177,102 +150,116 @@ const MapTimeline = ({
     const renderNodes = () => {
         return NODES.map((node, index) => {
             const level = index + 1;
-            const yPos = START_Y + (index * LEVEL_GAP);
+            const yPos = TOP_PADDING + (index * LEVEL_GAP);
             
             // Logic States
             const isPast = level < currentLevel;
             const isCurrent = level === currentLevel;
-            const isTarget = level === currentLevel + 1; // This is the BOSS for current level
+            const isTarget = level === currentLevel + 1;
             const isFuture = level > currentLevel + 1;
             
-            const isBossReady = isTarget && progressRatio >= 1; // XP is full
-
-            // Special Case: Level 4 is the final goal
-            const isFinal = level === 4;
+            const isBossReady = isTarget && progressRatio >= 1;
 
             return (
                 <div 
                     key={node.id}
-                    className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center"
-                    style={{ top: yPos }}
+                    className="absolute w-full flex items-center z-30"
+                    style={{ top: yPos, transform: 'translateY(-50%)' }}
                 >
-                    {/* NODE CIRCLE */}
+                    {/* 1. THE NODE (On the Line) */}
                     <div 
                         onClick={() => {
-                            if (isBossReady && onLevelClick) onLevelClick(currentLevel); // Pass current level to trigger its boss
+                            if (isBossReady && onLevelClick) onLevelClick(currentLevel);
                         }}
-                        className={`
-                            relative w-20 h-20 rounded-full flex items-center justify-center border-4 shadow-xl transition-all duration-500
-                            ${isCurrent 
-                                ? 'bg-blue-600 border-blue-200 scale-110 ring-4 ring-blue-100' 
-                                : isPast 
-                                    ? 'bg-slate-900 border-slate-700' 
-                                    : isTarget
-                                        ? isBossReady 
-                                            ? 'bg-gradient-to-br from-yellow-400 to-orange-500 border-yellow-200 cursor-pointer animate-pulse scale-110'
-                                            : 'bg-white border-slate-200'
-                                        : 'bg-slate-50 border-slate-100 opacity-60'
-                            }
-                        `}
+                        className="absolute flex items-center justify-center transition-all duration-500 cursor-default"
+                        style={{ left: LINE_X, transform: 'translateX(-50%)' }}
                     >
+                        {/* Outer Glow for Current */}
                         {isCurrent && (
-                            <div className="text-white flex flex-col items-center">
-                                <span className="text-[9px] uppercase tracking-widest font-bold opacity-80">Nivå</span>
-                                <span className="text-3xl font-black leading-none">{level}</span>
-                            </div>
+                            <div className="absolute w-16 h-16 bg-blue-500/10 rounded-full animate-pulse-slow"></div>
                         )}
 
-                        {isPast && <Check className="w-8 h-8 text-green-400 stroke-[3]" />}
+                        <div className={`
+                            relative rounded-full flex items-center justify-center border-2 transition-all duration-300
+                            ${isCurrent 
+                                ? 'w-14 h-14 bg-white border-blue-500 shadow-lg text-blue-600' 
+                                : isPast 
+                                    ? 'w-10 h-10 bg-blue-500 border-blue-500 text-white' 
+                                    : isTarget && isBossReady
+                                        ? 'w-14 h-14 bg-orange-500 border-orange-400 text-white shadow-lg animate-bounce-subtle cursor-pointer'
+                                        : 'w-10 h-10 bg-white border-slate-200 text-slate-300'
+                            }
+                        `}>
+                            {isCurrent && <span className="text-xl font-bold">{level}</span>}
+                            {isPast && <Check size={18} strokeWidth={3} />}
+                            
+                            {isTarget && isBossReady && <Swords size={24} />}
+                            {isTarget && !isBossReady && <Lock size={16} />}
+                            
+                            {isFuture && <Lock size={16} />}
+                            
+                            {/* Special Icon for Final Goal */}
+                            {level === 4 && isCurrent && <Star className="fill-current text-yellow-400" size={24} />}
+                        </div>
+                    </div>
 
-                        {isTarget && (
-                            isBossReady ? (
-                                <Swords className="w-10 h-10 text-white animate-wiggle" />
-                            ) : (
-                                <Lock className="w-8 h-8 text-slate-300" />
-                            )
-                        )}
+                    {/* 2. THE CONTENT (To the Right) */}
+                    <div 
+                        className={`ml-24 pr-6 transition-all duration-500 ${
+                            isFuture ? 'opacity-40 grayscale' : 'opacity-100'
+                        }`}
+                    >
+                        <div className="flex items-center gap-2 mb-0.5">
+                            <span className={`text-[10px] font-bold uppercase tracking-widest ${
+                                isCurrent ? 'text-blue-600' : 'text-slate-400'
+                            }`}>
+                                {node.label}
+                            </span>
+                            {isCurrent && (
+                                <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    Pågår
+                                </span>
+                            )}
+                             {isPast && (
+                                <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    Klar
+                                </span>
+                            )}
+                        </div>
                         
-                        {isFuture && (
-                            <Lock className="w-6 h-6 text-slate-200" />
-                        )}
-
-                        {/* Special case: If we are AT level 4, it's the trophy */}
-                        {isFinal && isCurrent && (
-                             <div className="absolute inset-0 bg-yellow-400 rounded-full flex items-center justify-center animate-bounce">
-                                 <Star className="w-10 h-10 text-yellow-900 fill-current" />
-                             </div>
-                        )}
-                    </div>
-
-                    {/* LABELS */}
-                    <div className={`mt-4 text-center transition-all ${isFuture ? 'opacity-40' : 'opacity-100'}`}>
-                        <span className={`block text-xs font-bold uppercase tracking-widest mb-1 ${isCurrent ? 'text-blue-600' : isTarget && isBossReady ? 'text-orange-600' : 'text-slate-400'}`}>
-                            {isTarget && isBossReady ? "BOSS FIGHT" : node.label}
-                        </span>
-                        <h3 className={`text-lg font-black leading-tight ${isCurrent ? 'text-slate-900' : 'text-slate-700'}`}>
-                            {node.desc}
+                        <h3 className={`text-lg font-bold leading-tight mb-1 ${
+                            isCurrent ? 'text-slate-900' : 'text-slate-700'
+                        }`}>
+                            {node.title}
                         </h3>
-                    </div>
+                        
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-[240px]">
+                            {node.sub}
+                        </p>
 
-                    {/* Boss Ready Tooltip */}
-                    {isTarget && isBossReady && (
-                         <div className="absolute -top-12 bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-bounce whitespace-nowrap">
-                            Klicka för Nivåtest!
-                         </div>
-                    )}
+                        {/* Boss Call to Action */}
+                        {isTarget && isBossReady && (
+                            <button 
+                                onClick={() => onLevelClick && onLevelClick(currentLevel)}
+                                className="mt-3 flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold shadow-md animate-pulse hover:bg-orange-600 transition-colors"
+                            >
+                                <Swords size={14} /> Starta Nivåtest <ChevronRight size={14} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             );
         });
     };
 
     return (
-        <div className="relative w-full overflow-hidden select-none" style={{ height: TOTAL_HEIGHT }}>
-            {/* SVG Layer for Paths */}
+        <div className="relative w-full select-none" style={{ height: TOTAL_HEIGHT }}>
+            {/* SVG Layer */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none">
                 {renderPath()}
             </svg>
 
-            {/* DOM Layer for Interactive Elements */}
+            {/* DOM Layer */}
             <div className="absolute inset-0 w-full h-full">
                 {renderNodes()}
                 {renderChests()}
