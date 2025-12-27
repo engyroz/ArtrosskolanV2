@@ -25,9 +25,11 @@ const MapTimeline = ({
     const TOP_PADDING = 60;
     const BOTTOM_PADDING = 100;
     
-    // X Coordinates for the columns
-    const THERMOMETER_X = 24;
-    const PATH_X = 80;
+    // Adjusted X Coordinates for centering
+    // Shifted right to balance the layout within the container
+    const THERMOMETER_X = 50;  
+    const PATH_X = 110;
+    const TEXT_LEFT_MARGIN = 170;
 
     // Progress calculations
     const progressRatio = Math.min(Math.max(currentXP / maxXP, 0), 1);
@@ -45,12 +47,12 @@ const MapTimeline = ({
     // --- RENDER HELPERS ---
 
     const renderThermometer = () => {
-        // 1. Base Rail Calculation
         const railHeight = (NODES.length - 1) * LEVEL_GAP;
         const elements = [];
 
         // Definition for Gradient
-        elements.push(
+        // Put in a separate group to ensure it renders before usage
+        const gradientDef = (
             <defs key="defs">
                 <linearGradient id="thermometerGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#60A5FA" /> {/* Blue-400 */}
@@ -65,11 +67,11 @@ const MapTimeline = ({
             elements.push(
                 <line 
                     key={`major-line-${index}`}
-                    x1={THERMOMETER_X - 16} // Extend further left for "10s" look
+                    x1={THERMOMETER_X - 16} // Extend further left
                     y1={y}
                     x2={PATH_X} 
                     y2={y}
-                    stroke="#E2E8F0" // Slate-200
+                    stroke="#CBD5E1" // Slate-300 (Darker for visibility)
                     strokeWidth="2"
                 />
             );
@@ -84,11 +86,11 @@ const MapTimeline = ({
             elements.push(
                 <line 
                     key={`stage-line-${i}-1`}
-                    x1={THERMOMETER_X - 10} // Slightly shorter left extension for "5s"
+                    x1={THERMOMETER_X - 10}
                     y1={y1}
                     x2={PATH_X} 
                     y2={y1}
-                    stroke="#F1F5F9" // Fainter Slate-100
+                    stroke="#E2E8F0" // Slate-200
                     strokeWidth="1.5"
                 />
             );
@@ -102,7 +104,7 @@ const MapTimeline = ({
                     y1={y2}
                     x2={PATH_X}
                     y2={y2}
-                    stroke="#F1F5F9" 
+                    stroke="#E2E8F0" 
                     strokeWidth="1.5"
                 />
             );
@@ -114,16 +116,15 @@ const MapTimeline = ({
                 key="therm-bg"
                 x1={THERMOMETER_X} y1={TOP_PADDING - 10} 
                 x2={THERMOMETER_X} y2={TOP_PADDING + railHeight + 10} 
-                stroke="#F8FAFC" // Slate-50
+                stroke="#E2E8F0" // Slate-200 (Darker for visibility)
                 strokeWidth="12" 
                 strokeLinecap="round" 
             />
         );
 
-        // D. Minor Decorative Ticks (Small faint lines on the tube itself)
+        // D. Minor Decorative Ticks on the tube
         for (let y = 20; y < railHeight; y += 20) {
              const tickY = TOP_PADDING + y;
-             // Skip if we are overlapping with major/intermediate lines
              const isMajor = y % LEVEL_GAP === 0;
              const isStage1 = Math.abs((y % LEVEL_GAP) - (LEVEL_GAP * 0.33)) < 10;
              const isStage2 = Math.abs((y % LEVEL_GAP) - (LEVEL_GAP * 0.66)) < 10;
@@ -136,7 +137,7 @@ const MapTimeline = ({
                         y1={tickY} 
                         x2={THERMOMETER_X + 3} 
                         y2={tickY} 
-                        stroke="#E2E8F0"
+                        stroke="#CBD5E1"
                         strokeWidth="1"
                     />
                 );
@@ -144,24 +145,26 @@ const MapTimeline = ({
         }
 
         // E. Active Fill (With Gradient)
-        // Calculate total pixels filled based on currentLevel + currentXP
         const completedLevelsHeight = (currentLevel - 1) * LEVEL_GAP;
         const currentLevelProgressHeight = progressRatio * LEVEL_GAP;
         const totalFill = Math.min(completedLevelsHeight + currentLevelProgressHeight, railHeight);
 
-        elements.push(
-            <line 
-                key="therm-fill"
-                x1={THERMOMETER_X} y1={TOP_PADDING} 
-                x2={THERMOMETER_X} y2={TOP_PADDING + totalFill} 
-                stroke="url(#thermometerGradient)" 
-                strokeWidth="12" 
-                strokeLinecap="round"
-                className="transition-all duration-1000 ease-out"
-            />
-        );
+        // Only render fill if we have length > 0
+        if (totalFill > 0) {
+            elements.push(
+                <line 
+                    key="therm-fill"
+                    x1={THERMOMETER_X} y1={TOP_PADDING} 
+                    x2={THERMOMETER_X} y2={TOP_PADDING + totalFill} 
+                    stroke="url(#thermometerGradient)" 
+                    strokeWidth="12" 
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 ease-out"
+                />
+            );
+        }
 
-        return <g>{elements}</g>;
+        return <g>{gradientDef}{elements}</g>;
     };
 
     const renderPathWithFootsteps = () => {
@@ -191,17 +194,14 @@ const MapTimeline = ({
             const stepSpacing = 24;
             const totalSteps = LEVEL_GAP / stepSpacing;
             
-            // Determine how many steps to show as "filled"
             let filledStepsCount = 0;
             if (isCompletedSegment) filledStepsCount = totalSteps;
             else if (isActiveSegment) filledStepsCount = Math.floor(totalSteps * progressRatio);
 
-            for (let s = 1; s < filledStepsCount; s++) { // Start at 1 to avoid overlap with node
+            for (let s = 1; s < filledStepsCount; s++) { 
                 const stepY = startY + (s * stepSpacing);
-                // Don't draw steps too close to the end node
                 if (stepY > endY - 20) continue;
 
-                // Alternate left/right offset for footprints
                 const isRight = s % 2 === 0;
                 const offsetX = isRight ? 4 : -4;
                 
@@ -313,9 +313,10 @@ const MapTimeline = ({
 
                     {/* 2. THE TEXT (Right Aligned) */}
                     <div 
-                        className={`absolute left-[130px] pr-4 transition-all duration-500 ${
+                        className={`absolute pr-4 transition-all duration-500 ${
                             isFuture ? 'opacity-30 grayscale' : 'opacity-100'
                         }`}
+                        style={{ left: TEXT_LEFT_MARGIN }}
                     >
                         <div className="flex items-center gap-2 mb-0.5">
                             <span className={`text-[9px] font-bold uppercase tracking-widest ${
@@ -356,7 +357,7 @@ const MapTimeline = ({
     };
 
     return (
-        <div className="relative w-full select-none" style={{ height: TOTAL_HEIGHT }}>
+        <div className="relative w-full max-w-lg mx-auto select-none" style={{ height: TOTAL_HEIGHT }}>
             {/* SVG Layer */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none">
                 {renderThermometer()}
