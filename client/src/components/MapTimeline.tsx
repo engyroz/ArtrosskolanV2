@@ -26,7 +26,6 @@ const MapTimeline = ({
     const BOTTOM_PADDING = 100;
     
     // Adjusted X Coordinates for centering
-    // Shifted right to balance the layout within the container
     const THERMOMETER_X = 50;  
     const PATH_X = 110;
     const TEXT_LEFT_MARGIN = 170;
@@ -48,77 +47,131 @@ const MapTimeline = ({
 
     const renderThermometer = () => {
         const railHeight = (NODES.length - 1) * LEVEL_GAP;
+        
+        // 1. Calculate Fill Dimensions
+        const completedLevelsHeight = (currentLevel - 1) * LEVEL_GAP;
+        const currentLevelProgressHeight = progressRatio * LEVEL_GAP;
+        // Total pixels filled from the top
+        const totalFill = Math.min(completedLevelsHeight + currentLevelProgressHeight, railHeight);
+        // The Y coordinate where the blue line ends
+        const fillLimitY = TOP_PADDING + totalFill;
+
         const elements = [];
 
-        // A. Horizontal Scale Lines (Major - Levels) "10s"
-        NODES.forEach((_, index) => {
-            const y = TOP_PADDING + (index * LEVEL_GAP);
-            elements.push(
-                <line 
-                    key={`major-line-${index}`}
-                    x1={THERMOMETER_X - 16} // Extend further left
-                    y1={y}
-                    x2={PATH_X} 
-                    y2={y}
-                    stroke="#CBD5E1" // Slate-300 (Darker for visibility)
-                    strokeWidth="2"
-                />
-            );
-        });
-
-        // B. Horizontal Scale Lines (Intermediate - Stages) "5s"
-        for (let i = 0; i < NODES.length - 1; i++) {
-            const startY = TOP_PADDING + (i * LEVEL_GAP);
-            
-            // Stage 2 Tick (33%)
-            const y1 = startY + (LEVEL_GAP * 0.33);
-            elements.push(
-                <line 
-                    key={`stage-line-${i}-1`}
-                    x1={THERMOMETER_X - 10}
-                    y1={y1}
-                    x2={PATH_X} 
-                    y2={y1}
-                    stroke="#E2E8F0" // Slate-200
-                    strokeWidth="1.5"
-                />
-            );
-
-            // Stage 3 Tick (66%)
-            const y2 = startY + (LEVEL_GAP * 0.66);
-            elements.push(
-                <line 
-                    key={`stage-line-${i}-2`}
-                    x1={THERMOMETER_X - 10}
-                    y1={y2}
-                    x2={PATH_X}
-                    y2={y2}
-                    stroke="#E2E8F0" 
-                    strokeWidth="1.5"
-                />
-            );
-        }
-
-        // C. Thermometer Tube Background
+        // 2. TUBE BACKGROUND (Base Layer)
         elements.push(
             <line 
                 key="therm-bg"
                 x1={THERMOMETER_X} y1={TOP_PADDING - 10} 
                 x2={THERMOMETER_X} y2={TOP_PADDING + railHeight + 10} 
-                stroke="#E2E8F0" // Slate-200 (Darker for visibility)
+                stroke="#E2E8F0" // Slate-200
                 strokeWidth="12" 
                 strokeLinecap="round" 
             />
         );
 
-        // D. Minor Decorative Ticks on the tube
+        // 3. ACTIVE FILL (Middle Layer)
+        if (totalFill > 0) {
+            elements.push(
+                <line 
+                    key="therm-fill"
+                    x1={THERMOMETER_X} y1={TOP_PADDING} 
+                    x2={THERMOMETER_X} y2={fillLimitY} 
+                    stroke="#3B82F6" // Blue-500
+                    strokeWidth="12" 
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 ease-out"
+                />
+            );
+
+            // 4. PULSATING END CAP
+            // A glowing ping effect behind the tip
+            elements.push(
+                 <circle
+                    key="therm-cap-pulse"
+                    cx={THERMOMETER_X}
+                    cy={fillLimitY}
+                    r="8"
+                    className="animate-ping origin-center"
+                    fill="#60A5FA" // Blue-400
+                    opacity="0.75"
+                />
+            );
+            // The solid tip
+            elements.push(
+                 <circle
+                    key="therm-cap-solid"
+                    cx={THERMOMETER_X}
+                    cy={fillLimitY}
+                    r="5"
+                    fill="#EFF6FF" // Blue-50 (White-ish)
+                    stroke="#2563EB" // Blue-600
+                    strokeWidth="2"
+                />
+            );
+        }
+
+        // 5. TICKS & LINES (Top Layer - Rendered over the fill)
+        // We change color based on whether the line is "active" (covered by blue fill)
+
+        // A. Major Lines (Levels) - "10s"
+        NODES.forEach((_, index) => {
+            const y = TOP_PADDING + (index * LEVEL_GAP);
+            const isActive = y <= fillLimitY;
+            // Active: Very light blue (Blue-50). Inactive: Slate-300
+            const color = isActive ? "#EFF6FF" : "#CBD5E1"; 
+
+            elements.push(
+                <line 
+                    key={`major-line-${index}`}
+                    x1={THERMOMETER_X - 16} 
+                    y1={y}
+                    x2={PATH_X} 
+                    y2={y}
+                    stroke={color} 
+                    strokeWidth="2"
+                />
+            );
+        });
+
+        // B. Intermediate Lines (Stages) - "5s"
+        for (let i = 0; i < NODES.length - 1; i++) {
+            const startY = TOP_PADDING + (i * LEVEL_GAP);
+            const ticks = [0.33, 0.66]; // 33% and 66%
+            
+            ticks.forEach((t, idx) => {
+                const y = startY + (LEVEL_GAP * t);
+                const isActive = y <= fillLimitY;
+                // Active: Light Blue (Blue-200). Inactive: Slate-200
+                const color = isActive ? "#BFDBFE" : "#E2E8F0";
+
+                elements.push(
+                    <line 
+                        key={`stage-line-${i}-${idx}`}
+                        x1={THERMOMETER_X - 10}
+                        y1={y}
+                        x2={PATH_X} 
+                        y2={y}
+                        stroke={color}
+                        strokeWidth="1.5"
+                    />
+                );
+            });
+        }
+
+        // C. Minor Decorative Ticks (On tube only)
         for (let y = 20; y < railHeight; y += 20) {
              const tickY = TOP_PADDING + y;
              const isMajor = y % LEVEL_GAP === 0;
+             // Approximate check to avoid drawing over stage lines
              const isStage1 = Math.abs((y % LEVEL_GAP) - (LEVEL_GAP * 0.33)) < 10;
              const isStage2 = Math.abs((y % LEVEL_GAP) - (LEVEL_GAP * 0.66)) < 10;
 
              if (!isMajor && !isStage1 && !isStage2) {
+                 const isActive = tickY <= fillLimitY;
+                 // Active: Blue-300 (Subtle on Blue-500). Inactive: Slate-300
+                 const color = isActive ? "#93C5FD" : "#CBD5E1"; 
+
                  elements.push(
                     <line 
                         key={`minor-tick-${y}`}
@@ -126,31 +179,11 @@ const MapTimeline = ({
                         y1={tickY} 
                         x2={THERMOMETER_X + 3} 
                         y2={tickY} 
-                        stroke="#CBD5E1"
+                        stroke={color}
                         strokeWidth="1"
                     />
                 );
              }
-        }
-
-        // E. Active Fill
-        const completedLevelsHeight = (currentLevel - 1) * LEVEL_GAP;
-        const currentLevelProgressHeight = progressRatio * LEVEL_GAP;
-        const totalFill = Math.min(completedLevelsHeight + currentLevelProgressHeight, railHeight);
-
-        // Only render fill if we have length > 0
-        if (totalFill > 0) {
-            elements.push(
-                <line 
-                    key="therm-fill"
-                    x1={THERMOMETER_X} y1={TOP_PADDING} 
-                    x2={THERMOMETER_X} y2={TOP_PADDING + totalFill} 
-                    stroke="#3B82F6" // Blue-500 (Solid color for reliability)
-                    strokeWidth="12" 
-                    strokeLinecap="round"
-                    className="transition-all duration-1000 ease-out"
-                />
-            );
         }
 
         return <g>{elements}</g>;
