@@ -70,7 +70,48 @@ const MapTimeline = ({
             />
         );
 
-        // 3. ACTIVE FILL (Middle Layer)
+        // 3. SCALE LINES (Constant Grey)
+        // These are drawn BEHIND the blue fill, so the fill covers the middle part.
+        // This ensures the line extending to the right is always grey.
+        
+        // A. Major Lines (Levels)
+        NODES.forEach((_, index) => {
+            const y = TOP_PADDING + (index * LEVEL_GAP);
+            elements.push(
+                <line 
+                    key={`major-line-bg-${index}`}
+                    x1={THERMOMETER_X - 16} 
+                    y1={y}
+                    x2={PATH_X} 
+                    y2={y}
+                    stroke="#CBD5E1" // Slate-300 (Always Grey)
+                    strokeWidth="2"
+                />
+            );
+        });
+
+        // B. Intermediate Lines (Stages)
+        for (let i = 0; i < NODES.length - 1; i++) {
+            const startY = TOP_PADDING + (i * LEVEL_GAP);
+            const ticks = [0.33, 0.66]; // 33% and 66%
+            
+            ticks.forEach((t, idx) => {
+                const y = startY + (LEVEL_GAP * t);
+                elements.push(
+                    <line 
+                        key={`stage-line-bg-${i}-${idx}`}
+                        x1={THERMOMETER_X - 10}
+                        y1={y}
+                        x2={PATH_X} 
+                        y2={y}
+                        stroke="#E2E8F0" // Slate-200 (Always Light Grey)
+                        strokeWidth="1.5"
+                    />
+                );
+            });
+        }
+
+        // 4. ACTIVE FILL (Middle Layer)
         if (totalFill > 0) {
             elements.push(
                 <line 
@@ -84,8 +125,7 @@ const MapTimeline = ({
                 />
             );
 
-            // 4. PULSATING END CAP
-            // A glowing ping effect behind the tip
+            // PULSATING END CAP
             elements.push(
                  <circle
                     key="therm-cap-pulse"
@@ -97,65 +137,56 @@ const MapTimeline = ({
                     opacity="0.75"
                 />
             );
-            // The solid tip
             elements.push(
                  <circle
                     key="therm-cap-solid"
                     cx={THERMOMETER_X}
                     cy={fillLimitY}
                     r="5"
-                    fill="#EFF6FF" // Blue-50 (White-ish)
-                    stroke="#2563EB" // Blue-600
+                    fill="#EFF6FF" 
+                    stroke="#2563EB" 
                     strokeWidth="2"
                 />
             );
         }
 
-        // 5. TICKS & LINES (Top Layer - Rendered over the fill)
-        // We change color based on whether the line is "active" (covered by blue fill)
-
-        // A. Major Lines (Levels) - "10s"
+        // 5. OVERLAY TICKS (Top Layer)
+        // These are the "Light Blue Marks" drawn ON TOP of the blue fill.
+        // We only draw them if the fill reaches this point.
+        
+        // A. Major Ticks Overlay
         NODES.forEach((_, index) => {
             const y = TOP_PADDING + (index * LEVEL_GAP);
-            const isActive = y <= fillLimitY;
-            // Active: Very light blue (Blue-50). Inactive: Slate-300
-            const color = isActive ? "#EFF6FF" : "#CBD5E1"; 
-
-            elements.push(
-                <line 
-                    key={`major-line-${index}`}
-                    x1={THERMOMETER_X - 16} 
-                    y1={y}
-                    x2={PATH_X} 
-                    y2={y}
-                    stroke={color} 
-                    strokeWidth="2"
-                />
-            );
-        });
-
-        // B. Intermediate Lines (Stages) - "5s"
-        for (let i = 0; i < NODES.length - 1; i++) {
-            const startY = TOP_PADDING + (i * LEVEL_GAP);
-            const ticks = [0.33, 0.66]; // 33% and 66%
-            
-            ticks.forEach((t, idx) => {
-                const y = startY + (LEVEL_GAP * t);
-                const isActive = y <= fillLimitY;
-                // Active: Light Blue (Blue-200). Inactive: Slate-200
-                const color = isActive ? "#BFDBFE" : "#E2E8F0";
-
-                elements.push(
+            if (y <= fillLimitY) {
+                 elements.push(
                     <line 
-                        key={`stage-line-${i}-${idx}`}
-                        x1={THERMOMETER_X - 10}
-                        y1={y}
-                        x2={PATH_X} 
-                        y2={y}
-                        stroke={color}
-                        strokeWidth="1.5"
+                        key={`major-tick-active-${index}`}
+                        x1={THERMOMETER_X - 6} y1={y}
+                        x2={THERMOMETER_X + 6} y2={y}
+                        stroke="#EFF6FF" // Blue-50 (Light Mark)
+                        strokeWidth="2"
                     />
                 );
+            }
+        });
+
+        // B. Stage Ticks Overlay
+        for (let i = 0; i < NODES.length - 1; i++) {
+            const startY = TOP_PADDING + (i * LEVEL_GAP);
+            const ticks = [0.33, 0.66];
+            ticks.forEach((t, idx) => {
+                const y = startY + (LEVEL_GAP * t);
+                if (y <= fillLimitY) {
+                    elements.push(
+                        <line 
+                            key={`stage-tick-active-${i}-${idx}`}
+                            x1={THERMOMETER_X - 4} y1={y}
+                            x2={THERMOMETER_X + 4} y2={y}
+                            stroke="#BFDBFE" // Blue-200 (Light Mark)
+                            strokeWidth="1.5"
+                        />
+                    );
+                }
             });
         }
 
@@ -163,13 +194,12 @@ const MapTimeline = ({
         for (let y = 20; y < railHeight; y += 20) {
              const tickY = TOP_PADDING + y;
              const isMajor = y % LEVEL_GAP === 0;
-             // Approximate check to avoid drawing over stage lines
              const isStage1 = Math.abs((y % LEVEL_GAP) - (LEVEL_GAP * 0.33)) < 10;
              const isStage2 = Math.abs((y % LEVEL_GAP) - (LEVEL_GAP * 0.66)) < 10;
 
              if (!isMajor && !isStage1 && !isStage2) {
                  const isActive = tickY <= fillLimitY;
-                 // Active: Blue-300 (Subtle on Blue-500). Inactive: Slate-300
+                 // If active: Light Blue. If inactive: Grey.
                  const color = isActive ? "#93C5FD" : "#CBD5E1"; 
 
                  elements.push(
