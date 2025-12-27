@@ -50,17 +50,6 @@ const MapTimeline = ({
         const railHeight = (NODES.length - 1) * LEVEL_GAP;
         const elements = [];
 
-        // Definition for Gradient
-        // Put in a separate group to ensure it renders before usage
-        const gradientDef = (
-            <defs key="defs">
-                <linearGradient id="thermometerGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#60A5FA" /> {/* Blue-400 */}
-                    <stop offset="100%" stopColor="#2563EB" /> {/* Blue-600 */}
-                </linearGradient>
-            </defs>
-        );
-
         // A. Horizontal Scale Lines (Major - Levels) "10s"
         NODES.forEach((_, index) => {
             const y = TOP_PADDING + (index * LEVEL_GAP);
@@ -144,7 +133,7 @@ const MapTimeline = ({
              }
         }
 
-        // E. Active Fill (With Gradient)
+        // E. Active Fill
         const completedLevelsHeight = (currentLevel - 1) * LEVEL_GAP;
         const currentLevelProgressHeight = progressRatio * LEVEL_GAP;
         const totalFill = Math.min(completedLevelsHeight + currentLevelProgressHeight, railHeight);
@@ -156,7 +145,7 @@ const MapTimeline = ({
                     key="therm-fill"
                     x1={THERMOMETER_X} y1={TOP_PADDING} 
                     x2={THERMOMETER_X} y2={TOP_PADDING + totalFill} 
-                    stroke="url(#thermometerGradient)" 
+                    stroke="#3B82F6" // Blue-500 (Solid color for reliability)
                     strokeWidth="12" 
                     strokeLinecap="round"
                     className="transition-all duration-1000 ease-out"
@@ -164,7 +153,7 @@ const MapTimeline = ({
             );
         }
 
-        return <g>{gradientDef}{elements}</g>;
+        return <g>{elements}</g>;
     };
 
     const renderPathWithFootsteps = () => {
