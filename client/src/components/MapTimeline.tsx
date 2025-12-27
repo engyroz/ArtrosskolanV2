@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check, Lock, Swords, Flag, Star, Gift, PackageOpen, ChevronRight } from 'lucide-react';
+import { Check, Lock, Swords, Star, Gift, PackageOpen, ChevronRight } from 'lucide-react';
 
 interface MapTimelineProps {
   currentLevel: number;
@@ -21,27 +21,85 @@ const MapTimeline = ({
 }: MapTimelineProps) => {
     
     // --- LAYOUT CONFIGURATION ---
-    const LEVEL_GAP = 280; // Slightly reduced vertical gap for tighter feel
+    const LEVEL_GAP = 240; 
     const TOP_PADDING = 60;
     const BOTTOM_PADDING = 100;
-    const LINE_X = 48; // Fixed pixel position from left (The "Spine")
     
-    // Calculate precise progress
-    const progressRatio = Math.min(Math.max(currentXP / maxXP, 0), 1);
-    const activeFillHeight = progressRatio * LEVEL_GAP;
+    // X Coordinates for the columns
+    const THERMOMETER_X = 24;
+    const PATH_X = 80;
+    const TEXT_X = 140;
 
+    // Progress calculations
+    const progressRatio = Math.min(Math.max(currentXP / maxXP, 0), 1);
+    
+    // Nodes Data
     const NODES = [
-        { id: 1, label: "Fas 1", title: "Smärtlindring", sub: "Minska irritation & hitta ro" },
+        { id: 1, label: "Fas 1", title: "Smärtlindring", sub: "Minska irritation" },
         { id: 2, label: "Fas 2", title: "Grundstyrka", sub: "Bygg upp tålighet" },
-        { id: 3, label: "Fas 3", title: "Uppbyggnad", sub: "Öka belastning & balans" },
-        { id: 4, label: "Mål", title: "Prestation", sub: "Återgång till full aktivitet" }
+        { id: 3, label: "Fas 3", title: "Uppbyggnad", sub: "Öka belastning" },
+        { id: 4, label: "Mål", title: "Prestation", sub: "Återgång till aktivitet" }
     ];
 
     const TOTAL_HEIGHT = TOP_PADDING + ((NODES.length - 1) * LEVEL_GAP) + BOTTOM_PADDING;
 
     // --- RENDER HELPERS ---
 
-    const renderPath = () => {
+    const renderThermometer = () => {
+        // 1. Base Rail
+        const railHeight = (NODES.length - 1) * LEVEL_GAP;
+        const elements = [];
+
+        // Background Line
+        elements.push(
+            <line 
+                key="therm-bg"
+                x1={THERMOMETER_X} y1={TOP_PADDING} 
+                x2={THERMOMETER_X} y2={TOP_PADDING + railHeight} 
+                stroke="#E2E8F0" // Slate-200
+                strokeWidth="4" 
+                strokeLinecap="round" 
+            />
+        );
+
+        // Ticks along the scale
+        for (let y = 0; y <= railHeight; y += 20) {
+            elements.push(
+                <line 
+                    key={`tick-${y}`}
+                    x1={THERMOMETER_X - 4} y1={TOP_PADDING + y}
+                    x2={THERMOMETER_X} y2={TOP_PADDING + y}
+                    stroke="#CBD5E1"
+                    strokeWidth="1"
+                />
+            );
+        }
+
+        // Active Fill
+        // Calculate total pixels filled based on currentLevel + currentXP
+        // Levels start at 1. So if Level 2, we have passed 1 full gap.
+        const completedLevelsHeight = (currentLevel - 1) * LEVEL_GAP;
+        const currentLevelProgressHeight = progressRatio * LEVEL_GAP;
+        
+        // Cap at total height (for Level 4 max)
+        const totalFill = Math.min(completedLevelsHeight + currentLevelProgressHeight, railHeight);
+
+        elements.push(
+            <line 
+                key="therm-fill"
+                x1={THERMOMETER_X} y1={TOP_PADDING} 
+                x2={THERMOMETER_X} y2={TOP_PADDING + totalFill} 
+                stroke="#3B82F6" // Blue-500
+                strokeWidth="4" 
+                strokeLinecap="round"
+                className="transition-all duration-1000 ease-out"
+            />
+        );
+
+        return <g>{elements}</g>;
+    };
+
+    const renderPathWithFootsteps = () => {
         const segments = [];
 
         for (let i = 0; i < NODES.length - 1; i++) {
@@ -52,56 +110,45 @@ const MapTimeline = ({
             const isCompletedSegment = levelIndex < currentLevel;
             const isActiveSegment = levelIndex === currentLevel;
             
-            // 1. Background Rail (Subtle, thin grey)
+            // 1. Dotted Background Path
             segments.push(
                 <line 
-                    key={`bg-${i}`}
-                    x1={LINE_X} y1={startY} 
-                    x2={LINE_X} y2={endY} 
-                    stroke="#E2E8F0" // Slate-200
+                    key={`path-bg-${i}`}
+                    x1={PATH_X} y1={startY} 
+                    x2={PATH_X} y2={endY} 
+                    stroke="#CBD5E1" // Slate-300
                     strokeWidth="2" 
-                    strokeLinecap="round" 
+                    strokeDasharray="4 6"
                 />
             );
 
-            // 2. Completed Path (Solid Blue)
-            if (isCompletedSegment) {
-                segments.push(
-                    <line 
-                        key={`comp-${i}`}
-                        x1={LINE_X} y1={startY} 
-                        x2={LINE_X} y2={endY} 
-                        stroke="#3B82F6" // Blue-500
-                        strokeWidth="2" 
-                    />
-                );
-            }
+            // 2. Footsteps (Active or Completed)
+            const stepSpacing = 24;
+            const totalSteps = LEVEL_GAP / stepSpacing;
+            
+            // Determine how many steps to show as "filled"
+            let filledStepsCount = 0;
+            if (isCompletedSegment) filledStepsCount = totalSteps;
+            else if (isActiveSegment) filledStepsCount = Math.floor(totalSteps * progressRatio);
 
-            // 3. Active Progress Fill (Animated Blue)
-            if (isActiveSegment) {
-                const fillEndY = startY + activeFillHeight;
-                segments.push(
-                    <line 
-                        key={`active-${i}`}
-                        x1={LINE_X} y1={startY} 
-                        x2={LINE_X} y2={fillEndY} 
-                        stroke="#3B82F6" 
-                        strokeWidth="2" 
-                        strokeLinecap="round"
-                        className="transition-all duration-1000 ease-out"
-                    />
-                );
+            for (let s = 1; s < filledStepsCount; s++) { // Start at 1 to avoid overlap with node
+                const stepY = startY + (s * stepSpacing);
+                // Don't draw steps too close to the end node
+                if (stepY > endY - 20) continue;
+
+                // Alternate left/right offset for footprints
+                const isRight = s % 2 === 0;
+                const offsetX = isRight ? 4 : -4;
                 
-                // Optional: A small "head" dot at the tip of the progress
                 segments.push(
-                    <circle 
-                        key={`head-${i}`}
-                        cx={LINE_X} 
-                        cy={fillEndY} 
-                        r="3" 
-                        fill="#3B82F6"
-                        className="transition-all duration-1000 ease-out"
-                    />
+                    <g key={`step-${i}-${s}`} className="animate-fade-in">
+                        <path 
+                            d="M-1.5 -2.5 C-1.5 -4 1.5 -4 1.5 -2.5 L 1.5 1.5 C 1.5 3 -1.5 3 -1.5 1.5 Z"
+                            fill="#60A5FA" // Blue-400
+                            transform={`translate(${PATH_X + offsetX}, ${stepY})`}
+                            opacity={0.8}
+                        />
+                    </g>
                 );
             }
         }
@@ -126,22 +173,17 @@ const MapTimeline = ({
                     key={`chest-${chest.id}`}
                     onClick={() => onChestClick && onChestClick(chest.id, isUnlocked ? 'unlocked' : 'locked')}
                     className="absolute z-20 cursor-pointer group"
-                    style={{ left: LINE_X, top: yPos, transform: 'translate(-50%, -50%)' }}
+                    style={{ left: PATH_X, top: yPos, transform: 'translate(-50%, -50%)' }}
                 >
                     <div className={`
-                        w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300
+                        w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 shadow-sm
                         ${isUnlocked 
-                            ? 'bg-white border-yellow-400 text-yellow-500 shadow-md scale-110' 
+                            ? 'bg-white border-yellow-400 text-yellow-500 scale-110' 
                             : 'bg-slate-50 border-slate-200 text-slate-300'
                         }
                     `}>
                         {isUnlocked ? <PackageOpen size={14} /> : <Gift size={14} />}
                     </div>
-                    
-                    {/* Tiny Indicator Dot if ready to open */}
-                    {isUnlocked && (
-                         <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></div>
-                    )}
                 </div>
             );
         });
@@ -159,6 +201,7 @@ const MapTimeline = ({
             const isFuture = level > currentLevel + 1;
             
             const isBossReady = isTarget && progressRatio >= 1;
+            const isFinal = level === 4;
 
             return (
                 <div 
@@ -166,84 +209,79 @@ const MapTimeline = ({
                     className="absolute w-full flex items-center z-30"
                     style={{ top: yPos, transform: 'translateY(-50%)' }}
                 >
-                    {/* 1. THE NODE (On the Line) */}
+                    {/* 1. THE NODE (On the Path) */}
                     <div 
                         onClick={() => {
                             if (isBossReady && onLevelClick) onLevelClick(currentLevel);
                         }}
-                        className="absolute flex items-center justify-center transition-all duration-500 cursor-default"
-                        style={{ left: LINE_X, transform: 'translateX(-50%)' }}
+                        className="absolute flex items-center justify-center cursor-default"
+                        style={{ left: PATH_X, transform: 'translateX(-50%)' }}
                     >
-                        {/* Outer Glow for Current */}
+                        {/* Current Active Halo */}
                         {isCurrent && (
-                            <div className="absolute w-16 h-16 bg-blue-500/10 rounded-full animate-pulse-slow"></div>
+                            <div className="absolute w-12 h-12 bg-blue-100 rounded-full animate-pulse"></div>
                         )}
 
                         <div className={`
                             relative rounded-full flex items-center justify-center border-2 transition-all duration-300
                             ${isCurrent 
-                                ? 'w-14 h-14 bg-white border-blue-500 shadow-lg text-blue-600' 
+                                ? 'w-10 h-10 bg-blue-600 border-blue-100 shadow-md text-white' 
                                 : isPast 
-                                    ? 'w-10 h-10 bg-blue-500 border-blue-500 text-white' 
+                                    ? 'w-8 h-8 bg-slate-800 border-slate-800 text-white' 
                                     : isTarget && isBossReady
-                                        ? 'w-14 h-14 bg-orange-500 border-orange-400 text-white shadow-lg animate-bounce-subtle cursor-pointer'
-                                        : 'w-10 h-10 bg-white border-slate-200 text-slate-300'
+                                        ? 'w-12 h-12 bg-orange-500 border-white ring-2 ring-orange-200 text-white shadow-lg animate-bounce-subtle cursor-pointer'
+                                        : 'w-8 h-8 bg-white border-slate-200 text-slate-300'
                             }
                         `}>
-                            {isCurrent && <span className="text-xl font-bold">{level}</span>}
-                            {isPast && <Check size={18} strokeWidth={3} />}
+                            {isCurrent && <span className="text-sm font-bold">{level}</span>}
+                            {isPast && <Check size={14} strokeWidth={3} />}
                             
-                            {isTarget && isBossReady && <Swords size={24} />}
-                            {isTarget && !isBossReady && <Lock size={16} />}
+                            {isTarget && isBossReady && <Swords size={20} />}
+                            {isTarget && !isBossReady && <Lock size={12} />}
                             
-                            {isFuture && <Lock size={16} />}
+                            {isFuture && <Lock size={12} />}
                             
-                            {/* Special Icon for Final Goal */}
-                            {level === 4 && isCurrent && <Star className="fill-current text-yellow-400" size={24} />}
+                            {/* Final Goal Icon */}
+                            {isFinal && isCurrent && <Star className="fill-current text-yellow-400" size={18} />}
                         </div>
                     </div>
 
-                    {/* 2. THE CONTENT (To the Right) */}
+                    {/* 2. THE TEXT (Right Aligned) */}
                     <div 
-                        className={`ml-24 pr-6 transition-all duration-500 ${
-                            isFuture ? 'opacity-40 grayscale' : 'opacity-100'
+                        className={`absolute left-[130px] pr-4 transition-all duration-500 ${
+                            isFuture ? 'opacity-30 grayscale' : 'opacity-100'
                         }`}
                     >
                         <div className="flex items-center gap-2 mb-0.5">
-                            <span className={`text-[10px] font-bold uppercase tracking-widest ${
+                            <span className={`text-[9px] font-bold uppercase tracking-widest ${
                                 isCurrent ? 'text-blue-600' : 'text-slate-400'
                             }`}>
                                 {node.label}
                             </span>
-                            {isCurrent && (
-                                <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                    Pågår
-                                </span>
-                            )}
                              {isPast && (
-                                <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                <span className="text-slate-400 text-[9px] font-bold px-1.5 py-0.5 border border-slate-200 rounded-full">
                                     Klar
                                 </span>
                             )}
                         </div>
                         
-                        <h3 className={`text-lg font-bold leading-tight mb-1 ${
+                        <h3 className={`text-base font-bold leading-tight mb-0.5 ${
                             isCurrent ? 'text-slate-900' : 'text-slate-700'
                         }`}>
                             {node.title}
                         </h3>
                         
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-[240px]">
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-[200px]">
                             {node.sub}
                         </p>
 
-                        {/* Boss Call to Action */}
+                        {/* Boss Action Button */}
                         {isTarget && isBossReady && (
                             <button 
                                 onClick={() => onLevelClick && onLevelClick(currentLevel)}
-                                className="mt-3 flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold shadow-md animate-pulse hover:bg-orange-600 transition-colors"
+                                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-bold shadow-md animate-pulse hover:bg-orange-600 transition-colors"
                             >
-                                <Swords size={14} /> Starta Nivåtest <ChevronRight size={14} />
+                                <Swords size={12} /> Starta Nivåtest <ChevronRight size={12} />
                             </button>
                         )}
                     </div>
@@ -256,10 +294,11 @@ const MapTimeline = ({
         <div className="relative w-full select-none" style={{ height: TOTAL_HEIGHT }}>
             {/* SVG Layer */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                {renderPath()}
+                {renderThermometer()}
+                {renderPathWithFootsteps()}
             </svg>
 
-            {/* DOM Layer */}
+            {/* DOM Layer (Nodes & Text) */}
             <div className="absolute inset-0 w-full h-full">
                 {renderNodes()}
                 {renderChests()}
