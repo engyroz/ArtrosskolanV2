@@ -22,6 +22,7 @@ import Settings from './pages/Settings';
 import AdminTools from './pages/AdminTools'; 
 import ProtectedRoute from './components/ProtectedRoute';
 import TimeTravelDebug from './components/TimeTravelDebug';
+import ProgressionDebug from './components/ProgressionDebug'; // New Import
 
 const Layout = ({ children }: { children?: React.ReactNode }) => {
   const location = useLocation();
@@ -42,6 +43,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
 
       {showBottomNav && <BottomNavigation />}
       <TimeTravelDebug />
+      <ProgressionDebug />
     </div>
   );
 };

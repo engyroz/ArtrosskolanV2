@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
-import { Activity, User, LogOut, Settings, HelpCircle, UserCircle, ShieldAlert, Clock } from 'lucide-react';
+import { Activity, User, LogOut, Settings, HelpCircle, UserCircle, ShieldAlert, Wrench } from 'lucide-react';
 
 const TopNavigation = () => {
   const { user, userProfile, logout } = useAuth();
@@ -99,8 +99,8 @@ const TopNavigation = () => {
                       onClick={() => { toggleDebug(); setShowProfileMenu(false); }}
                       className="w-full flex items-center px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                     >
-                      <Clock className={`w-4 h-4 mr-3 ${isDebugVisible ? 'text-blue-600' : 'text-slate-400'}`} /> 
-                      {isDebugVisible ? 'Göm Tidsmaskin' : 'Visa Tidsmaskin'}
+                      <Wrench className={`w-4 h-4 mr-3 ${isDebugVisible ? 'text-blue-600' : 'text-slate-400'}`} /> 
+                      {isDebugVisible ? 'Dölj Dev Tools' : 'Visa Dev Tools'}
                     </button>
 
                     <Link 
