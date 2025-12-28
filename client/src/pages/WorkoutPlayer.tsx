@@ -110,6 +110,10 @@ const WorkoutPlayer = () => {
 
     const activityType = session.type === 'rehab' ? 'REHAB_SESSION' : 'DAILY_MEDICINE';
     const result = calculateProgressionUpdate(userProfile, activityType);
+    
+    // New total sessions count for logic
+    const currentSessions = userProfile.progression?.lifetimeSessions || 0;
+    const newSessionCount = session.type === 'rehab' ? currentSessions + 1 : currentSessions;
 
     try {
         const userRef = db.collection('users').doc(userProfile.uid);
@@ -138,7 +142,18 @@ const WorkoutPlayer = () => {
         await userRef.update(updatePayload);
         await refreshProfile();
         
-        navigate('/dashboard', { state: { xpEarned: result.xpEarned } });
+        // Navigate to Summary instead of Dashboard
+        navigate('/summary', { 
+            state: { 
+                xpEarned: result.xpEarned,
+                newTotalXP: result.newTotalXP,
+                levelMaxedOut: result.levelMaxedOut,
+                sessionType: session.type,
+                painScore: finalPain,
+                exertion: finalExertion,
+                lifetimeSessions: newSessionCount
+            } 
+        });
 
     } catch (e) {
         console.error("Error saving session:", e);

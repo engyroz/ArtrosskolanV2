@@ -14,11 +14,12 @@ import Results from './pages/Results';
 import Payment from './pages/Payment';
 import Dashboard from './pages/Dashboard';
 import WorkoutPlayer from './pages/WorkoutPlayer';
+import WorkoutSummary from './pages/WorkoutSummary'; // New Page
 import CalendarDiary from './pages/CalendarDiary';
 import MyJourney from './pages/MyJourney'; 
-import KnowledgeBase from './pages/KnowledgeBase'; // New Page
-import Settings from './pages/Settings'; // New Page
-import AdminTools from './pages/AdminTools'; // New Admin Page
+import KnowledgeBase from './pages/KnowledgeBase'; 
+import Settings from './pages/Settings'; 
+import AdminTools from './pages/AdminTools'; 
 import ProtectedRoute from './components/ProtectedRoute';
 import TimeTravelDebug from './components/TimeTravelDebug';
 
@@ -82,7 +83,6 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               } />
 
-              {/* New Knowledge Route */}
               <Route path="/knowledge" element={
                 <ProtectedRoute requireSubscription={true}>
                   <KnowledgeBase />
@@ -95,7 +95,6 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               } />
 
-              {/* Admin Route */}
               <Route path="/admin" element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminTools />
@@ -105,6 +104,12 @@ const App: React.FC = () => {
               <Route path="/workout" element={
                 <ProtectedRoute requireSubscription={true}>
                   <WorkoutPlayer />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/summary" element={
+                <ProtectedRoute requireSubscription={true}>
+                  <WorkoutSummary />
                 </ProtectedRoute>
               } />
               
