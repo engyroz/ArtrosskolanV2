@@ -59,8 +59,6 @@ const StageRewardModal = ({ isOpen, onClose, level, stage, joint, isNewUnlock }:
                 .map(s => ({ id: s.id, ...s.data() } as Exercise));
              setExercises(loaded);
           }
-        } else {
-            console.warn(`Level document ${docId} not found.`);
         }
       } catch (e) {
         console.error("Failed to load rewards", e);
@@ -205,7 +203,8 @@ const StageRewardModal = ({ isOpen, onClose, level, stage, joint, isNewUnlock }:
                                                </div>
                                            )}
                                            <div className="flex-1 min-w-0">
-                                               <p className="text-sm font-bold text-white leading-tight truncate">{ex.title}</p>
+                                               {/* CHANGED: Removed truncate, allowing wrap */}
+                                               <p className="text-sm font-bold text-white leading-tight">{ex.title}</p>
                                                <p className="text-[10px] text-slate-400 uppercase tracking-wide">{ex.category || 'Övning'}</p>
                                            </div>
                                        </div>
@@ -215,7 +214,6 @@ const StageRewardModal = ({ isOpen, onClose, level, stage, joint, isNewUnlock }:
                        ) : (
                            <div className="text-center py-4">
                                <p className="text-sm text-slate-400 mb-1">Inga specifika övningar hittades.</p>
-                               <p className="text-xs text-slate-600">Databas: {normalizeJoint(joint)}_{level} (Stage {stage})</p>
                            </div>
                        )}
                    </div>
