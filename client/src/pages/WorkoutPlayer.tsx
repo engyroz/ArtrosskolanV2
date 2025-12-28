@@ -151,7 +151,9 @@ const WorkoutPlayer = () => {
                 sessionType: session.type,
                 painScore: finalPain,
                 exertion: finalExertion,
-                lifetimeSessions: newSessionCount
+                lifetimeSessions: newSessionCount,
+                stageUp: result.stageUp, // Pass the stageUp flag
+                newStage: result.newStage
             } 
         });
 

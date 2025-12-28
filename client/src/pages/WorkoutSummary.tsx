@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Check, ArrowRight, Lock, Map, Video, Zap, Star } from 'lucide-react';
+import { Check, ArrowRight, Lock, Map, Video, Zap, Star, Package } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../contexts/AuthContext';
 import { getMaxXP } from '../utils/progressionEngine';
@@ -14,6 +14,8 @@ interface LocationState {
   painScore: number;
   exertion: string;
   lifetimeSessions: number;
+  stageUp?: boolean; // New
+  newStage?: number; // New
 }
 
 const WorkoutSummary = () => {
@@ -129,6 +131,12 @@ const WorkoutSummary = () => {
 
   // --- COPY LOGIC ---
   const getFeedbackCopy = () => {
+    if (state.stageUp) {
+      return {
+          title: "Etapp Avklarad!",
+          subtitle: "En belöning väntar på kartan."
+      };
+    }
     if (state.painScore >= 6) {
       return {
         title: "Klokt beslut.",
@@ -183,8 +191,8 @@ const WorkoutSummary = () => {
       <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md z-10">
         
         <div className="animate-float mb-8">
-           <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.5)] border-4 border-slate-800">
-              <Check className="w-12 h-12 text-white" strokeWidth={4} />
+           <div className={`w-24 h-24 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.5)] border-4 border-slate-800 ${state.stageUp ? 'bg-yellow-500' : 'bg-gradient-to-br from-blue-500 to-green-500'}`}>
+              {state.stageUp ? <Package className="w-12 h-12 text-slate-900 animate-bounce-subtle" /> : <Check className="w-12 h-12 text-white" strokeWidth={4} />}
            </div>
         </div>
 
@@ -270,12 +278,21 @@ const WorkoutSummary = () => {
       </div>
 
       {/* 3. CTA */}
-      <button 
-        onClick={() => navigate('/dashboard')}
-        className="w-full max-w-md py-4 bg-white text-slate-900 rounded-2xl font-black text-lg shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:bg-slate-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 z-10 animate-fade-in delay-500"
-      >
-        Hämta Belöning <ArrowRight className="w-6 h-6" />
-      </button>
+      {state.stageUp ? (
+         <button 
+           onClick={() => navigate('/journey')}
+           className="w-full max-w-md py-4 bg-yellow-400 text-yellow-900 rounded-2xl font-black text-lg shadow-[0_0_20px_rgba(250,204,21,0.5)] hover:bg-yellow-300 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 z-10 animate-pulse delay-500"
+         >
+           Gå till kartan för att hämta belöning <ArrowRight className="w-6 h-6" />
+         </button>
+      ) : (
+         <button 
+           onClick={() => navigate('/dashboard')}
+           className="w-full max-w-md py-4 bg-white text-slate-900 rounded-2xl font-black text-lg shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:bg-slate-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 z-10 animate-fade-in delay-500"
+         >
+           Tillbaka till Dashboard <ArrowRight className="w-6 h-6" />
+         </button>
+      )}
 
     </div>
   );

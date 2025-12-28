@@ -1,14 +1,15 @@
 
 import React from 'react';
-import { Check, Lock, Swords, Star, Gift, PackageOpen, ChevronRight } from 'lucide-react';
+import { Check, Lock, Swords, Star, Package, PackageOpen } from 'lucide-react';
 
 interface MapTimelineProps {
   currentLevel: number;
   currentXP: number;
   maxXP: number;
   startLevel?: number;
+  openedChests?: string[]; // Array of "level_stage" strings
   onLevelClick?: (level: number) => void;
-  onChestClick?: (stage: number, status: 'locked' | 'unlocked') => void;
+  onChestClick?: (stage: number, status: 'locked' | 'unlocked' | 'opened') => void;
 }
 
 const MapTimeline = ({ 
@@ -16,6 +17,7 @@ const MapTimeline = ({
   currentXP, 
   maxXP, 
   startLevel = 1, 
+  openedChests = [],
   onLevelClick,
   onChestClick 
 }: MapTimelineProps) => {
@@ -71,10 +73,6 @@ const MapTimeline = ({
         );
 
         // 3. SCALE LINES (Constant Grey)
-        // These are drawn BEHIND the blue fill, so the fill covers the middle part.
-        // This ensures the line extending to the right is always grey.
-        
-        // A. Major Lines (Levels)
         NODES.forEach((_, index) => {
             const y = TOP_PADDING + (index * LEVEL_GAP);
             elements.push(
@@ -90,7 +88,7 @@ const MapTimeline = ({
             );
         });
 
-        // B. Intermediate Lines (Stages)
+        // Intermediate Lines (Stages)
         for (let i = 0; i < NODES.length - 1; i++) {
             const startY = TOP_PADDING + (i * LEVEL_GAP);
             const ticks = [0.33, 0.66]; // 33% and 66%
@@ -151,10 +149,6 @@ const MapTimeline = ({
         }
 
         // 5. OVERLAY TICKS (Top Layer)
-        // These are the "Light Blue Marks" drawn ON TOP of the blue fill.
-        // We only draw them if the fill reaches this point.
-        
-        // A. Major Ticks Overlay
         NODES.forEach((_, index) => {
             const y = TOP_PADDING + (index * LEVEL_GAP);
             if (y <= fillLimitY) {
@@ -170,7 +164,6 @@ const MapTimeline = ({
             }
         });
 
-        // B. Stage Ticks Overlay
         for (let i = 0; i < NODES.length - 1; i++) {
             const startY = TOP_PADDING + (i * LEVEL_GAP);
             const ticks = [0.33, 0.66];
@@ -199,7 +192,6 @@ const MapTimeline = ({
 
              if (!isMajor && !isStage1 && !isStage2) {
                  const isActive = tickY <= fillLimitY;
-                 // If active: Light Blue. If inactive: Grey.
                  const color = isActive ? "#93C5FD" : "#CBD5E1"; 
 
                  elements.push(
@@ -230,19 +222,17 @@ const MapTimeline = ({
             const isCompletedSegment = levelIndex < currentLevel;
             const isActiveSegment = levelIndex === currentLevel;
             
-            // 1. Dotted Background Path
             segments.push(
                 <line 
                     key={`path-bg-${i}`}
                     x1={PATH_X} y1={startY} 
                     x2={PATH_X} y2={endY} 
-                    stroke="#CBD5E1" // Slate-300
+                    stroke="#CBD5E1" 
                     strokeWidth="2" 
                     strokeDasharray="4 6"
                 />
             );
 
-            // 2. Footsteps (Active or Completed)
             const stepSpacing = 24;
             const totalSteps = LEVEL_GAP / stepSpacing;
             
@@ -273,33 +263,55 @@ const MapTimeline = ({
     };
 
     const renderChests = () => {
-        if (currentLevel >= 4) return null;
-
+        // Only show chests for levels the user is currently traversing or has passed
+        // But the design implies chests exist at 33% and 66% of ANY level.
+        // For simplicity, we render chests for the CURRENT level and MAYBE past ones? 
+        // Let's stick to current logic: render for the current level primarily.
+        
+        // Actually, chests should appear on the path for the current level being traversed.
         const startY = TOP_PADDING + ((currentLevel - 1) * LEVEL_GAP);
         const chests = [
-            { id: 2, pos: 0.33 },
-            { id: 3, pos: 0.66 }
+            { stage: 2, pos: 0.33 },
+            { stage: 3, pos: 0.66 }
         ];
 
         return chests.map((chest) => {
+            if (currentLevel >= 4) return null; // No chests in level 4 (Goal level)
+
             const yPos = startY + (LEVEL_GAP * chest.pos);
             const isUnlocked = progressRatio >= chest.pos;
+            const chestId = `${currentLevel}_${chest.stage}`;
+            const isOpened = openedChests.includes(chestId);
             
+            let status: 'locked' | 'unlocked' | 'opened' = 'locked';
+            if (isUnlocked) status = isOpened ? 'opened' : 'unlocked';
+
             return (
                 <div 
-                    key={`chest-${chest.id}`}
-                    onClick={() => onChestClick && onChestClick(chest.id, isUnlocked ? 'unlocked' : 'locked')}
+                    key={`chest-${chest.stage}`}
+                    onClick={() => onChestClick && onChestClick(chest.stage, status)}
                     className="absolute z-20 cursor-pointer group"
                     style={{ left: PATH_X, top: yPos, transform: 'translate(-50%, -50%)' }}
                 >
+                    {/* Glow effect for unlocked but unopened */}
+                    {status === 'unlocked' && (
+                        <div className="absolute inset-0 bg-yellow-400 rounded-full blur-md animate-pulse opacity-60"></div>
+                    )}
+
                     <div className={`
-                        w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 shadow-sm
-                        ${isUnlocked 
-                            ? 'bg-white border-yellow-400 text-yellow-500 scale-110' 
-                            : 'bg-slate-50 border-slate-200 text-slate-300'
+                        relative w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 shadow-sm
+                        ${status === 'unlocked' 
+                            ? 'bg-yellow-100 border-yellow-500 text-yellow-600 scale-110 shadow-[0_0_15px_rgba(234,179,8,0.5)]' 
+                            : status === 'opened'
+                                ? 'bg-white border-yellow-400 text-yellow-500'
+                                : 'bg-slate-50 border-slate-200 text-slate-300'
                         }
                     `}>
-                        {isUnlocked ? <PackageOpen size={14} /> : <Gift size={14} />}
+                        {status === 'opened' ? (
+                            <PackageOpen size={16} />
+                        ) : (
+                            <Package size={16} className={status === 'unlocked' ? 'animate-bounce-subtle' : ''} />
+                        )}
                     </div>
                 </div>
             );
@@ -311,7 +323,6 @@ const MapTimeline = ({
             const level = index + 1;
             const yPos = TOP_PADDING + (index * LEVEL_GAP);
             
-            // Logic States
             const isPast = level < currentLevel;
             const isCurrent = level === currentLevel;
             const isTarget = level === currentLevel + 1;
@@ -334,7 +345,6 @@ const MapTimeline = ({
                         className="absolute flex items-center justify-center cursor-default"
                         style={{ left: PATH_X, transform: 'translateX(-50%)' }}
                     >
-                        {/* Current Active Halo */}
                         {isCurrent && (
                             <div className="absolute w-12 h-12 bg-blue-100 rounded-full animate-pulse"></div>
                         )}
@@ -358,7 +368,6 @@ const MapTimeline = ({
                             
                             {isFuture && <Lock size={12} />}
                             
-                            {/* Final Goal Icon */}
                             {isFinal && isCurrent && <Star className="fill-current text-yellow-400" size={18} />}
                         </div>
                     </div>
@@ -393,13 +402,12 @@ const MapTimeline = ({
                             {node.sub}
                         </p>
 
-                        {/* Boss Action Button */}
                         {isTarget && isBossReady && (
                             <button 
                                 onClick={() => onLevelClick && onLevelClick(currentLevel)}
                                 className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-bold shadow-md animate-pulse hover:bg-orange-600 transition-colors"
                             >
-                                <Swords size={12} /> Starta Nivåtest <ChevronRight size={12} />
+                                <Swords size={12} /> Starta Nivåtest
                             </button>
                         )}
                     </div>
@@ -410,13 +418,11 @@ const MapTimeline = ({
 
     return (
         <div className="relative w-full max-w-lg mx-auto select-none" style={{ height: TOTAL_HEIGHT }}>
-            {/* SVG Layer */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none">
                 {renderThermometer()}
                 {renderPathWithFootsteps()}
             </svg>
 
-            {/* DOM Layer (Nodes & Text) */}
             <div className="absolute inset-0 w-full h-full">
                 {renderNodes()}
                 {renderChests()}

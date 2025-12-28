@@ -1,3 +1,4 @@
+
 // Centralized text configuration for the app
 
 export const PRE_FLIGHT_MESSAGES = {
@@ -59,6 +60,25 @@ export const BOSS_FIGHT_QUESTIONS = {
       { id: 'bf3_2', text: 'Kan du göra 10 snabba uppresningar från stol utan att bli trött i leden?' },
       { id: 'bf3_3', text: 'Upplever du att leden begränsar dig i vardagen? (Svar: Nej)' }
   ]
+};
+
+export const STAGE_NAMES = {
+  1: {
+    title: "Lugn start",
+    stages: { 1: "Lugn start", 2: "Grundläggande kontroll", 3: "Stabil bas" }
+  },
+  2: {
+    title: "Grundstyrka",
+    stages: { 1: "Smidiga rörelser", 2: "Balans i vardagen", 3: "Funktionell styrka" }
+  },
+  3: {
+    title: "Uppbyggnad",
+    stages: { 1: "Kraftfull utveckling", 2: "Uthållig vävnad", 3: "Toppform" }
+  },
+  4: {
+    title: "Återgång",
+    stages: { 1: "Fri rörlighet", 2: "Stark framtid", 3: "Livslång hälsa" }
+  }
 };
 
 // --- DASHBOARD CONSTANTS ---
