@@ -26,11 +26,23 @@ const StageRewardModal = ({ isOpen, onClose, level, stage, joint, isNewUnlock }:
   const levelConfig = STAGE_NAMES[level as keyof typeof STAGE_NAMES] || { title: `Level ${level}`, stages: {} };
   const stageName = (levelConfig.stages as any)[stage] || `Etapp ${stage}`;
 
+  // Helper to match DB naming convention (knee, hip, shoulder)
+  const normalizeJoint = (j: string) => {
+      const lower = j.toLowerCase();
+      if (lower === 'knä' || lower === 'kna') return 'knee';
+      if (lower === 'höft' || lower === 'hoft') return 'hip';
+      if (lower === 'axel' || lower === 'shoulder') return 'shoulder';
+      return lower; // Fallback
+  };
+
   // Fetch Exercises for this stage
   useEffect(() => {
     const loadRewards = async () => {
       setLoading(true);
-      const docId = `${joint.toLowerCase()}_${level}`;
+      
+      const dbJoint = normalizeJoint(joint);
+      const docId = `${dbJoint}_${level}`;
+      
       try {
         const doc = await db.collection('levels').doc(docId).get();
         if (doc.exists) {
@@ -42,9 +54,13 @@ const StageRewardModal = ({ isOpen, onClose, level, stage, joint, isNewUnlock }:
              // Fetch actual exercise docs to get titles/images
              const promises = ids.map(id => db.collection('exercises').doc(id).get());
              const snapshots = await Promise.all(promises);
-             const loaded = snapshots.map(s => ({ id: s.id, ...s.data() } as Exercise));
+             const loaded = snapshots
+                .filter(s => s.exists)
+                .map(s => ({ id: s.id, ...s.data() } as Exercise));
              setExercises(loaded);
           }
+        } else {
+            console.warn(`Level document ${docId} not found.`);
         }
       } catch (e) {
         console.error("Failed to load rewards", e);
@@ -98,11 +114,11 @@ const StageRewardModal = ({ isOpen, onClose, level, stage, joint, isNewUnlock }:
   );
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
        {/* Dark Glass Background */}
        <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-xl" onClick={onClose}></div>
        
-       <div className="relative w-full max-w-sm flex flex-col items-center justify-center text-center z-10">
+       <div className="relative w-full max-w-sm flex flex-col items-center justify-center text-center z-10 my-auto">
           
           {/* --- ANIMATION PHASE: CLOSED --- */}
           {animState === 'closed' && (
@@ -140,15 +156,17 @@ const StageRewardModal = ({ isOpen, onClose, level, stage, joint, isNewUnlock }:
 
           {/* --- ANIMATION PHASE: OPEN / REVEAL --- */}
           {animState === 'open' && (
-              <div className="bg-slate-800/80 border border-slate-700/50 rounded-[2rem] p-6 w-full shadow-2xl animate-slide-up backdrop-blur-md relative overflow-hidden">
+              <div className="bg-slate-800/90 border border-slate-700/50 rounded-[2rem] p-6 w-full shadow-2xl animate-slide-up backdrop-blur-md relative mt-10">
                    
-                   {/* Background Decor */}
-                   <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-yellow-500/10 to-transparent pointer-events-none"></div>
+                   {/* Background Decor - Inner wrapper to safely clip */}
+                   <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
+                        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-yellow-500/10 to-transparent"></div>
+                   </div>
 
-                   {/* Header */}
+                   {/* Header - Icon pulled up with negative margin */}
                    <div className="flex flex-col items-center mb-6 relative z-10">
-                       <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg -mt-16 mb-4 border-4 border-slate-800 ring-4 ring-yellow-500/20">
-                           <PackageOpen className="w-10 h-10 text-slate-900" strokeWidth={2} />
+                       <div className="w-24 h-24 bg-yellow-500 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.5)] -mt-16 mb-4 border-4 border-slate-800 ring-4 ring-yellow-500/20">
+                           <PackageOpen className="w-12 h-12 text-slate-900" strokeWidth={2} />
                        </div>
                        <h2 className="text-yellow-400 font-bold text-xs uppercase tracking-widest mb-1">
                            {isNewUnlock ? 'Upplåst!' : 'Avklarad Etapp'}
@@ -159,7 +177,7 @@ const StageRewardModal = ({ isOpen, onClose, level, stage, joint, isNewUnlock }:
                    </div>
 
                    {/* Exercises List */}
-                   <div className="bg-slate-900/60 rounded-2xl p-5 mb-6 text-left border border-slate-700/50">
+                   <div className="bg-slate-900/60 rounded-2xl p-5 mb-6 text-left border border-slate-700/50 relative z-10">
                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                            <Dumbbell className="w-3 h-3" /> Nya övningar i ditt schema
                        </h3>
@@ -168,34 +186,43 @@ const StageRewardModal = ({ isOpen, onClose, level, stage, joint, isNewUnlock }:
                            <div className="flex justify-center py-4"><Loader2 className="w-6 h-6 text-blue-500 animate-spin" /></div>
                        ) : exercises.length > 0 ? (
                            <div className="space-y-3">
-                               {exercises.map((ex, idx) => (
-                                   <div 
-                                     key={ex.id} 
-                                     className="flex items-center gap-3 animate-fade-in-right p-2 rounded-lg hover:bg-white/5 transition-colors"
-                                     style={{ animationDelay: `${idx * 100}ms` }}
-                                   >
-                                       {ex.imageUrl ? (
-                                           <img src={ex.imageUrl} className="w-10 h-10 rounded-lg object-cover bg-slate-800 border border-slate-700" alt="" />
-                                       ) : (
-                                           <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
-                                               <Star className="w-4 h-4 text-slate-600" />
+                               {exercises.map((ex, idx) => {
+                                   // Logic to pick the LAST image as thumbnail
+                                   const images = ex.imageUrls || (ex.imageUrl ? [ex.imageUrl] : []);
+                                   const thumbnail = images.length > 0 ? images[images.length - 1] : null;
+
+                                   return (
+                                       <div 
+                                         key={ex.id} 
+                                         className="flex items-center gap-3 animate-fade-in-right p-2 rounded-lg hover:bg-white/5 transition-colors"
+                                         style={{ animationDelay: `${idx * 100}ms` }}
+                                       >
+                                           {thumbnail ? (
+                                               <img src={thumbnail} className="w-10 h-10 rounded-lg object-cover bg-slate-800 border border-slate-700" alt="" />
+                                           ) : (
+                                               <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
+                                                   <Star className="w-4 h-4 text-slate-600" />
+                                               </div>
+                                           )}
+                                           <div className="flex-1 min-w-0">
+                                               <p className="text-sm font-bold text-white leading-tight truncate">{ex.title}</p>
+                                               <p className="text-[10px] text-slate-400 uppercase tracking-wide">{ex.category || 'Övning'}</p>
                                            </div>
-                                       )}
-                                       <div className="flex-1 min-w-0">
-                                           <p className="text-sm font-bold text-white leading-tight truncate">{ex.title}</p>
-                                           <p className="text-[10px] text-slate-400 uppercase tracking-wide">{ex.category || 'Övning'}</p>
                                        </div>
-                                   </div>
-                               ))}
+                                   );
+                               })}
                            </div>
                        ) : (
-                           <p className="text-sm text-slate-500 text-center py-2">Inga specifika övningar hittades.</p>
+                           <div className="text-center py-4">
+                               <p className="text-sm text-slate-400 mb-1">Inga specifika övningar hittades.</p>
+                               <p className="text-xs text-slate-600">Databas: {normalizeJoint(joint)}_{level} (Stage {stage})</p>
+                           </div>
                        )}
                    </div>
 
                    <button 
                      onClick={onClose}
-                     className="w-full py-4 bg-yellow-400 text-yellow-900 rounded-2xl font-black text-lg shadow-lg hover:bg-yellow-300 transition-colors flex items-center justify-center gap-2 transform active:scale-[0.98]"
+                     className="relative z-10 w-full py-4 bg-yellow-400 text-yellow-900 rounded-2xl font-black text-lg shadow-lg hover:bg-yellow-300 transition-colors flex items-center justify-center gap-2 transform active:scale-[0.98]"
                    >
                        <Check className="w-5 h-5" strokeWidth={3} /> Toppen, tack!
                    </button>
