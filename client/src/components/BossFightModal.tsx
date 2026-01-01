@@ -49,6 +49,8 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightM
   const questions = jointData[stableLevel] || [];
 
   // Reset state on open
+  // IMPORTANT: Do NOT include 'level' in dependency array. 
+  // If we do, the modal resets to INTRO when the user profile updates (level increments) during the SUCCESS phase.
   useEffect(() => {
     if (isOpen) {
       setPhase('INTRO');
@@ -56,7 +58,8 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightM
       setFailedQuestions([]);
       setStableLevel(level); // Capture the level at start of test
     }
-  }, [isOpen, level]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Fetch Videos based on Stable Level
   useEffect(() => {
