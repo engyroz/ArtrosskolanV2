@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Check, ArrowRight, AlertTriangle, ShieldCheck, Play, Award, RotateCcw } from 'lucide-react';
 import { BOSS_FIGHT_DATA, BOSS_FIGHT_TITLES, BossQuestion } from '../utils/textConstants';
 import BunnyPlayer from './BunnyPlayer';
@@ -30,38 +30,23 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightM
   const [introVideoId, setIntroVideoId] = useState<string | undefined>(undefined);
   const [levelUpVideoId, setLevelUpVideoId] = useState<string | undefined>(undefined);
 
-  // Normalize joint string to match data keys
-  const normalizedJoint = (joint || 'knee').toLowerCase().replace('ä', 'a').replace('ö', 'o');
-  // Fallback to knee if data missing
-  const jointData = BOSS_FIGHT_DATA[normalizedJoint] || BOSS_FIGHT_DATA['knee'];
-  const questions = jointData[level] || [];
+  // Capture level when modal opens to prevent content switching during "Level Up" db updates
+  const [stableLevel, setStableLevel] = useState(level);
 
-  // Fetch Videos
-  useEffect(() => {
-    if (isOpen && joint && level) {
-        const fetchVideos = async () => {
-            const jointKey = normalizedJoint;
-            try {
-                // 1. Fetch Current Level (Boss Fight Intro)
-                const currentDocId = `${jointKey}_${level}`;
-                const currentDoc = await db.collection('levels').doc(currentDocId).get();
-                if (currentDoc.exists) {
-                    setIntroVideoId(currentDoc.data()?.bossIntroVideoId);
-                }
+  // Helper to match DB naming convention
+  const normalizeJoint = (j: string) => {
+      const lower = (j || '').toLowerCase();
+      if (lower.includes('knä') || lower.includes('knee') || lower.includes('kna')) return 'knee';
+      if (lower.includes('höft') || lower.includes('hip') || lower.includes('hoft')) return 'hip';
+      if (lower.includes('axel') || lower.includes('shoulder')) return 'shoulder';
+      return 'knee'; // Fallback
+  };
 
-                // 2. Fetch Next Level (Level Up Intro)
-                const nextDocId = `${jointKey}_${level + 1}`;
-                const nextDoc = await db.collection('levels').doc(nextDocId).get();
-                if (nextDoc.exists) {
-                    setLevelUpVideoId(nextDoc.data()?.levelIntroVideoId);
-                }
-            } catch (e) {
-                console.error("Video fetch error", e);
-            }
-        };
-        fetchVideos();
-    }
-  }, [isOpen, joint, level, normalizedJoint]);
+  const jointKey = normalizeJoint(joint);
+  
+  // Get Data based on stable level
+  const jointData = BOSS_FIGHT_DATA[jointKey] || BOSS_FIGHT_DATA['knee'];
+  const questions = jointData[stableLevel] || [];
 
   // Reset state on open
   useEffect(() => {
@@ -69,8 +54,41 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightM
       setPhase('INTRO');
       setCurrentQuestionIndex(0);
       setFailedQuestions([]);
+      setStableLevel(level); // Capture the level at start of test
     }
-  }, [isOpen]);
+  }, [isOpen, level]);
+
+  // Fetch Videos based on Stable Level
+  useEffect(() => {
+    if (isOpen && jointKey && stableLevel) {
+        const fetchVideos = async () => {
+            try {
+                // 1. Fetch Current Level (Boss Fight Intro)
+                const currentDocId = `${jointKey}_${stableLevel}`;
+                const currentDoc = await db.collection('levels').doc(currentDocId).get();
+                if (currentDoc.exists) {
+                    setIntroVideoId(currentDoc.data()?.bossIntroVideoId);
+                } else {
+                    setIntroVideoId(undefined);
+                }
+
+                // 2. Fetch Next Level (Level Up Intro) - The video to show upon success
+                // We show the intro for the level they just unlocked
+                const nextLevel = stableLevel + 1;
+                const nextDocId = `${jointKey}_${nextLevel}`;
+                const nextDoc = await db.collection('levels').doc(nextDocId).get();
+                if (nextDoc.exists) {
+                    setLevelUpVideoId(nextDoc.data()?.levelIntroVideoId);
+                } else {
+                    setLevelUpVideoId(undefined);
+                }
+            } catch (e) {
+                console.error("Video fetch error", e);
+            }
+        };
+        fetchVideos();
+    }
+  }, [isOpen, jointKey, stableLevel]);
 
   if (!isOpen) return null;
 
@@ -110,7 +128,7 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightM
     if (user && !isSaving) {
         setIsSaving(true);
         try {
-            const nextLevel = level + 1;
+            const nextLevel = stableLevel + 1;
             await db.collection('users').doc(user.uid).update({
                 currentLevel: nextLevel,
                 "progression.experiencePoints": 0,
@@ -143,9 +161,9 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightM
             {introVideoId ? (
                 <BunnyPlayer videoId={introVideoId} title="Boss Fight Intro" />
             ) : (
-                <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                <div className="flex flex-col items-center justify-center h-full text-slate-500 bg-slate-100">
                     <Play className="w-12 h-12 mb-2 opacity-50" />
-                    <p>Intro Video</p>
+                    <p className="text-xs font-bold uppercase tracking-wider">Video saknas</p>
                 </div>
             )}
         </div>
@@ -155,7 +173,7 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightM
                 <ShieldCheck className="w-8 h-8 text-yellow-600" />
              </div>
              <h2 className="text-3xl font-black text-slate-900 mb-4 uppercase tracking-tight">
-                Nivåtest {level}
+                Nivåtest {stableLevel}
              </h2>
              <p className="text-slate-600 mb-8 max-w-sm leading-relaxed">
                 Är du redo för nästa nivå? Se videon ovan och svara ärligt på frågorna för att säkerställa att kroppen håller.
@@ -196,7 +214,7 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightM
                     </div>
 
                     <h3 className="text-2xl font-bold text-slate-900 mb-auto leading-tight">
-                        {question.text}
+                        {question ? question.text : "Laddar fråga..."}
                     </h3>
 
                     <div className="grid grid-cols-2 gap-4 mt-8">
@@ -242,10 +260,10 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightM
              </div>
              
              <h1 className="text-4xl font-black mb-2 leading-none text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-white to-yellow-200">
-                {BOSS_FIGHT_TITLES[level as keyof typeof BOSS_FIGHT_TITLES] || "Mästare"}
+                {BOSS_FIGHT_TITLES[stableLevel as keyof typeof BOSS_FIGHT_TITLES] || "Mästare"}
              </h1>
              <p className="text-slate-400 font-medium mb-8">
-                Du har bemästrat nivå {level} och är nu redo för nya utmaningar.
+                Du har bemästrat nivå {stableLevel} och är nu redo för nya utmaningar.
              </p>
 
              {/* Unlocks */}
@@ -264,7 +282,7 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightM
                         <div className="w-6 h-6 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center">
                             <Check className="w-3 h-3" />
                         </div>
-                        Fas {level + 1} Utbildning
+                        Fas {stableLevel + 1} Utbildning
                     </li>
                 </ul>
              </div>
