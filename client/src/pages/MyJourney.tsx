@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Flag, X, Gift, AlertCircle, CheckCircle } from 'lucide-react';
 import { getMaxXP } from '../utils/progressionEngine';
@@ -22,7 +22,8 @@ const getLevelFocus = (level: number) => {
   }
 };
 
-const MyJourney = ({ history }: RouteComponentProps) => {
+const MyJourney = () => {
+  const navigate = useNavigate();
   const { userProfile, user, refreshProfile } = useAuth();
   
   // State for modals
@@ -64,7 +65,7 @@ const MyJourney = ({ history }: RouteComponentProps) => {
 
   const handleBossSuccess = () => {
       setShowBossModal(false);
-      history.push('/dashboard'); 
+      navigate('/dashboard'); 
   };
 
   const handleChestClick = async (stage: number, status: 'locked' | 'unlocked' | 'opened') => {
@@ -169,4 +170,4 @@ const MyJourney = ({ history }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(MyJourney);
+export default MyJourney;

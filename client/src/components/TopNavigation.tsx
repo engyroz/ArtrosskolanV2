@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
-import { withRouter, RouteComponentProps, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import { Activity, User, LogOut, Settings, HelpCircle, UserCircle, ShieldAlert, Wrench } from 'lucide-react';
 
-const TopNavigation = ({ history, location }: RouteComponentProps) => {
+const TopNavigation = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user, userProfile, logout } = useAuth();
   const { toggleDebug, isDebugVisible } = useTime();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -22,11 +24,11 @@ const TopNavigation = ({ history, location }: RouteComponentProps) => {
       if (location.pathname === '/dashboard') {
         window.location.reload(); 
       } else {
-        history.push('/dashboard');
+        navigate('/dashboard');
       }
     } else {
       // Scenario 2: Public -> Go to Landing
-      history.push('/');
+      navigate('/');
     }
   };
 
@@ -34,7 +36,7 @@ const TopNavigation = ({ history, location }: RouteComponentProps) => {
     try {
       await logout();
       setShowProfileMenu(false);
-      history.push('/');
+      navigate('/');
     } catch (error) {
       console.error("Logout failed", error);
     }
@@ -149,4 +151,4 @@ const TopNavigation = ({ history, location }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(TopNavigation);
+export default TopNavigation;

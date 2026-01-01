@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight, Activity, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { 
   getAssessmentState,
@@ -12,7 +12,9 @@ import { JointType, Question } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
 
-const Assessment = ({ history, location }: RouteComponentProps) => {
+const Assessment = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const { user, refreshProfile } = useAuth();
   
@@ -67,7 +69,7 @@ const Assessment = ({ history, location }: RouteComponentProps) => {
 
             await userRef.set(payload, { merge: true });
             await refreshProfile();
-            history.push('/dashboard');
+            navigate('/dashboard');
         } else {
             console.log("User is anonymous. Saving to LocalStorage...");
             saveAssessmentToStorage({
@@ -80,7 +82,7 @@ const Assessment = ({ history, location }: RouteComponentProps) => {
             });
 
             setTimeout(() => {
-                history.push('/results');
+                navigate('/results');
             }, 500); 
         }
     } catch (error) {
@@ -329,4 +331,4 @@ const Assessment = ({ history, location }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(Assessment);
+export default Assessment;

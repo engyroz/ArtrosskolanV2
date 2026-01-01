@@ -1,20 +1,21 @@
 
 import React, { useState } from 'react';
-import { withRouter, RouteComponentProps, Redirect, Link } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { auth } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
-const Login = ({ history }: RouteComponentProps) => {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   
   const { user } = useAuth();
 
   if (user) {
-    return <Redirect to="/dashboard" />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,7 +25,7 @@ const Login = ({ history }: RouteComponentProps) => {
 
     try {
       await auth.signInWithEmailAndPassword(email, password);
-      history.push('/dashboard');
+      navigate('/dashboard');
     } catch (err: any) {
       setError('Fel e-post eller lösenord.');
     } finally {
@@ -85,4 +86,4 @@ const Login = ({ history }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(Login);
+export default Login;

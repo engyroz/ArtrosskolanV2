@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { HashRouter as Router, Switch, Route, Redirect, withRouter, RouteComponentProps } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import TopNavigation from './components/TopNavigation';
 import BottomNavigation from './components/BottomNavigation';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -23,12 +23,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import TimeTravelDebug from './components/TimeTravelDebug';
 import ProgressionDebug from './components/ProgressionDebug';
 
-interface LayoutProps extends RouteComponentProps {
-  children?: React.ReactNode;
-}
-
-const LayoutBase = ({ children, location }: LayoutProps) => {
+const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
+  const location = useLocation();
   
   // App routes where Bottom Nav should appear
   const isAppRoute = ['/dashboard', '/calendar', '/journey', '/knowledge', '/profile'].includes(location.pathname);
@@ -49,81 +46,79 @@ const LayoutBase = ({ children, location }: LayoutProps) => {
   );
 };
 
-const Layout = withRouter(LayoutBase);
-
 const App: React.FC = () => {
   return (
     <TimeProvider>
       <AuthProvider>
         <Router>
           <Layout>
-            <Switch>
-              <Route exact path="/" component={Landing} />
-              <Route path="/assessment" component={Assessment} />
-              <Route path="/results" component={Results} />
-              <Route path="/register" component={Register} />
-              <Route path="/login" component={Login} />
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/assessment" element={<Assessment />} />
+              <Route path="/results" element={<Results />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/login" element={<Login />} />
 
-              <Route path="/payment" render={() => (
+              <Route path="/payment" element={
                 <ProtectedRoute>
                   <Payment />
                 </ProtectedRoute>
-              )} />
+              } />
 
-              <Route path="/dashboard" render={() => (
+              <Route path="/dashboard" element={
                 <ProtectedRoute requireSubscription={true}>
                   <Dashboard />
                 </ProtectedRoute>
-              )} />
+              } />
 
-              <Route path="/calendar" render={() => (
+              <Route path="/calendar" element={
                 <ProtectedRoute requireSubscription={true}>
                   <CalendarDiary />
                 </ProtectedRoute>
-              )} />
+              } />
 
-              <Route path="/journey" render={() => (
+              <Route path="/journey" element={
                 <ProtectedRoute requireSubscription={true}>
                   <MyJourney />
                 </ProtectedRoute>
-              )} />
+              } />
 
-              <Route path="/knowledge" render={() => (
+              <Route path="/knowledge" element={
                 <ProtectedRoute requireSubscription={true}>
                   <KnowledgeBase />
                 </ProtectedRoute>
-              )} />
+              } />
 
-              <Route path="/settings" render={() => (
+              <Route path="/settings" element={
                 <ProtectedRoute>
                   <Settings />
                 </ProtectedRoute>
-              )} />
+              } />
 
-              <Route path="/admin" render={() => (
+              <Route path="/admin" element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminTools />
                 </ProtectedRoute>
-              )} />
+              } />
 
-              <Route path="/workout" render={() => (
+              <Route path="/workout" element={
                 <ProtectedRoute requireSubscription={true}>
                   <WorkoutPlayer />
                 </ProtectedRoute>
-              )} />
+              } />
 
-              <Route path="/summary" render={() => (
+              <Route path="/summary" element={
                 <ProtectedRoute requireSubscription={true}>
                   <WorkoutSummary />
                 </ProtectedRoute>
-              )} />
+              } />
               
               {/* Legacy redirects */}
-              <Redirect from="/plan" to="/calendar" />
-              <Redirect from="/progress" to="/journey" />
-              <Redirect from="/profile" to="/settings" /> 
+              <Route path="/plan" element={<Navigate to="/calendar" replace />} />
+              <Route path="/progress" element={<Navigate to="/journey" replace />} />
+              <Route path="/profile" element={<Navigate to="/settings" replace />} />
 
-            </Switch>
+            </Routes>
           </Layout>
         </Router>
       </AuthProvider>

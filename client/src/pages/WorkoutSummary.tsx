@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, ArrowRight, Lock, Map, Video, Zap, Star, Package } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,7 +18,9 @@ interface LocationState {
   newStage?: number; // New
 }
 
-const WorkoutSummary = ({ history, location }: RouteComponentProps) => {
+const WorkoutSummary = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { userProfile } = useAuth();
   
   const state = location.state as LocationState;
@@ -31,9 +33,9 @@ const WorkoutSummary = ({ history, location }: RouteComponentProps) => {
   // Safety check: redirect if no state (direct access)
   useEffect(() => {
     if (!state) {
-      history.push('/dashboard');
+      navigate('/dashboard');
     }
-  }, [state, history]);
+  }, [state, navigate]);
 
   if (!state || !userProfile) return null;
 
@@ -278,14 +280,14 @@ const WorkoutSummary = ({ history, location }: RouteComponentProps) => {
       {/* 3. CTA */}
       {state.stageUp ? (
          <button 
-           onClick={() => history.push('/journey')}
+           onClick={() => navigate('/journey')}
            className="w-full max-w-md py-4 bg-yellow-400 text-yellow-900 rounded-2xl font-black text-lg shadow-[0_0_20px_rgba(250,204,21,0.5)] hover:bg-yellow-300 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 z-10 animate-pulse delay-500"
          >
            Gå till kartan för att hämta belöning <ArrowRight className="w-6 h-6" />
          </button>
       ) : (
          <button 
-           onClick={() => history.push('/dashboard')}
+           onClick={() => navigate('/dashboard')}
            className="w-full max-w-md py-4 bg-white text-slate-900 rounded-2xl font-black text-lg shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:bg-slate-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 z-10 animate-fade-in delay-500"
          >
            Tillbaka till Dashboard <ArrowRight className="w-6 h-6" />
@@ -296,4 +298,4 @@ const WorkoutSummary = ({ history, location }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(WorkoutSummary);
+export default WorkoutSummary;

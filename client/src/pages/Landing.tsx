@@ -1,17 +1,19 @@
 
 import React from 'react';
-import { withRouter, RouteComponentProps, Redirect } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { ArrowRight, Activity, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const Landing = ({ history, location }: RouteComponentProps) => {
+const Landing = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const jointParam = searchParams.get('joint');
 
   // 1. Redirect if logged in
   if (user && !loading) {
-    return <Redirect to="/dashboard" />;
+    return <Navigate to="/dashboard" replace />;
   }
   
   // Optional: Show loading spinner while auth check completes
@@ -32,7 +34,7 @@ const Landing = ({ history, location }: RouteComponentProps) => {
   const content = getContent();
 
   const startAssessment = () => {
-    history.push(jointParam ? `/assessment?joint=${jointParam}` : '/assessment');
+    navigate(jointParam ? `/assessment?joint=${jointParam}` : '/assessment');
   };
 
   return (
@@ -91,4 +93,4 @@ const Landing = ({ history, location }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(Landing);
+export default Landing;

@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Redirect, withRouter, RouteComponentProps } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-interface ProtectedRouteProps extends RouteComponentProps {
-  children?: React.ReactNode;
+interface ProtectedRouteProps {
+  children: React.ReactElement;
   requireOnboarding?: boolean;
   requireSubscription?: boolean;
   requiredRole?: string;
@@ -14,10 +14,10 @@ const ProtectedRoute = ({
   children, 
   requireOnboarding = false, 
   requireSubscription = false,
-  requiredRole,
-  location
+  requiredRole
 }: ProtectedRouteProps) => {
   const { user, userProfile, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -29,7 +29,7 @@ const ProtectedRoute = ({
 
   // 1. Must be logged in
   if (!user) {
-    return <Redirect to={{ pathname: "/", state: { from: location } }} />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // 2. Profile must be loaded
@@ -43,30 +43,30 @@ const ProtectedRoute = ({
 
   // 3. Role Check
   if (requiredRole && userProfile.role !== requiredRole) {
-    return <Redirect to="/dashboard" />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // 4. Subscription Check
   if (requireSubscription && userProfile.subscriptionStatus !== 'active') {
-    return <Redirect to="/payment" />;
+    return <Navigate to="/payment" replace />;
   }
 
   // 5. Onboarding Check
   if (requireOnboarding && !userProfile.onboardingCompleted) {
-    return <Redirect to="/assessment" />;
+    return <Navigate to="/assessment" replace />;
   }
 
   // Special Case: If we are ON the assessment page, but already finished it
   if (location.pathname === '/assessment' && userProfile.onboardingCompleted) {
-    return <Redirect to="/dashboard" />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Special Case: If we are ON the payment page, but already active
   if (location.pathname === '/payment' && userProfile.subscriptionStatus === 'active') {
-    return <Redirect to="/dashboard" />;
+    return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>;
+  return children;
 };
 
-export default withRouter(ProtectedRoute);
+export default ProtectedRoute;

@@ -1,21 +1,22 @@
 
 import React from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Bell, Shield, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const Settings = ({ history }: RouteComponentProps) => {
+const Settings = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
-    history.push('/');
+    navigate('/');
   };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <div className="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-10 flex items-center">
-        <button onClick={() => history.goBack()} className="mr-4 p-2 -ml-2 rounded-full hover:bg-slate-100">
+        <button onClick={() => navigate(-1)} className="mr-4 p-2 -ml-2 rounded-full hover:bg-slate-100">
             <ArrowLeft className="h-6 w-6 text-slate-600" />
         </button>
         <h1 className="text-xl font-bold text-slate-900">Inställningar</h1>
@@ -65,4 +66,4 @@ const Settings = ({ history }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(Settings);
+export default Settings;

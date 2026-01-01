@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import { WorkoutLog } from '../types';
 import { Play, CheckCircle, Clock, XCircle, Dumbbell, Activity, Check, Lock, Coffee, BookOpen, Edit2, Save } from 'lucide-react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ACTION_CARD_CONFIG } from '../utils/textConstants';
 
-interface DayDetailCardProps extends RouteComponentProps {
+interface DayDetailCardProps {
   date: Date;
   log?: WorkoutLog; 
   isToday: boolean;
@@ -19,7 +19,6 @@ interface DayDetailCardProps extends RouteComponentProps {
 }
 
 const DayDetailCard = ({ 
-  history, 
   date, 
   log, 
   isToday, 
@@ -31,6 +30,7 @@ const DayDetailCard = ({
   onSaveNote, 
   level = 1 
 }: DayDetailCardProps) => {
+  const navigate = useNavigate();
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteText, setNoteText] = useState(log?.userNote || '');
 
@@ -192,7 +192,7 @@ const DayDetailCard = ({
 
                     {isToday ? (
                         <button 
-                            onClick={() => history.push('/dashboard')}
+                            onClick={() => navigate('/dashboard')}
                             className="px-5 py-2.5 bg-white text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-lg flex items-center"
                         >
                             Starta <Play className="w-3.5 h-3.5 ml-1.5 fill-current" />
@@ -231,7 +231,7 @@ const DayDetailCard = ({
                       </div>
                   ) : (
                       <button 
-                        onClick={() => history.push('/knowledge')}
+                        onClick={() => navigate('/knowledge')}
                         className="inline-flex items-center px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-colors"
                       >
                           <BookOpen className="w-4 h-4 mr-2 text-slate-400" />
@@ -277,4 +277,4 @@ const DayDetailCard = ({
   );
 };
 
-export default withRouter(DayDetailCard);
+export default DayDetailCard;

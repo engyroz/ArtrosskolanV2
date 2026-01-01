@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Database, Layout, ShieldAlert, Eye, Video, Film } from 'lucide-react';
 import DatabaseResetTool from '../components/admin/DatabaseResetTool';
 import ImageManagerTool from '../components/admin/ImageManagerTool';
@@ -9,7 +9,8 @@ import ExercisePreviewTool from '../components/admin/ExercisePreviewTool';
 import LectureManagerTool from '../components/admin/LectureManagerTool';
 import LevelVideoManagerTool from '../components/admin/LevelVideoManagerTool';
 
-const AdminTools = ({ history }: RouteComponentProps) => {
+const AdminTools = () => {
+  const navigate = useNavigate();
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
   const handleToolClick = (toolName: string) => {
@@ -139,7 +140,7 @@ const AdminTools = ({ history }: RouteComponentProps) => {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <div className="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-10 flex items-center">
-        <button onClick={() => history.push('/dashboard')} className="mr-4 p-2 -ml-2 rounded-full hover:bg-slate-100">
+        <button onClick={() => navigate('/dashboard')} className="mr-4 p-2 -ml-2 rounded-full hover:bg-slate-100">
             <ArrowLeft className="h-6 w-6 text-slate-600" />
         </button>
         <div className="flex items-center gap-2">
@@ -168,4 +169,4 @@ const AdminTools = ({ history }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(AdminTools);
+export default AdminTools;

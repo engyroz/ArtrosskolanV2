@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Calendar, { CalendarMarker } from '../components/Calendar';
 import DayDetailCard from '../components/DayDetailCard';
 import { WorkoutLog, SessionStatus, ActivityLogEntry } from '../types';
@@ -11,7 +11,8 @@ import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
 import { PHYSICAL_ACTIVITY_TASKS } from '../utils/textConstants';
 
-const CalendarDiary = ({ history }: RouteComponentProps) => {
+const CalendarDiary = () => {
+  const navigate = useNavigate();
   const { userProfile, user, refreshProfile } = useAuth();
   const { currentDate: today } = useTime();
   
@@ -96,7 +97,7 @@ const CalendarDiary = ({ history }: RouteComponentProps) => {
   const selectedLog = logs.find(l => l.date === toLocalISOString(selectedDate));
   
   const handleStartRehab = () => {
-      history.push('/dashboard'); 
+      navigate('/dashboard'); 
   };
 
   const handleToggleActivity = async () => {
@@ -190,4 +191,4 @@ const CalendarDiary = ({ history }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(CalendarDiary);
+export default CalendarDiary;

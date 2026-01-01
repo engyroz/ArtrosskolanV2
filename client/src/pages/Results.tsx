@@ -1,22 +1,23 @@
 
 import React, { useEffect, useState } from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Lock, Calendar, ChevronDown, ArrowRight, Activity } from 'lucide-react';
 import { getAssessmentFromStorage } from '../utils/assessmentEngine';
 import { contentConfig } from '../utils/contentConfig';
 import { AssessmentData } from '../types';
 
-const Results = ({ history }: RouteComponentProps) => {
+const Results = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<AssessmentData | null>(null);
 
   useEffect(() => {
     const stored = getAssessmentFromStorage();
     if (!stored) {
-        history.push('/'); // Redirect if no assessment found
+        navigate('/'); // Redirect if no assessment found
     } else {
         setData(stored);
     }
-  }, [history]);
+  }, [navigate]);
 
   if (!data || !data.programConfig) return null;
 
@@ -121,7 +122,7 @@ const Results = ({ history }: RouteComponentProps) => {
         {/* 5. CTA */}
         <div className="text-center pb-24">
             <button 
-                onClick={() => history.push('/register')}
+                onClick={() => navigate('/register')}
                 className="w-full sm:w-auto px-10 py-5 bg-blue-600 text-white rounded-xl font-bold text-xl shadow-xl hover:bg-blue-700 hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center mx-auto"
             >
                 Starta min plan & spara konto <ArrowRight className="ml-3 h-6 w-6" />
@@ -134,4 +135,4 @@ const Results = ({ history }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(Results);
+export default Results;

@@ -1,9 +1,12 @@
 
 import React from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Calendar, Map, BookOpen } from 'lucide-react';
 
-const BottomNavigation = ({ history, location }: RouteComponentProps) => {
+const BottomNavigation = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   if (location.pathname === '/workout') return null;
 
   const tabs = [
@@ -21,7 +24,7 @@ const BottomNavigation = ({ history, location }: RouteComponentProps) => {
           return (
             <button
               key={tab.id}
-              onClick={() => history.push(tab.path)}
+              onClick={() => navigate(tab.path)}
               className={`flex flex-col items-center justify-center w-16 h-14 space-y-1 transition-colors ${
                 isActive ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
               }`}
@@ -36,4 +39,4 @@ const BottomNavigation = ({ history, location }: RouteComponentProps) => {
   );
 };
 
-export default withRouter(BottomNavigation);
+export default BottomNavigation;
