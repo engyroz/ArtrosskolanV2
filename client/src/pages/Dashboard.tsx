@@ -41,6 +41,7 @@ const Dashboard = () => {
 
   const userProfileHistory = userProfile?.activityHistory || [];
   const currentLevel = userProfile?.currentLevel || 1;
+  const userJoint = userProfile?.program?.joint || 'Knä';
   const selectedDateStr = toLocalISOString(today);
   
   const rehabLog = userProfileHistory.find(h => h.date === selectedDateStr && h.type === 'rehab');
@@ -247,6 +248,7 @@ const Dashboard = () => {
         onClose={() => setShowBossFight(false)}
         onSuccess={handleBossFightSuccess}
         level={currentLevel}
+        joint={userJoint}
       />
 
       {/* Header */}

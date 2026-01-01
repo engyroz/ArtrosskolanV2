@@ -9,6 +9,9 @@ const env = (import.meta as any).env;
 export const BUNNY_LIBRARY_ID = env.VITE_BUNNY_LIBRARY_ID || ''; 
 export const BUNNY_PULL_ZONE = env.VITE_BUNNY_PULL_ZONE || ''; 
 
+// Fallback/Generic Videos
+export const GENERIC_VICTORY_VIDEO_ID = '9a3e8e32-7849-4e27-8b59-4f3f237e606e'; // Using Intro as placeholder, ideally replace with specific confetti video
+
 export const contentConfig = {
   diagnosisTexts: {
     1: {
