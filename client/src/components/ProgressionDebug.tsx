@@ -5,7 +5,7 @@ import { useTime } from '../contexts/TimeContext';
 import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
 import { getMaxXP } from '../utils/progressionEngine';
-import { Wrench, Package, Swords, RefreshCw, Loader2, Unlock } from 'lucide-react';
+import { Wrench, Package, Swords, RefreshCw, Loader2, Unlock, Rewind } from 'lucide-react';
 
 const ProgressionDebug = () => {
   const { user, userProfile, refreshProfile } = useAuth();
@@ -84,6 +84,18 @@ const ProgressionDebug = () => {
     }, [`${currentLevel}_2`, `${currentLevel}_3`]); // Reset all chests for this level
   };
 
+  const goToPreviousLevel = () => {
+    if (currentLevel <= 1) return;
+    
+    updateProgression({
+        currentLevel: currentLevel - 1,
+        "progression.experiencePoints": 0,
+        "progression.currentStage": 1,
+        "progression.levelMaxedOut": false,
+        "progression.currentPhase": 1
+    });
+  };
+
   return (
     <div className="fixed bottom-4 left-4 z-[100] animate-fade-in">
       <div className="bg-slate-900/90 backdrop-blur-md text-slate-200 p-4 rounded-xl border border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.3)] w-64">
@@ -142,14 +154,27 @@ const ProgressionDebug = () => {
 
           <div className="h-px bg-slate-700 my-1"></div>
 
-          <button 
-            onClick={resetLevel}
-            disabled={loading}
-            className="flex items-center justify-center gap-2 px-3 py-2 bg-red-900/30 hover:bg-red-900/50 text-red-200 rounded-lg text-xs font-bold transition-colors"
-          >
-            <RefreshCw className="w-3 h-3" />
-            Reset Level Progress
-          </button>
+          <div className="flex gap-2">
+            <button 
+                onClick={resetLevel}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 px-2 py-2 bg-red-900/30 hover:bg-red-900/50 text-red-200 rounded-lg text-xs font-bold transition-colors"
+                title="Reset current level"
+            >
+                <RefreshCw className="w-3 h-3" />
+                Reset
+            </button>
+
+            <button 
+                onClick={goToPreviousLevel}
+                disabled={loading || currentLevel <= 1}
+                className="flex-1 flex items-center justify-center gap-2 px-2 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                title="Go to previous level"
+            >
+                <Rewind className="w-3 h-3" />
+                Prev Lvl
+            </button>
+          </div>
 
         </div>
       </div>
