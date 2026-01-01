@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Flag, X, Gift, AlertCircle, CheckCircle } from 'lucide-react';
+import { Flag } from 'lucide-react';
 import { getMaxXP } from '../utils/progressionEngine';
 import { LEVEL_DESCRIPTIONS } from '../utils/contentConfig';
 import MapTimeline from '../components/MapTimeline';
 import BossFightModal from '../components/BossFightModal';
-import StageRewardModal from '../components/StageRewardModal'; // New Import
+import StageRewardModal from '../components/StageRewardModal';
 import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
 
@@ -28,7 +28,6 @@ const MyJourney = () => {
   
   // State for modals
   const [showBossModal, setShowBossModal] = useState(false);
-  const [bossVideoId, setBossVideoId] = useState<string | undefined>(undefined);
   
   // New Modal State for Stage Rewards
   const [rewardModal, setRewardModal] = useState<{
@@ -57,28 +56,6 @@ const MyJourney = () => {
 
   const currentXP = userProfile?.progression?.experiencePoints || 0;
   const maxXP = getMaxXP(currentLevel);
-
-  // Fetch Boss Video Config
-  useEffect(() => {
-    const fetchVideoConfig = async () => {
-        const jointKey = (userJoint || 'knee').toLowerCase().replace('ä','a').replace('ö','o');
-        const docId = `${jointKey}_${currentLevel}`;
-        try {
-            const doc = await db.collection('levels').doc(docId).get();
-            if (doc.exists) {
-                const data = doc.data();
-                if (data?.bossIntroVideoId) {
-                    setBossVideoId(data.bossIntroVideoId);
-                }
-            }
-        } catch (e) {
-            console.error("Failed to fetch level config", e);
-        }
-    };
-    if (showBossModal) {
-        fetchVideoConfig();
-    }
-  }, [showBossModal, userJoint, currentLevel]);
 
   // --- HANDLERS ---
 
@@ -177,7 +154,6 @@ const MyJourney = () => {
         onSuccess={handleBossSuccess}
         level={currentLevel}
         joint={userJoint}
-        introVideoId={bossVideoId}
       />
 
       {/* New Stage Reward Modal */}

@@ -197,25 +197,9 @@ const Dashboard = () => {
       }
   };
 
-  const handleBossFightSuccess = async () => {
-    if (!userProfile) return;
-    try {
-        const nextLevel = userProfile.currentLevel + 1;
-        const userRef = db.collection('users').doc(userProfile.uid);
-        
-        // Reset Progression for next level
-        await userRef.update({
-            currentLevel: nextLevel,
-            "progression.experiencePoints": 0,
-            "progression.currentStage": 1,
-            "progression.levelMaxedOut": false,
-            "progression.currentPhase": 1,
-            // exerciseProgress is kept to track historical max weights if needed, 
-            // or could be cleared if completely fresh start desired.
-        });
-        await refreshProfile();
-        setShowBossFight(false);
-    } catch (e) { console.error(e); }
+  const handleBossFightSuccess = () => {
+      // The modal handles DB updates internally now.
+      setShowBossFight(false);
   };
 
   const levelConfig = ACTION_CARD_CONFIG[currentLevel as keyof typeof ACTION_CARD_CONFIG] || ACTION_CARD_CONFIG[1];

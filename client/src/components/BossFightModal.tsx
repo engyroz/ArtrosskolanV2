@@ -14,12 +14,11 @@ interface BossFightModalProps {
   onSuccess: () => void;
   level: number;
   joint: string;
-  introVideoId?: string;
 }
 
 type Phase = 'INTRO' | 'TESTING' | 'SUCCESS' | 'FAILURE';
 
-const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint, introVideoId }: BossFightModalProps) => {
+const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint }: BossFightModalProps) => {
   const { user, refreshProfile } = useAuth();
   
   const [phase, setPhase] = useState<Phase>('INTRO');
@@ -27,11 +26,42 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint, introVideoId
   const [failedQuestions, setFailedQuestions] = useState<BossQuestion[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Video State
+  const [introVideoId, setIntroVideoId] = useState<string | undefined>(undefined);
+  const [levelUpVideoId, setLevelUpVideoId] = useState<string | undefined>(undefined);
+
   // Normalize joint string to match data keys
   const normalizedJoint = (joint || 'knee').toLowerCase().replace('ä', 'a').replace('ö', 'o');
   // Fallback to knee if data missing
   const jointData = BOSS_FIGHT_DATA[normalizedJoint] || BOSS_FIGHT_DATA['knee'];
   const questions = jointData[level] || [];
+
+  // Fetch Videos
+  useEffect(() => {
+    if (isOpen && joint && level) {
+        const fetchVideos = async () => {
+            const jointKey = normalizedJoint;
+            try {
+                // 1. Fetch Current Level (Boss Fight Intro)
+                const currentDocId = `${jointKey}_${level}`;
+                const currentDoc = await db.collection('levels').doc(currentDocId).get();
+                if (currentDoc.exists) {
+                    setIntroVideoId(currentDoc.data()?.bossIntroVideoId);
+                }
+
+                // 2. Fetch Next Level (Level Up Intro)
+                const nextDocId = `${jointKey}_${level + 1}`;
+                const nextDoc = await db.collection('levels').doc(nextDocId).get();
+                if (nextDoc.exists) {
+                    setLevelUpVideoId(nextDoc.data()?.levelIntroVideoId);
+                }
+            } catch (e) {
+                console.error("Video fetch error", e);
+            }
+        };
+        fetchVideos();
+    }
+  }, [isOpen, joint, level, normalizedJoint]);
 
   // Reset state on open
   useEffect(() => {
@@ -41,14 +71,6 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint, introVideoId
       setFailedQuestions([]);
     }
   }, [isOpen]);
-
-  // Persist state (basic)
-  useEffect(() => {
-    if (isOpen && user && phase === 'TESTING') {
-       // Ideally save to DB here, but for simplicity we keep local
-       // If strict persistence required: db.collection('users').doc(user.uid).update({ bossFightIndex: currentQuestionIndex })
-    }
-  }, [currentQuestionIndex, phase, isOpen, user]);
 
   if (!isOpen) return null;
 
@@ -204,9 +226,12 @@ const BossFightModal = ({ isOpen, onClose, onSuccess, level, joint, introVideoId
 
   const renderSuccess = () => (
     <div className="flex flex-col h-full bg-slate-900 text-white relative overflow-hidden">
-         {/* Victory Video */}
+         {/* Victory Video (Level Up Intro) */}
          <div className="w-full aspect-video bg-black z-10">
-            <BunnyPlayer videoId={GENERIC_VICTORY_VIDEO_ID} title="Victory!" />
+            <BunnyPlayer 
+                videoId={levelUpVideoId || GENERIC_VICTORY_VIDEO_ID} 
+                title="Level Up!" 
+            />
          </div>
 
          <div className="flex-1 p-8 flex flex-col items-center text-center z-10 overflow-y-auto">
