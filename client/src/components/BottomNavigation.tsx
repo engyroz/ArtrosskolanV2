@@ -1,18 +1,16 @@
+
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Calendar, Map, BookOpen } from 'lucide-react'; // Changed User icon to BookOpen for Kunskap
+import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { Home, Calendar, Map, BookOpen } from 'lucide-react';
 
-const BottomNavigation = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
+const BottomNavigation = ({ history, location }: RouteComponentProps) => {
   if (location.pathname === '/workout') return null;
 
   const tabs = [
     { id: 'dashboard', label: 'Idag', icon: Home, path: '/dashboard' },
     { id: 'calendar', label: 'Kalender', icon: Calendar, path: '/calendar' },
     { id: 'journey', label: 'Resan', icon: Map, path: '/journey' },
-    { id: 'knowledge', label: 'Kunskap', icon: BookOpen, path: '/knowledge' }, // New Tab 4
+    { id: 'knowledge', label: 'Kunskap', icon: BookOpen, path: '/knowledge' },
   ];
 
   return (
@@ -23,7 +21,7 @@ const BottomNavigation = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => navigate(tab.path)}
+              onClick={() => history.push(tab.path)}
               className={`flex flex-col items-center justify-center w-16 h-14 space-y-1 transition-colors ${
                 isActive ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
               }`}
@@ -38,4 +36,4 @@ const BottomNavigation = () => {
   );
 };
 
-export default BottomNavigation;
+export default withRouter(BottomNavigation);

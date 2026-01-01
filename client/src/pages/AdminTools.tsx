@@ -1,15 +1,15 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, Database, Layout, ShieldAlert, Eye, Video } from 'lucide-react';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { ArrowLeft, Upload, Database, Layout, ShieldAlert, Eye, Video, Film } from 'lucide-react';
 import DatabaseResetTool from '../components/admin/DatabaseResetTool';
 import ImageManagerTool from '../components/admin/ImageManagerTool';
 import ProgramBuilderTool from '../components/admin/ProgramBuilderTool';
 import ExercisePreviewTool from '../components/admin/ExercisePreviewTool';
 import LectureManagerTool from '../components/admin/LectureManagerTool';
+import LevelVideoManagerTool from '../components/admin/LevelVideoManagerTool';
 
-const AdminTools = () => {
-  const navigate = useNavigate();
+const AdminTools = ({ history }: RouteComponentProps) => {
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
   const handleToolClick = (toolName: string) => {
@@ -31,6 +31,10 @@ const AdminTools = () => {
     }
     if (toolName === 'Lecture Manager') {
         setActiveTool('lecture-manager');
+        return;
+    }
+    if (toolName === 'Level Video Manager') {
+        setActiveTool('level-video-manager');
         return;
     }
     alert(`${toolName} feature coming soon.`);
@@ -100,6 +104,20 @@ const AdminTools = () => {
             </p>
           </button>
 
+          {/* Tool 6: Level Video Manager */}
+          <button 
+            onClick={() => handleToolClick('Level Video Manager')}
+            className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-pink-300 transition-all text-left group"
+          >
+            <div className="h-12 w-12 bg-pink-50 text-pink-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Film className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Level Video Manager</h3>
+            <p className="text-sm text-slate-500">
+               Assign Boss Fight and Level Intro videos to specific levels and joints.
+            </p>
+          </button>
+
           {/* Tool 3: Database Reset */}
           <button 
             onClick={() => handleToolClick('Database Reset')}
@@ -121,7 +139,7 @@ const AdminTools = () => {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <div className="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-10 flex items-center">
-        <button onClick={() => navigate('/dashboard')} className="mr-4 p-2 -ml-2 rounded-full hover:bg-slate-100">
+        <button onClick={() => history.push('/dashboard')} className="mr-4 p-2 -ml-2 rounded-full hover:bg-slate-100">
             <ArrowLeft className="h-6 w-6 text-slate-600" />
         </button>
         <div className="flex items-center gap-2">
@@ -140,6 +158,8 @@ const AdminTools = () => {
           <ExercisePreviewTool onBack={() => setActiveTool(null)} />
       ) : activeTool === 'lecture-manager' ? (
           <LectureManagerTool onBack={() => setActiveTool(null)} />
+      ) : activeTool === 'level-video-manager' ? (
+          <LevelVideoManagerTool onBack={() => setActiveTool(null)} />
       ) : (
           renderToolSelection()
       )}
@@ -148,4 +168,4 @@ const AdminTools = () => {
   );
 };
 
-export default AdminTools;
+export default withRouter(AdminTools);

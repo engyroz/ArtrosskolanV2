@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
-import { useNavigate } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import Calendar, { CalendarMarker } from '../components/Calendar';
 import DayDetailCard from '../components/DayDetailCard';
 import { WorkoutLog, SessionStatus, ActivityLogEntry } from '../types';
@@ -10,10 +11,9 @@ import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
 import { PHYSICAL_ACTIVITY_TASKS } from '../utils/textConstants';
 
-const CalendarDiary = () => {
+const CalendarDiary = ({ history }: RouteComponentProps) => {
   const { userProfile, user, refreshProfile } = useAuth();
   const { currentDate: today } = useTime();
-  const navigate = useNavigate();
   
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [currentMonth, setCurrentMonth] = useState<Date>(today);
@@ -29,7 +29,7 @@ const CalendarDiary = () => {
   useEffect(() => {
     if (!userProfile) return;
 
-    const history = userProfile.activityHistory || [];
+    const historyLog = userProfile.activityHistory || [];
     const level = userProfile.currentLevel || 1;
     const schedule = level === 1 ? [0, 1, 2, 3, 4, 5, 6] : [1, 3, 5];
 
@@ -42,7 +42,7 @@ const CalendarDiary = () => {
         const dateStr = toLocalISOString(date);
         const dayIndex = date.getDay();
         
-        const entry = history.find(h => h.date === dateStr && h.type !== 'daily_activity'); 
+        const entry = historyLog.find(h => h.date === dateStr && h.type !== 'daily_activity'); 
         
         if (entry) {
             generatedLogs.push({
@@ -96,7 +96,7 @@ const CalendarDiary = () => {
   const selectedLog = logs.find(l => l.date === toLocalISOString(selectedDate));
   
   const handleStartRehab = () => {
-      navigate('/dashboard'); 
+      history.push('/dashboard'); 
   };
 
   const handleToggleActivity = async () => {
@@ -190,4 +190,4 @@ const CalendarDiary = () => {
   );
 };
 
-export default CalendarDiary;
+export default withRouter(CalendarDiary);

@@ -1,8 +1,7 @@
 
 import React from 'react';
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import Navbar from './components/Navbar'; // Legacy, keeping for reference if needed but unused in new layout
-import TopNavigation from './components/TopNavigation'; // NEW GLOBAL HEADER
+import { HashRouter as Router, Switch, Route, Redirect, withRouter, RouteComponentProps } from 'react-router-dom';
+import TopNavigation from './components/TopNavigation';
 import BottomNavigation from './components/BottomNavigation';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { TimeProvider } from './contexts/TimeContext';
@@ -14,7 +13,7 @@ import Results from './pages/Results';
 import Payment from './pages/Payment';
 import Dashboard from './pages/Dashboard';
 import WorkoutPlayer from './pages/WorkoutPlayer';
-import WorkoutSummary from './pages/WorkoutSummary'; // New Page
+import WorkoutSummary from './pages/WorkoutSummary';
 import CalendarDiary from './pages/CalendarDiary';
 import MyJourney from './pages/MyJourney'; 
 import KnowledgeBase from './pages/KnowledgeBase'; 
@@ -22,10 +21,13 @@ import Settings from './pages/Settings';
 import AdminTools from './pages/AdminTools'; 
 import ProtectedRoute from './components/ProtectedRoute';
 import TimeTravelDebug from './components/TimeTravelDebug';
-import ProgressionDebug from './components/ProgressionDebug'; // New Import
+import ProgressionDebug from './components/ProgressionDebug';
 
-const Layout = ({ children }: { children?: React.ReactNode }) => {
-  const location = useLocation();
+interface LayoutProps extends RouteComponentProps {
+  children?: React.ReactNode;
+}
+
+const LayoutBase = ({ children, location }: LayoutProps) => {
   const { user } = useAuth();
   
   // App routes where Bottom Nav should appear
@@ -34,7 +36,6 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
-      {/* Global Header replaces Navbar */}
       <TopNavigation />
       
       <main className="flex-grow relative">
@@ -48,79 +49,81 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
   );
 };
 
+const Layout = withRouter(LayoutBase);
+
 const App: React.FC = () => {
   return (
     <TimeProvider>
       <AuthProvider>
         <Router>
           <Layout>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/assessment" element={<Assessment />} />
-              <Route path="/results" element={<Results />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/login" element={<Login />} />
+            <Switch>
+              <Route exact path="/" component={Landing} />
+              <Route path="/assessment" component={Assessment} />
+              <Route path="/results" component={Results} />
+              <Route path="/register" component={Register} />
+              <Route path="/login" component={Login} />
 
-              <Route path="/payment" element={
+              <Route path="/payment" render={() => (
                 <ProtectedRoute>
                   <Payment />
                 </ProtectedRoute>
-              } />
+              )} />
 
-              <Route path="/dashboard" element={
+              <Route path="/dashboard" render={() => (
                 <ProtectedRoute requireSubscription={true}>
                   <Dashboard />
                 </ProtectedRoute>
-              } />
+              )} />
 
-              <Route path="/calendar" element={
+              <Route path="/calendar" render={() => (
                 <ProtectedRoute requireSubscription={true}>
                   <CalendarDiary />
                 </ProtectedRoute>
-              } />
+              )} />
 
-              <Route path="/journey" element={
+              <Route path="/journey" render={() => (
                 <ProtectedRoute requireSubscription={true}>
                   <MyJourney />
                 </ProtectedRoute>
-              } />
+              )} />
 
-              <Route path="/knowledge" element={
+              <Route path="/knowledge" render={() => (
                 <ProtectedRoute requireSubscription={true}>
                   <KnowledgeBase />
                 </ProtectedRoute>
-              } />
+              )} />
 
-              <Route path="/settings" element={
+              <Route path="/settings" render={() => (
                 <ProtectedRoute>
                   <Settings />
                 </ProtectedRoute>
-              } />
+              )} />
 
-              <Route path="/admin" element={
+              <Route path="/admin" render={() => (
                 <ProtectedRoute requiredRole="admin">
                   <AdminTools />
                 </ProtectedRoute>
-              } />
+              )} />
 
-              <Route path="/workout" element={
+              <Route path="/workout" render={() => (
                 <ProtectedRoute requireSubscription={true}>
                   <WorkoutPlayer />
                 </ProtectedRoute>
-              } />
+              )} />
 
-              <Route path="/summary" element={
+              <Route path="/summary" render={() => (
                 <ProtectedRoute requireSubscription={true}>
                   <WorkoutSummary />
                 </ProtectedRoute>
-              } />
+              )} />
               
               {/* Legacy redirects */}
-              <Route path="/plan" element={<CalendarDiary />} />
-              <Route path="/progress" element={<MyJourney />} /> 
-              <Route path="/profile" element={<Settings />} /> 
+              <Redirect from="/plan" to="/calendar" />
+              <Redirect from="/progress" to="/journey" />
+              <Redirect from="/profile" to="/settings" /> 
 
-            </Routes>
+            </Switch>
           </Layout>
         </Router>
       </AuthProvider>

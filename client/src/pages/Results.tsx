@@ -1,22 +1,22 @@
+
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { CheckCircle, Lock, Calendar, ChevronDown, ArrowRight, Activity } from 'lucide-react';
 import { getAssessmentFromStorage } from '../utils/assessmentEngine';
 import { contentConfig } from '../utils/contentConfig';
 import { AssessmentData } from '../types';
 
-const Results = () => {
-  const navigate = useNavigate();
+const Results = ({ history }: RouteComponentProps) => {
   const [data, setData] = useState<AssessmentData | null>(null);
 
   useEffect(() => {
     const stored = getAssessmentFromStorage();
     if (!stored) {
-        navigate('/'); // Redirect if no assessment found
+        history.push('/'); // Redirect if no assessment found
     } else {
         setData(stored);
     }
-  }, [navigate]);
+  }, [history]);
 
   if (!data || !data.programConfig) return null;
 
@@ -121,7 +121,7 @@ const Results = () => {
         {/* 5. CTA */}
         <div className="text-center pb-24">
             <button 
-                onClick={() => navigate('/register')}
+                onClick={() => history.push('/register')}
                 className="w-full sm:w-auto px-10 py-5 bg-blue-600 text-white rounded-xl font-bold text-xl shadow-xl hover:bg-blue-700 hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center mx-auto"
             >
                 Starta min plan & spara konto <ArrowRight className="ml-3 h-6 w-6" />
@@ -134,4 +134,4 @@ const Results = () => {
   );
 };
 
-export default Results;
+export default withRouter(Results);

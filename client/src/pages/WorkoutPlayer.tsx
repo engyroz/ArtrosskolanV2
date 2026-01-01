@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import { WorkoutSession, ExertionLevel } from '../types';
@@ -8,11 +8,9 @@ import { calculateProgressionUpdate } from '../utils/progressionEngine';
 import { toLocalISOString } from '../utils/dateHelpers';
 import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
-import { X, CheckCircle, ChevronRight, AlertTriangle, ChevronDown, ChevronUp, Info, Clock, Repeat } from 'lucide-react';
+import { X, CheckCircle, ChevronRight, AlertTriangle, ChevronDown, ChevronUp, Info } from 'lucide-react';
 
-const WorkoutPlayer = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+const WorkoutPlayer = ({ history, location }: RouteComponentProps) => {
   const state = location.state as any; 
   const { userProfile, refreshProfile } = useAuth();
   const { currentDate } = useTime(); 
@@ -34,9 +32,9 @@ const WorkoutPlayer = () => {
       setSession(state.session);
     } else {
       console.warn("No session state found, redirecting to dashboard");
-      navigate('/dashboard'); 
+      history.push('/dashboard'); 
     }
-  }, [state, navigate]);
+  }, [state, history]);
 
   const currentExercise = session?.exercises[currentIndex];
 
@@ -72,7 +70,7 @@ const WorkoutPlayer = () => {
                     Detta kan bero på att inga matchande övningar finns i databasen för din led.
                 </p>
                 <button 
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => history.push('/dashboard')}
                     className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold"
                 >
                     Tillbaka till Dashboard
@@ -143,18 +141,16 @@ const WorkoutPlayer = () => {
         await refreshProfile();
         
         // Navigate to Summary instead of Dashboard
-        navigate('/summary', { 
-            state: { 
-                xpEarned: result.xpEarned,
-                newTotalXP: result.newTotalXP,
-                levelMaxedOut: result.levelMaxedOut,
-                sessionType: session.type,
-                painScore: finalPain,
-                exertion: finalExertion,
-                lifetimeSessions: newSessionCount,
-                stageUp: result.stageUp, // Pass the stageUp flag
-                newStage: result.newStage
-            } 
+        history.push('/summary', { 
+            xpEarned: result.xpEarned,
+            newTotalXP: result.newTotalXP,
+            levelMaxedOut: result.levelMaxedOut,
+            sessionType: session.type,
+            painScore: finalPain,
+            exertion: finalExertion,
+            lifetimeSessions: newSessionCount,
+            stageUp: result.stageUp, 
+            newStage: result.newStage
         });
 
     } catch (e) {
@@ -237,7 +233,7 @@ const WorkoutPlayer = () => {
       {/* 1. Header & Progress */}
       <div className="flex-none bg-white z-20">
         <div className="px-6 py-4 flex justify-between items-center border-b border-slate-100">
-            <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 text-slate-400 hover:text-slate-600">
+            <button onClick={() => history.push('/dashboard')} className="p-2 -ml-2 text-slate-400 hover:text-slate-600">
                 <X className="w-6 h-6" />
             </button>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -337,4 +333,4 @@ const WorkoutPlayer = () => {
   );
 };
 
-export default WorkoutPlayer;
+export default withRouter(WorkoutPlayer);

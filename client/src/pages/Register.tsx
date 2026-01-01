@@ -1,14 +1,12 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { getAssessmentFromStorage, clearAssessmentStorage } from '../utils/assessmentEngine';
-// Removed unused fetchUserPlan import
 import { UserProfile } from '../types';
 import { Loader2 } from 'lucide-react';
 
-const Register = () => {
-  const navigate = useNavigate();
+const Register = ({ history }: RouteComponentProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,19 +29,17 @@ const Register = () => {
       };
 
       if (assessmentData && assessmentData.programConfig) {
-        // Removed activePlanIds generation and assignment
         profileData = {
             ...profileData,
             currentLevel: assessmentData.level,
             program: assessmentData.programConfig,
-            // activePlanIds removed; exercises now fetched at runtime
-            exerciseProgress: {} // Init empty progress
+            exerciseProgress: {} 
         };
       }
 
       await db.collection('users').doc(user!.uid).set(profileData);
       clearAssessmentStorage();
-      navigate('/payment');
+      history.push('/payment');
 
     } catch (err: any) {
       console.error(err);
@@ -74,4 +70,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default withRouter(Register);

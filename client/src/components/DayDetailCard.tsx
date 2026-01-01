@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { WorkoutLog } from '../types';
 import { Play, CheckCircle, Clock, XCircle, Dumbbell, Activity, Check, Lock, Coffee, BookOpen, Edit2, Save } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { ACTION_CARD_CONFIG } from '../utils/textConstants';
 
-interface DayDetailCardProps {
+interface DayDetailCardProps extends RouteComponentProps {
   date: Date;
   log?: WorkoutLog; 
   isToday: boolean;
@@ -14,11 +15,22 @@ interface DayDetailCardProps {
   activityConfig: { title: string; desc: string }; 
   isFuture: boolean; 
   onSaveNote?: (note: string) => void;
-  level?: number; // New prop
+  level?: number; 
 }
 
-const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isActivityDone, activityConfig, isFuture, onSaveNote, level = 1 }: DayDetailCardProps) => {
-  const navigate = useNavigate();
+const DayDetailCard = ({ 
+  history, 
+  date, 
+  log, 
+  isToday, 
+  onStartRehab, 
+  onToggleActivity, 
+  isActivityDone, 
+  activityConfig, 
+  isFuture, 
+  onSaveNote, 
+  level = 1 
+}: DayDetailCardProps) => {
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteText, setNoteText] = useState(log?.userNote || '');
 
@@ -41,10 +53,8 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
       return '👌';
   };
 
-  // Get dynamic text for Recovery Card
-  // Safe lookup for level config
   const levelConfig = ACTION_CARD_CONFIG[level as keyof typeof ACTION_CARD_CONFIG] || ACTION_CARD_CONFIG[1];
-  const recoveryText = levelConfig.recoverySubtitle; // "Låt kroppen vila idag" etc.
+  const recoveryText = levelConfig.recoverySubtitle; 
 
   // --- RENDER LOGIC ---
 
@@ -182,7 +192,7 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
 
                     {isToday ? (
                         <button 
-                            onClick={() => navigate('/dashboard')}
+                            onClick={() => history.push('/dashboard')}
                             className="px-5 py-2.5 bg-white text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-lg flex items-center"
                         >
                             Starta <Play className="w-3.5 h-3.5 ml-1.5 fill-current" />
@@ -221,7 +231,7 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
                       </div>
                   ) : (
                       <button 
-                        onClick={() => navigate('/knowledge')}
+                        onClick={() => history.push('/knowledge')}
                         className="inline-flex items-center px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-colors"
                       >
                           <BookOpen className="w-4 h-4 mr-2 text-slate-400" />
@@ -267,4 +277,4 @@ const DayDetailCard = ({ date, log, isToday, onStartRehab, onToggleActivity, isA
   );
 };
 
-export default DayDetailCard;
+export default withRouter(DayDetailCard);

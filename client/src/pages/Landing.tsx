@@ -1,21 +1,20 @@
-import React from 'react';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { ArrowRight, Activity, ShieldCheck } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext'; // Import Auth Context
 
-const Landing = () => {
-  const { user, loading } = useAuth(); // Get user state
-  const navigate = useNavigate();
-  const location = useLocation();
+import React from 'react';
+import { withRouter, RouteComponentProps, Redirect } from 'react-router-dom';
+import { ArrowRight, Activity, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+
+const Landing = ({ history, location }: RouteComponentProps) => {
+  const { user, loading } = useAuth();
   const searchParams = new URLSearchParams(location.search);
   const jointParam = searchParams.get('joint');
 
   // 1. Redirect if logged in
   if (user && !loading) {
-    return <Navigate to="/dashboard" replace />;
+    return <Redirect to="/dashboard" />;
   }
   
-  // Optional: Show loading spinner while auth check completes to prevent flash of content
+  // Optional: Show loading spinner while auth check completes
   if (loading) {
       return <div className="min-h-screen bg-white"></div>;
   }
@@ -33,7 +32,7 @@ const Landing = () => {
   const content = getContent();
 
   const startAssessment = () => {
-    navigate(jointParam ? `/assessment?joint=${jointParam}` : '/assessment');
+    history.push(jointParam ? `/assessment?joint=${jointParam}` : '/assessment');
   };
 
   return (
@@ -92,4 +91,4 @@ const Landing = () => {
   );
 };
 
-export default Landing;
+export default withRouter(Landing);

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { Check, ArrowRight, Lock, Map, Video, Zap, Star, Package } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,9 +18,7 @@ interface LocationState {
   newStage?: number; // New
 }
 
-const WorkoutSummary = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+const WorkoutSummary = ({ history, location }: RouteComponentProps) => {
   const { userProfile } = useAuth();
   
   const state = location.state as LocationState;
@@ -33,9 +31,9 @@ const WorkoutSummary = () => {
   // Safety check: redirect if no state (direct access)
   useEffect(() => {
     if (!state) {
-      navigate('/dashboard');
+      history.push('/dashboard');
     }
-  }, [state, navigate]);
+  }, [state, history]);
 
   if (!state || !userProfile) return null;
 
@@ -280,14 +278,14 @@ const WorkoutSummary = () => {
       {/* 3. CTA */}
       {state.stageUp ? (
          <button 
-           onClick={() => navigate('/journey')}
+           onClick={() => history.push('/journey')}
            className="w-full max-w-md py-4 bg-yellow-400 text-yellow-900 rounded-2xl font-black text-lg shadow-[0_0_20px_rgba(250,204,21,0.5)] hover:bg-yellow-300 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 z-10 animate-pulse delay-500"
          >
            Gå till kartan för att hämta belöning <ArrowRight className="w-6 h-6" />
          </button>
       ) : (
          <button 
-           onClick={() => navigate('/dashboard')}
+           onClick={() => history.push('/dashboard')}
            className="w-full max-w-md py-4 bg-white text-slate-900 rounded-2xl font-black text-lg shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:bg-slate-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 z-10 animate-fade-in delay-500"
          >
            Tillbaka till Dashboard <ArrowRight className="w-6 h-6" />
@@ -298,4 +296,4 @@ const WorkoutSummary = () => {
   );
 };
 
-export default WorkoutSummary;
+export default withRouter(WorkoutSummary);

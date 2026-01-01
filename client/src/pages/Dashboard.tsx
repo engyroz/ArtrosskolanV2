@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import { Exercise } from '../types';
@@ -22,11 +22,9 @@ import LevelProgressBar from '../components/LevelProgressBar';
 import PreWorkoutModal from '../components/PreWorkoutModal';
 import BossFightModal from '../components/BossFightModal';
 
-const Dashboard = () => {
+const Dashboard = ({ history, location }: RouteComponentProps) => {
   const { userProfile, refreshProfile } = useAuth();
   const { currentDate: today } = useTime(); 
-  const navigate = useNavigate();
-  const location = useLocation();
   
   const [loading, setLoading] = useState(true);
   const [showPreFlight, setShowPreFlight] = useState(false);
@@ -128,7 +126,7 @@ const Dashboard = () => {
   const handleHeroClick = () => {
     if (heroMode === 'completed') return; 
     if (heroMode === 'recovery') {
-        navigate('/journey'); 
+        history.push('/journey'); 
         return;
     }
     if (heroMode === 'boss_fight') {
@@ -155,7 +153,7 @@ const Dashboard = () => {
 
     // Pass the locally fetched dailyPlanIds to session builder
     const session = getWorkoutSession(userProfile, allExercises, preFlightType, dailyPlanIds);
-    navigate('/workout', { state: { session } });
+    history.push('/workout', { session });
   };
 
   const handleToggleActivity = async () => {
@@ -343,4 +341,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default withRouter(Dashboard);

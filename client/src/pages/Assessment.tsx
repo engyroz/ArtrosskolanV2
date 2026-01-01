@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { ArrowRight, Activity, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { 
   getAssessmentState,
@@ -8,14 +8,11 @@ import {
   AssessmentState,
   saveAssessmentToStorage
 } from '../utils/assessmentEngine';
-// Removed unused fetchUserPlan import
 import { JointType, Question } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
 
-const Assessment = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+const Assessment = ({ history, location }: RouteComponentProps) => {
   const searchParams = new URLSearchParams(location.search);
   const { user, refreshProfile } = useAuth();
   
@@ -65,13 +62,12 @@ const Assessment = () => {
                 assessmentData: finalAnswers,
                 currentLevel: result.level,
                 program: result,
-                // Removed activePlanIds; exercises now fetched at runtime
                 exerciseProgress: {} 
             };
 
             await userRef.set(payload, { merge: true });
             await refreshProfile();
-            navigate('/dashboard');
+            history.push('/dashboard');
         } else {
             console.log("User is anonymous. Saving to LocalStorage...");
             saveAssessmentToStorage({
@@ -84,7 +80,7 @@ const Assessment = () => {
             });
 
             setTimeout(() => {
-                navigate('/results');
+                history.push('/results');
             }, 500); 
         }
     } catch (error) {
@@ -333,4 +329,4 @@ const Assessment = () => {
   );
 };
 
-export default Assessment;
+export default withRouter(Assessment);
