@@ -5,6 +5,7 @@ export interface UserProfile {
   currentLevel: number;
   subscriptionStatus: 'active' | 'trialing' | 'none';
   onboardingCompleted: boolean;
+  welcomeScreenSeen?: boolean; // New field to track if onboarding welcome has been shown
   displayName?: string;
   program?: ProgramConfig; 
   role?: string; // 'admin' or undefined

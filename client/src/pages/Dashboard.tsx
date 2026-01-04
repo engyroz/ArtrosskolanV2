@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,6 +21,7 @@ import ActionCard from '../components/ActionCard';
 import LevelProgressBar from '../components/LevelProgressBar';
 import PreWorkoutModal from '../components/PreWorkoutModal';
 import BossFightModal from '../components/BossFightModal';
+import WelcomeModal from '../components/WelcomeModal';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -223,6 +225,8 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-slate-50 pb-32">
       
+      <WelcomeModal />
+
       <PreWorkoutModal 
         isOpen={showPreFlight} 
         onClose={() => setShowPreFlight(false)} 

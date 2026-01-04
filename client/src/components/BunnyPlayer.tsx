@@ -9,9 +9,10 @@ interface BunnyPlayerProps {
   isLocked?: boolean;
   onLoad?: () => void;
   posterUrl?: string; // Optional override for thumbnail
+  muted?: boolean; // New prop for autoplay mute
 }
 
-const BunnyPlayer = ({ videoId, title, isLocked = false, onLoad, posterUrl }: BunnyPlayerProps) => {
+const BunnyPlayer = ({ videoId, title, isLocked = false, onLoad, posterUrl, muted = false }: BunnyPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [imgError, setImgError] = useState(false);
 
@@ -131,7 +132,8 @@ const BunnyPlayer = ({ videoId, title, isLocked = false, onLoad, posterUrl }: Bu
 
   // --- 5. RENDER: ACTIVE PLAYER (IFRAME) ---
   // Construct URL internally
-  const embedUrl = `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${videoId}?autoplay=true&preload=true`;
+  const muteParam = muted ? '&muted=true' : '';
+  const embedUrl = `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${videoId}?autoplay=true&preload=true${muteParam}`;
 
   return (
     <div className="relative w-full h-full bg-black shadow-lg overflow-hidden">
