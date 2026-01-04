@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import { Exercise } from '../types';
@@ -23,7 +22,7 @@ import PreWorkoutModal from '../components/PreWorkoutModal';
 import BossFightModal from '../components/BossFightModal';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+  const history = useHistory();
   const location = useLocation();
   const { userProfile, refreshProfile } = useAuth();
   const { currentDate: today } = useTime(); 
@@ -59,6 +58,11 @@ const Dashboard = () => {
   // Simple scheduler: Level 1 everyday, else Mon/Wed/Fri
   const isRehabDay = currentLevel === 1 || [1, 3, 5].includes(dayIndex);
   
+  // Extract First Name (Tilltalsnamn)
+  const firstName = userProfile?.displayName 
+    ? userProfile.displayName.split(' ')[0] 
+    : (userProfile?.displayName || 'Kämpe');
+
   // --- HERO MODE LOGIC ---
   let heroMode: 'active' | 'recovery' | 'completed' | 'boss_fight' = 'active';
   
@@ -129,7 +133,7 @@ const Dashboard = () => {
   const handleHeroClick = () => {
     if (heroMode === 'completed') return; 
     if (heroMode === 'recovery') {
-        navigate('/journey'); 
+        history.push('/journey'); 
         return;
     }
     if (heroMode === 'boss_fight') {
@@ -156,7 +160,7 @@ const Dashboard = () => {
 
     // Pass the locally fetched dailyPlanIds to session builder
     const session = getWorkoutSession(userProfile, allExercises, preFlightType, dailyPlanIds);
-    navigate('/workout', { state: { session } });
+    history.push('/workout', { session });
   };
 
   const handleToggleActivity = async () => {
@@ -240,7 +244,7 @@ const Dashboard = () => {
           <div className="max-w-md mx-auto px-4 pt-8 pb-4 flex justify-between items-start">
             <div>
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                    Hej {userProfile?.displayName || 'Kämpe'}!
+                    Hej {firstName}!
                 </h1>
                 <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-1">
                     Vecka {currentWeek}, Dag {currentDayInWeek}

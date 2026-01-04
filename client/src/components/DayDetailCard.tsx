@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { WorkoutLog } from '../types';
 import { Play, CheckCircle, Clock, XCircle, Dumbbell, Activity, Check, Lock, Coffee, BookOpen, Edit2, Save } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { ACTION_CARD_CONFIG } from '../utils/textConstants';
 
 interface DayDetailCardProps {
@@ -30,7 +29,7 @@ const DayDetailCard = ({
   onSaveNote, 
   level = 1 
 }: DayDetailCardProps) => {
-  const navigate = useNavigate();
+  const history = useHistory();
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteText, setNoteText] = useState(log?.userNote || '');
 
@@ -192,7 +191,7 @@ const DayDetailCard = ({
 
                     {isToday ? (
                         <button 
-                            onClick={() => navigate('/dashboard')}
+                            onClick={() => history.push('/dashboard')}
                             className="px-5 py-2.5 bg-white text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-lg flex items-center"
                         >
                             Starta <Play className="w-3.5 h-3.5 ml-1.5 fill-current" />
@@ -231,7 +230,7 @@ const DayDetailCard = ({
                       </div>
                   ) : (
                       <button 
-                        onClick={() => navigate('/knowledge')}
+                        onClick={() => history.push('/knowledge')}
                         className="inline-flex items-center px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-colors"
                       >
                           <BookOpen className="w-4 h-4 mr-2 text-slate-400" />
@@ -254,27 +253,3 @@ const DayDetailCard = ({
             className={`w-full flex items-center p-4 rounded-xl border transition-all ${
                 isActivityDone 
                 ? 'bg-green-50 border-green-200' 
-                : 'bg-white border-slate-200'
-            } ${!canToggleActivity ? 'opacity-60 cursor-not-allowed' : 'hover:border-blue-300 cursor-pointer'}`}
-        >
-            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors ${
-                isActivityDone 
-                ? 'bg-green-500 border-green-500 text-white' 
-                : 'border-slate-300 bg-white'
-            }`}>
-                {isActivityDone ? <Check className="w-3.5 h-3.5" /> : (isFuture ? null : <Activity className="w-3.5 h-3.5 text-slate-300"/>)}
-            </div>
-            <div className="text-left">
-                <span className={`block font-bold ${isActivityDone ? 'text-green-900' : 'text-slate-900'}`}>
-                    {activityConfig.title}
-                </span>
-                <span className="text-xs text-slate-500">{activityConfig.desc}</span>
-            </div>
-        </button>
-      </div>
-
-    </div>
-  );
-};
-
-export default DayDetailCard;

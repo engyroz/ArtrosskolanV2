@@ -1,16 +1,16 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { getAssessmentFromStorage, clearAssessmentStorage } from '../utils/assessmentEngine';
 import { UserProfile } from '../types';
 import { Loader2 } from 'lucide-react';
 
 const Register = () => {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const history = useHistory();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +24,7 @@ const Register = () => {
       let profileData: Partial<UserProfile> = {
         uid: user!.uid,
         email: user!.email!,
+        displayName: fullName,
         subscriptionStatus: 'none',
         onboardingCompleted: false,
         currentLevel: 1,
@@ -40,7 +41,7 @@ const Register = () => {
 
       await db.collection('users').doc(user!.uid).set(profileData);
       clearAssessmentStorage();
-      navigate('/payment');
+      history.push('/payment');
 
     } catch (err: any) {
       console.error(err);
@@ -54,6 +55,10 @@ const Register = () => {
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
         <h2 className="text-2xl font-bold text-slate-900 mb-6">Spara din plan</h2>
         <form onSubmit={handleRegister} className="space-y-4">
+            <input 
+                type="text" required className="w-full px-4 py-3 rounded-xl border border-slate-300"
+                value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="För- och efternamn"
+            />
             <input 
                 type="email" required className="w-full px-4 py-3 rounded-xl border border-slate-300"
                 value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-post"

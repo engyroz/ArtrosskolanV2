@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { ArrowRight, Activity, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { 
   getAssessmentState,
@@ -13,7 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
 
 const Assessment = () => {
-  const navigate = useNavigate();
+  const history = useHistory();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const { user, refreshProfile } = useAuth();
@@ -69,7 +68,7 @@ const Assessment = () => {
 
             await userRef.set(payload, { merge: true });
             await refreshProfile();
-            navigate('/dashboard');
+            history.push('/dashboard');
         } else {
             console.log("User is anonymous. Saving to LocalStorage...");
             saveAssessmentToStorage({
@@ -82,7 +81,7 @@ const Assessment = () => {
             });
 
             setTimeout(() => {
-                navigate('/results');
+                history.push('/results');
             }, 500); 
         }
     } catch (error) {

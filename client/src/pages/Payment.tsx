@@ -1,13 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { CreditCard, CheckCircle, ShieldCheck, Loader2 } from 'lucide-react';
 
 const Payment = () => {
   const { user, refreshProfile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const history = useHistory();
   const location = useLocation();
   
   const searchParams = new URLSearchParams(location.search);
@@ -33,7 +32,7 @@ const Payment = () => {
               await refreshProfile();
               // 3. Navigate will happen automatically via ProtectedRoute, 
               // but we can also force it here to be safe
-              navigate('/dashboard');
+              history.push('/dashboard');
             }
           }
         } catch (error) {
@@ -45,7 +44,7 @@ const Payment = () => {
     if (isSuccess && sessionId) {
       verifyPayment();
     }
-  }, [isSuccess, sessionId, user, refreshProfile, navigate]);
+  }, [isSuccess, sessionId, user, refreshProfile, history]);
 
   const handleSubscribe = async () => {
     if (!user) return;
