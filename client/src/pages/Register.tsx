@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { getAssessmentFromStorage, clearAssessmentStorage } from '../utils/assessmentEngine';
 import { UserProfile } from '../types';
@@ -10,7 +10,7 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +41,7 @@ const Register = () => {
 
       await db.collection('users').doc(user!.uid).set(profileData);
       clearAssessmentStorage();
-      history.push('/payment');
+      navigate('/payment');
 
     } catch (err: any) {
       console.error(err);

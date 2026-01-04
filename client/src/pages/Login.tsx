@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useHistory, Redirect, Link } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { auth } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -9,12 +9,12 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const history = useHistory();
+  const navigate = useNavigate();
   
   const { user } = useAuth();
 
   if (user) {
-    return <Redirect to="/dashboard" />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,7 +24,7 @@ const Login = () => {
 
     try {
       await auth.signInWithEmailAndPassword(email, password);
-      history.push('/dashboard');
+      navigate('/dashboard');
     } catch (err: any) {
       setError('Fel e-post eller lösenord.');
     } finally {

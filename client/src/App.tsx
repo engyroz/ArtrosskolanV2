@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter as Router, Switch, Route, Redirect, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import TopNavigation from './components/TopNavigation';
 import BottomNavigation from './components/BottomNavigation';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -51,73 +51,73 @@ const App: React.FC = () => {
       <AuthProvider>
         <Router>
           <Layout>
-            <Switch>
-              <Route exact path="/" component={Landing} />
-              <Route path="/assessment" component={Assessment} />
-              <Route path="/results" component={Results} />
-              <Route path="/register" component={Register} />
-              <Route path="/login" component={Login} />
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/assessment" element={<Assessment />} />
+              <Route path="/results" element={<Results />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/login" element={<Login />} />
 
-              <Route path="/payment">
+              <Route path="/payment" element={
                 <ProtectedRoute>
                   <Payment />
                 </ProtectedRoute>
-              </Route>
+              } />
 
-              <Route path="/dashboard">
+              <Route path="/dashboard" element={
                 <ProtectedRoute requireSubscription={true}>
                   <Dashboard />
                 </ProtectedRoute>
-              </Route>
+              } />
 
-              <Route path="/calendar">
+              <Route path="/calendar" element={
                 <ProtectedRoute requireSubscription={true}>
                   <CalendarDiary />
                 </ProtectedRoute>
-              </Route>
+              } />
 
-              <Route path="/journey">
+              <Route path="/journey" element={
                 <ProtectedRoute requireSubscription={true}>
                   <MyJourney />
                 </ProtectedRoute>
-              </Route>
+              } />
 
-              <Route path="/knowledge">
+              <Route path="/knowledge" element={
                 <ProtectedRoute requireSubscription={true}>
                   <KnowledgeBase />
                 </ProtectedRoute>
-              </Route>
+              } />
 
-              <Route path="/settings">
+              <Route path="/settings" element={
                 <ProtectedRoute>
                   <Settings />
                 </ProtectedRoute>
-              </Route>
+              } />
 
-              <Route path="/admin">
+              <Route path="/admin" element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminTools />
                 </ProtectedRoute>
-              </Route>
+              } />
 
-              <Route path="/workout">
+              <Route path="/workout" element={
                 <ProtectedRoute requireSubscription={true}>
                   <WorkoutPlayer />
                 </ProtectedRoute>
-              </Route>
+              } />
 
-              <Route path="/summary">
+              <Route path="/summary" element={
                 <ProtectedRoute requireSubscription={true}>
                   <WorkoutSummary />
                 </ProtectedRoute>
-              </Route>
+              } />
               
               {/* Legacy redirects */}
-              <Redirect from="/plan" to="/calendar" />
-              <Redirect from="/progress" to="/journey" />
-              <Redirect from="/profile" to="/settings" />
+              <Route path="/plan" element={<Navigate to="/calendar" replace />} />
+              <Route path="/progress" element={<Navigate to="/journey" replace />} />
+              <Route path="/profile" element={<Navigate to="/settings" replace />} />
 
-            </Switch>
+            </Routes>
           </Layout>
         </Router>
       </AuthProvider>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTime } from '../contexts/TimeContext';
 import { Exercise } from '../types';
@@ -22,7 +22,7 @@ import PreWorkoutModal from '../components/PreWorkoutModal';
 import BossFightModal from '../components/BossFightModal';
 
 const Dashboard = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const { userProfile, refreshProfile } = useAuth();
   const { currentDate: today } = useTime(); 
@@ -133,7 +133,7 @@ const Dashboard = () => {
   const handleHeroClick = () => {
     if (heroMode === 'completed') return; 
     if (heroMode === 'recovery') {
-        history.push('/journey'); 
+        navigate('/journey'); 
         return;
     }
     if (heroMode === 'boss_fight') {
@@ -160,7 +160,7 @@ const Dashboard = () => {
 
     // Pass the locally fetched dailyPlanIds to session builder
     const session = getWorkoutSession(userProfile, allExercises, preFlightType, dailyPlanIds);
-    history.push('/workout', { session });
+    navigate('/workout', { state: { session } });
   };
 
   const handleToggleActivity = async () => {

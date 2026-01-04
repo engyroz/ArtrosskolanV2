@@ -1,9 +1,9 @@
 import React from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Calendar, Map, BookOpen } from 'lucide-react';
 
 const BottomNavigation = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
 
   if (location.pathname === '/workout') return null;
@@ -23,7 +23,7 @@ const BottomNavigation = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => history.push(tab.path)}
+              onClick={() => navigate(tab.path)}
               className={`flex flex-col items-center justify-center w-16 h-14 space-y-1 transition-colors ${
                 isActive ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
               }`}

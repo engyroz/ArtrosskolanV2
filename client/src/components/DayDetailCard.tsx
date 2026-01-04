@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { WorkoutLog } from '../types';
 import { Play, CheckCircle, Clock, XCircle, Dumbbell, Activity, Check, Lock, Coffee, BookOpen, Edit2, Save } from 'lucide-react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ACTION_CARD_CONFIG } from '../utils/textConstants';
 
 interface DayDetailCardProps {
@@ -29,7 +29,7 @@ const DayDetailCard = ({
   onSaveNote, 
   level = 1 
 }: DayDetailCardProps) => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteText, setNoteText] = useState(log?.userNote || '');
 
@@ -172,7 +172,7 @@ const DayDetailCard = ({
             <div className="relative z-10 flex flex-col h-full">
                 <div className="flex justify-between items-start mb-4">
                     <div>
-                        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-lg mb-2 inline-block ${isToday ? 'bg-blue-500 text-blue-50' : 'bg-slate-200 text-slate-500'}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-lg mb-2 inline-block ${isToday ? 'bg-blue-50 text-blue-50' : 'bg-slate-200 text-slate-500'}`}>
                             {isToday ? 'Dagens Pass' : 'Planerat'}
                         </span>
                         <h4 className={`text-xl font-extrabold ${isToday ? 'text-white' : 'text-slate-500'}`}>
@@ -191,7 +191,7 @@ const DayDetailCard = ({
 
                     {isToday ? (
                         <button 
-                            onClick={() => history.push('/dashboard')}
+                            onClick={onStartRehab}
                             className="px-5 py-2.5 bg-white text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-lg flex items-center"
                         >
                             Starta <Play className="w-3.5 h-3.5 ml-1.5 fill-current" />
@@ -230,7 +230,7 @@ const DayDetailCard = ({
                       </div>
                   ) : (
                       <button 
-                        onClick={() => history.push('/knowledge')}
+                        onClick={() => navigate('/knowledge')}
                         className="inline-flex items-center px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-colors"
                       >
                           <BookOpen className="w-4 h-4 mr-2 text-slate-400" />
@@ -253,3 +253,37 @@ const DayDetailCard = ({
             className={`w-full flex items-center p-4 rounded-xl border transition-all ${
                 isActivityDone 
                 ? 'bg-green-50 border-green-200' 
+                : canToggleActivity 
+                    ? 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-md' 
+                    : 'bg-slate-50 border-slate-200 cursor-not-allowed'
+            }`}
+        >
+            <div className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors mr-4 ${
+                isActivityDone 
+                ? 'bg-green-500 text-white' 
+                : 'bg-slate-100 text-slate-400'
+            }`}>
+                {isActivityDone ? <Check className="w-5 h-5" /> : <Activity className="w-5 h-5" />}
+            </div>
+            
+            <div className="flex-grow text-left">
+                <div className="flex justify-between items-center mb-0.5">
+                    <h4 className={`font-bold ${isActivityDone ? 'text-green-900' : isFuture ? 'text-slate-400' : 'text-slate-900'}`}>
+                        {activityConfig.title}
+                    </h4>
+                    {!isActivityDone && !isFuture && (
+                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+10 XP</span>
+                    )}
+                </div>
+                <p className={`text-xs ${isActivityDone ? 'text-green-700' : 'text-slate-500'}`}>
+                    {activityConfig.desc}
+                </p>
+            </div>
+        </button>
+      </div>
+
+    </div>
+  );
+};
+
+export default DayDetailCard;
