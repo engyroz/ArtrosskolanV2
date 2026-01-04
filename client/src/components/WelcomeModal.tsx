@@ -21,8 +21,11 @@ const WelcomeModal = () => {
   };
 
   useEffect(() => {
-    // Show only if onboarding is done AND not yet seen
-    if (userProfile && userProfile.onboardingCompleted && !userProfile.welcomeScreenSeen) {
+    // Check if onboarding is effectively done (either flag is true OR program exists)
+    // AND the welcome screen hasn't been seen yet.
+    const isReady = userProfile && (userProfile.onboardingCompleted || !!userProfile.program);
+    
+    if (isReady && !userProfile.welcomeScreenSeen) {
        setIsOpen(true);
        
        const level = userProfile.currentLevel || 1;

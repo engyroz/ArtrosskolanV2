@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
@@ -33,6 +34,7 @@ const Register = () => {
       if (assessmentData && assessmentData.programConfig) {
         profileData = {
             ...profileData,
+            onboardingCompleted: true, // User has completed assessment via onboarding flow
             currentLevel: assessmentData.level,
             program: assessmentData.programConfig,
             exerciseProgress: {} 
