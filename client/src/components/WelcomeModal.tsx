@@ -96,7 +96,7 @@ const WelcomeModal = () => {
               </div>
 
               {/* Video Player */}
-              <div className="w-full aspect-video bg-black rounded-2xl shadow-xl overflow-hidden mb-10 border-4 border-white ring-1 ring-slate-200">
+              <div className="w-full aspect-video bg-black rounded-2xl shadow-2xl overflow-hidden mb-10 ring-1 ring-black/10">
                   {loadingVideo ? (
                       <div className="w-full h-full flex items-center justify-center bg-slate-100">
                           <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />

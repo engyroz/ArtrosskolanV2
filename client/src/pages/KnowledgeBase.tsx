@@ -174,7 +174,7 @@ const KnowledgeBase = () => {
         
         {/* PLAYER CONTAINER - STYLED CARD */}
         <div className="p-4 lg:p-8 pb-0">
-            <div className={`relative w-full rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl bg-black border-4 border-white ring-1 ring-slate-200 transition-all duration-500 aspect-video ${!activeLecture ? 'flex items-center justify-center' : ''}`}>
+            <div className={`relative w-full rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl bg-black ring-1 ring-black/10 transition-all duration-500 aspect-video ${!activeLecture ? 'flex items-center justify-center' : ''}`}>
                {activeLecture ? (
                  <BunnyPlayer 
                    videoId={activeLecture.videoId} 
