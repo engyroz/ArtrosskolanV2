@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, Database, Layout, ShieldAlert, Eye, Video, Film } from 'lucide-react';
+import { ArrowLeft, Upload, Database, Layout, ShieldAlert, Eye, Video, Film, UserCheck } from 'lucide-react';
 import DatabaseResetTool from '../components/admin/DatabaseResetTool';
 import ImageManagerTool from '../components/admin/ImageManagerTool';
 import ProgramBuilderTool from '../components/admin/ProgramBuilderTool';
 import ExercisePreviewTool from '../components/admin/ExercisePreviewTool';
 import LectureManagerTool from '../components/admin/LectureManagerTool';
 import LevelVideoManagerTool from '../components/admin/LevelVideoManagerTool';
+import UserProfileResetTool from '../components/admin/UserProfileResetTool';
 
 const AdminTools = () => {
   const navigate = useNavigate();
@@ -38,6 +39,10 @@ const AdminTools = () => {
         setActiveTool('level-video-manager');
         return;
     }
+    if (toolName === 'User Reset') {
+        setActiveTool('user-reset');
+        return;
+    }
     alert(`${toolName} feature coming soon.`);
   };
 
@@ -49,6 +54,20 @@ const AdminTools = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
+          {/* Tool: User Profile Reset */}
+          <button 
+            onClick={() => handleToolClick('User Reset')}
+            className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-left group"
+          >
+            <div className="h-12 w-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <UserCheck className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">User Profile Reset</h3>
+            <p className="text-sm text-slate-500">
+              Reset your profile to test onboarding flow and welcome screens for different levels.
+            </p>
+          </button>
+
           {/* Tool 1: Bulk Image Uploader */}
           <button 
             onClick={() => handleToolClick('Bulk Image Uploader')}
@@ -161,6 +180,8 @@ const AdminTools = () => {
           <LectureManagerTool onBack={() => setActiveTool(null)} />
       ) : activeTool === 'level-video-manager' ? (
           <LevelVideoManagerTool onBack={() => setActiveTool(null)} />
+      ) : activeTool === 'user-reset' ? (
+          <UserProfileResetTool onBack={() => setActiveTool(null)} />
       ) : (
           renderToolSelection()
       )}
