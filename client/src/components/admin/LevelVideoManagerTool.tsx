@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Loader2, Video, Film, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Video, Film, AlertCircle, RefreshCw, Sparkles } from 'lucide-react';
 import { db } from '../../firebase';
 import { BunnyVideo } from '../../types';
 
@@ -13,6 +13,7 @@ type JointOption = 'knee' | 'hip' | 'shoulder';
 interface LevelVideoConfig {
   bossIntroVideoId?: string;
   levelIntroVideoId?: string;
+  welcomeVideoId?: string; // New field for initial assignment
 }
 
 const LevelVideoManagerTool = ({ onBack }: LevelVideoManagerToolProps) => {
@@ -77,7 +78,8 @@ const LevelVideoManagerTool = ({ onBack }: LevelVideoManagerToolProps) => {
                 const data = snap.data();
                 newConfigs[level] = {
                     bossIntroVideoId: data?.bossIntroVideoId || '',
-                    levelIntroVideoId: data?.levelIntroVideoId || ''
+                    levelIntroVideoId: data?.levelIntroVideoId || '',
+                    welcomeVideoId: data?.welcomeVideoId || ''
                 };
             }
         });
@@ -117,7 +119,8 @@ const LevelVideoManagerTool = ({ onBack }: LevelVideoManagerToolProps) => {
             // We use merge: true so we don't overwrite existing exercise arrays (stage1_ids, etc)
             batch.set(docRef, {
                 bossIntroVideoId: config.bossIntroVideoId || '',
-                levelIntroVideoId: config.levelIntroVideoId || ''
+                levelIntroVideoId: config.levelIntroVideoId || '',
+                welcomeVideoId: config.welcomeVideoId || ''
             }, { merge: true });
         });
 
@@ -141,7 +144,7 @@ const LevelVideoManagerTool = ({ onBack }: LevelVideoManagerToolProps) => {
     <div className="min-h-screen bg-slate-50 flex flex-col">
        {/* Toolbar */}
        <div className="bg-white border-b border-slate-200 p-4 sticky top-0 z-20 shadow-sm flex-shrink-0">
-            <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
                         <ArrowLeft className="h-5 w-5" />
@@ -177,7 +180,7 @@ const LevelVideoManagerTool = ({ onBack }: LevelVideoManagerToolProps) => {
        </div>
 
        {/* Content */}
-       <div className="max-w-5xl mx-auto w-full p-6 animate-fade-in">
+       <div className="max-w-6xl mx-auto w-full p-6 animate-fade-in">
             
             {/* Bunny Status */}
             {bunnyError && (
@@ -206,15 +209,42 @@ const LevelVideoManagerTool = ({ onBack }: LevelVideoManagerToolProps) => {
                                 <span className="text-xs font-mono text-slate-400">{selectedJoint}_{level}</span>
                             </div>
                             
-                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 
-                                {/* 1. Level Intro Video */}
+                                {/* 1. Welcome Video (NEW) */}
+                                <div>
+                                    <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
+                                        <Sparkles className="w-4 h-4 text-yellow-500" /> Welcome Video
+                                    </label>
+                                    <p className="text-xs text-slate-500 mb-3 min-h-[2.5em]">
+                                        Played when a user is <strong>first assigned</strong> this level (e.g. after assessment).
+                                    </p>
+                                    <select 
+                                        className="w-full p-3 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500"
+                                        value={levelConfigs[level]?.welcomeVideoId || ''}
+                                        onChange={(e) => handleConfigChange(level, 'welcomeVideoId', e.target.value)}
+                                    >
+                                        <option value="">-- No Video Selected --</option>
+                                        {bunnyVideos.map(v => (
+                                            <option key={v.guid} value={v.guid}>
+                                                {v.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {levelConfigs[level]?.welcomeVideoId && (
+                                        <div className="mt-2 text-xs text-green-600 font-medium flex items-center gap-1">
+                                            Selected: {getVideoTitle(levelConfigs[level]!.welcomeVideoId!)}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 2. Level Intro Video */}
                                 <div>
                                     <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
                                         <Video className="w-4 h-4 text-blue-500" /> Level Intro Video
                                     </label>
-                                    <p className="text-xs text-slate-500 mb-3">
-                                        Played immediately when the user unlocks Level {level}. Use this to welcome them to the new phase.
+                                    <p className="text-xs text-slate-500 mb-3 min-h-[2.5em]">
+                                        Played when unlocking this level from the previous one (Victory screen).
                                     </p>
                                     <select 
                                         className="w-full p-3 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500"
@@ -235,13 +265,13 @@ const LevelVideoManagerTool = ({ onBack }: LevelVideoManagerToolProps) => {
                                     )}
                                 </div>
 
-                                {/* 2. Boss Fight Intro Video */}
+                                {/* 3. Boss Fight Intro Video */}
                                 <div>
                                     <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-                                        <Video className="w-4 h-4 text-orange-500" /> Boss Fight Intro Video
+                                        <Video className="w-4 h-4 text-orange-500" /> Boss Fight Intro
                                     </label>
-                                    <p className="text-xs text-slate-500 mb-3">
-                                        Played when the user clicks "Start Level Test" (Boss Fight) for Level {level}.
+                                    <p className="text-xs text-slate-500 mb-3 min-h-[2.5em]">
+                                        Played when the user clicks "Start Level Test" for Level {level}.
                                     </p>
                                     <select 
                                         className="w-full p-3 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500"
